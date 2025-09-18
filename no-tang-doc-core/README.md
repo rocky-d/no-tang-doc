@@ -1,4 +1,18 @@
 # no-tang-doc-core
+## 联调快速启动步骤
+1. 准备 Docker Desktop
+2. 进入 no-tang-doc-core 目录
+3. 进入docker-compose.yml修改OpenAI Key
+4. 运行docker compose up -d 并通过Docker Desktop观测app container启动状态
+5. 进入Insomnia导入NoTangGroup团队的insomnia export文件
+6. 测试注册用户API
+7. 测试登录获取Token 并前往jwt.io尝试解析
+8. 测试受保护API
+9. 进入管理页面查看已注册用户 localhost:8080/admin 账号/密码 admin/admin
+10. 进入数据库查看Liquibase Changelog
+11. docker compose down
+
+
 
 > 模块：后端核心服务（Spring Boot + Keycloak + JPA + Liquibase）。本地仅存用户业务属性，不存密码，认证全部交给 Keycloak。
 

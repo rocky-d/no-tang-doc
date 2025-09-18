@@ -1,0 +1,83 @@
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: mysql-ntdoc
+    command: ["mysqld","--default-authentication-plugin=mysql_native_password","--character-set-server=utf8mb4","--collation-server=utf8mb4_unicode_ci"]
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: notangdoc
+      MYSQL_ROOT_HOST: "%"
+    ports:
+      - "3305:3306"
+    # 测试环境：不持久化数据，删除容器即删除数据（不再挂卷/不使用 tmpfs）
+    # 如需提速可再启用 tmpfs，但在部分平台可能不支持
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 15s
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3.4
+    command:
+      - start-dev
+      - --import-realm
+      - --hostname-strict=false
+    volumes:
+      - ./no-tang-doc-core.json:/opt/keycloak/data/import/no-tang-doc-core.json:ro
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      # 浏览器前端可见的 URL
+      KC_HOSTNAME_URL: http://localhost:8080
+      KC_HOSTNAME_ADMIN_URL: http://localhost:8080
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  wait-for-keycloak:
+    image: curlimages/curl:8.10.1
+    depends_on:
+      keycloak:
+        condition: service_started
+    entrypoint: ["sh","-c"]
+    command: >
+      sh -c "until curl -fsS --retry 30 --retry-delay 3 http://keycloak:8080/realms/ntdoc/.well-known/openid-configuration >/dev/null;
+      do echo 'waiting for keycloak realm ntdoc...'; sleep 3; done;
+      echo 'keycloak is ready';"
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ntdoc:test
+    ports:
+      - "8070:8070"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/notangdoc?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI: http://localhost:8080/realms/ntdoc/protocol/openid-connect/auth
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/token
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/userinfo
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/certs
+      # Resource Server：改用 jwk-set-uri，避免容器内请求 localhost
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/certs
+
+      # 回调仍为浏览器可达的 localhost
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI: http://localhost:8070/login/oauth2/code/*
+      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
+
+      KEYCLOAK_CLIENT_ID: no-tang-doc-core
+      KEYCLOAK_CLIENT_SECRET: no-tang-doc-core-test-secret
+      OPENAI_API_KEY:
+    depends_on:
+      mysql:
+        condition: service_healthy
+      wait-for-keycloak:
+        condition: service_completed_successfully
+    restart: unless-stopped

@@ -1,4 +1,3 @@
-
 server:
   port: 8070
 
@@ -6,7 +5,7 @@ spring:
   application:
     name: no-tang-doc-core
   datasource:
-    url: jdbc:mysql://localhost:3305/notangdoc?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
+    url: ${SPRING_DATASOURCE_URL:}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -25,18 +24,21 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://localhost:8080/realms/ntdoc
+          jwk-set-uri: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/certs
       client:
         registration:
           keycloak:
-            client-id: no-tang-doc-core
+            client-id: ${KEYCLOAK_CLIENT_ID:}
             authorization-grant-type: authorization_code
-            redirect-uri: "http://localhost:8070/login/oauth2/code/*"
+            redirect-uri: ${ SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:}
             scope: openid,profile,email
             client-secret: ${KEYCLOAK_CLIENT_SECRET:} # 修改为你本地KeyClock的Client Secret
         provider:
           keycloak:
-            issuer-uri: http://localhost:8080/realms/ntdoc
+            authorization-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/auth
+            token-uri: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/token
+            user-info-uri: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/userinfo
+            jwk-set-uri: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/certs
   ai:
     openai:
       api-key: ${OPENAI_API_KEY:}
@@ -47,13 +49,13 @@ spring:
 
 keycloak:
   realm: ntdoc
-  auth-server-url: http://localhost:8080
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:}
   admin:
     realm: master
     username: ${KEYCLOAK_ADMIN_USERNAME:admin}
     password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
   client:
-    id: no-tang-doc-core
+    id: ${KEYCLOAK_CLIENT_ID:}
     secret: ${KEYCLOAK_CLIENT_SECRET:}
 
 management:
