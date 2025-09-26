@@ -72,3 +72,10 @@ logging:
     root: INFO
     org.springframework.security: INFO
     # org.hibernate.SQL: DEBUG
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true

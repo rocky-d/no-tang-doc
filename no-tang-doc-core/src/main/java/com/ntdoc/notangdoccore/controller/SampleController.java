@@ -12,6 +12,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +25,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
+@Tag(name = "示例接口", description = "示例控制器")
 public class SampleController {
     private final KeycloakAdminService keycloakAdminService;
     private final UserSyncService userSyncService;
@@ -56,5 +63,13 @@ public class SampleController {
         String username = jwt.getClaimAsString("preferred_username");
         String weather = weatherService.getWeather(city);
         return "Hello, " + username + ", " + city + "今日天气：" + weather;
+    }
+
+
+    @GetMapping("/sample")
+    @Operation(summary = "获取示例数据", description = "返回示例数据")
+    @ApiResponse(responseCode = "200", description = "成功")
+    public String getSample() {
+        return "Hello from Sample Controller";
     }
 }

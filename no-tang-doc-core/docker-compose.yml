@@ -74,7 +74,7 @@ services:
 
       KEYCLOAK_CLIENT_ID: no-tang-doc-core
       KEYCLOAK_CLIENT_SECRET: no-tang-doc-core-test-secret
-      OPENAI_API_KEY:
+      OPENAI_API_KEY: 
     depends_on:
       mysql:
         condition: service_healthy
