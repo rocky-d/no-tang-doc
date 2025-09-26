@@ -1,0 +1,8 @@
+*log*
+*out*
+*tmp*
+*temp*
+
+.idea/
+.vscode/
+node_modules/
