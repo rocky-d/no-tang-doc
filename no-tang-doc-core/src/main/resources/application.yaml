@@ -5,7 +5,7 @@ spring:
   application:
     name: no-tang-doc-core
   datasource:
-    url: ${SPRING_DATASOURCE_URL:}
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3305/notangdoc}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:root}
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -19,44 +19,44 @@ spring:
     open-in-view: false
   liquibase:
     enabled: true
-    change-log: classpath:db/changelog/db.changelog-master.yaml
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
   security:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/certs
+          jwk-set-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/certs
       client:
         registration:
           keycloak:
-            client-id: ${KEYCLOAK_CLIENT_ID:}
+            client-id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
             authorization-grant-type: authorization_code
-            redirect-uri: ${ SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:}
+            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:http://localhost:8070/login/oauth2/code/*}
             scope: openid,profile,email
-            client-secret: ${KEYCLOAK_CLIENT_SECRET:} # 修改为你本地KeyClock的Client Secret
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:z1VI8bpLpOnDsqa5TeIHsOmstdk1SdMc} # 修改为你本地KeyClock的Client Secret
         provider:
           keycloak:
             authorization-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/auth
-            token-uri: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/token
-            user-info-uri: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/userinfo
-            jwk-set-uri: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/certs
-  ai:
-    openai:
-      api-key: ${OPENAI_API_KEY:}
-      chat:
-        options:
-          model: gpt-4.1-mini
-          temperature: 0.2
+            token-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/token
+            user-info-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/userinfo
+            jwk-set-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/certs
+#  ai:
+#    openai:
+#      api-key: ${OPENAI_API_KEY:}
+#      chat:
+#        options:
+#          model: gpt-4.1-mini
+#          temperature: 0.2
 
 keycloak:
   realm: ntdoc
-  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:}
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://localhost:8080}
   admin:
     realm: master
     username: ${KEYCLOAK_ADMIN_USERNAME:admin}
     password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
   client:
-    id: ${KEYCLOAK_CLIENT_ID:}
-    secret: ${KEYCLOAK_CLIENT_SECRET:}
+    id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
+    secret: ${KEYCLOAK_CLIENT_SECRET:z1VI8bpLpOnDsqa5TeIHsOmstdk1SdMc}
 
 management:
   endpoints:

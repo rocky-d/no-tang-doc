@@ -48,8 +48,10 @@ public class SampleController {
         Jwt jwt = (Jwt) authentication.getPrincipal();
         String username = jwt.getClaimAsString("preferred_username");
         String email = jwt.getClaimAsString("email");
-        userSyncService.ensureLocalUser(username, email);
+        var user = userSyncService.ensureFromJwt(jwt);
+
         return Map.of(
+                "kcUserId",user.getKcUserId(),
                 "username", username,
                 "email", email,
                 "roles", jwt.getClaim("realm_access")
