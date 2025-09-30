@@ -1,9 +1,7 @@
-// src/pages/DocumentsPage.tsx
-import { useState } from 'react';
-import type { SearchMode } from '../components/SearchDialog';
+import React, { useState } from 'react';
+import { SearchMode } from '../components/SearchDialog';
 import { DocumentsList } from '../components/DocumentsList';
 
-// 与 Dashboard 内部保持一致的模拟数据(可提取到独立模块)
 interface Document {
     id: string;
     name: string;
@@ -22,26 +20,22 @@ const mockDocuments: Document[] = [
     { id: '5', name: 'Tax Documents 2023.pdf', type: 'PDF', size: '1.8 MB', uploadDate: '2024-01-11', category: 'Finance', tags: ['Tax','Annual','2023','Important','Archive'] }
 ];
 
-// 可替换为真实高级搜索
 const mockAdvancedSearch = async (query: string): Promise<Document[]> => {
     await new Promise(r => setTimeout(r, 400));
     if (!query.trim()) return mockDocuments;
     const q = query.toLowerCase();
     return mockDocuments.filter(d => {
+        const nameMatch = d.name.toLowerCase().includes(q);
+        const typeMatch = d.type.toLowerCase().includes(q);
+        const categoryMatch = d.category.toLowerCase().includes(q);
+        const tagMatch = d.tags.some(t => t.toLowerCase().includes(q));
         const yearMatch = q.includes('2024') || q.includes('2023');
         const hasYear = d.uploadDate.includes('2024') || d.uploadDate.includes('2023');
-        return (
-            d.name.toLowerCase().includes(q) ||
-            d.type.toLowerCase().includes(q) ||
-            d.category.toLowerCase().includes(q) ||
-            d.tags.some(t => t.toLowerCase().includes(q)) ||
-            (yearMatch && hasYear)
-        );
+        return nameMatch || typeMatch || categoryMatch || tagMatch || (yearMatch && hasYear);
     });
 };
 
 export function DocumentsPage() {
-    const [documents] = useState<Document[]>(mockDocuments);
     const [searchMode, setSearchMode] = useState<SearchMode>('simple');
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Document[]>(mockDocuments);
@@ -65,8 +59,8 @@ export function DocumentsPage() {
 
     return (
         <div style={{ padding: 24 }}>
-            {/* 这里可复用统一 SearchDialog 触发方式；临时简单输入框示例 */}
-            <div style={{ marginBottom: 16, display: 'flex', gap: 8 }}>
+            <h2 style={{ marginTop: 0 }}>Documents</h2>
+            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
                 <input
                     placeholder="Search..."
                     value={searchQuery}
@@ -82,7 +76,7 @@ export function DocumentsPage() {
                 </select>
             </div>
             <DocumentsList
-                documents={searchMode === 'advanced' ? searchResults : documents}
+                documents={searchMode === 'advanced' ? searchResults : mockDocuments}
                 searchTerm={searchMode === 'simple' ? searchQuery : ''}
                 searchMode={searchMode}
                 isSearching={isSearching}

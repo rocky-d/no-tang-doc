@@ -6,6 +6,7 @@ import { RegisterPage } from '@/pages/RegisterPage';
 import { DashboardPage } from '@/pages/DashboardPage';
 import { UploadPage } from '@/pages/UploadPage';
 import { useNavigate } from 'react-router-dom';
+import {DocumentsPage} from "@/pages/DocumentsPage.tsx";
 
 function HomeRoute() {
     const navigate = useNavigate();
@@ -27,6 +28,7 @@ export function AppRoutes() {
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
                 <Route path="/dashboard" element={<DashboardPage />} />
+                <Route path="/documents" element={<DocumentsPage />} />
                 <Route path="/upload" element={<UploadPage />} />
                 <Route path="*" element={<div>Not Found</div>} />
             </Routes>
