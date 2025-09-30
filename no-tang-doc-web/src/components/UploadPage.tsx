@@ -36,13 +36,6 @@ export function UploadPage({ onBack, onNavigateHome }: UploadPageProps) {
       {/* Upload Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold mb-2">Upload Your Documents</h1>
-            <p className="text-muted-foreground">
-              Drag and drop your files or click to browse and upload
-            </p>
-          </div>
-          
           <DocumentUpload />
         </div>
       </main>

@@ -1,10 +1,22 @@
-// 文件: 'src/pages/DashboardPage.tsx'
-import React from 'react';
-export default function DashboardPage() {
+import { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../components/AuthContext';
+import { Dashboard } from '../components/Dashboard';
+
+export function DashboardPage() {
+    const { user } = useAuth();
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        if (!user) navigate('/login', { replace: true });
+    }, [user, navigate]);
+
+    if (!user) return null;
+
     return (
-        <div style={{ padding: 24 }}>
-            <h2>DashboardPage</h2>
-            <p>仪表盘占位 (Step2).</p>
-        </div>
+        <Dashboard
+            onNavigateHome={() => navigate('/')}
+            onNavigateToUpload={() => navigate('/upload')}
+        />
     );
 }
