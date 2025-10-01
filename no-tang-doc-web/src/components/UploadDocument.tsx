@@ -8,7 +8,7 @@ interface UploadPageProps {
   onNavigateHome?: () => void;
 }
 
-export function UploadPage({ onBack, onNavigateHome }: UploadPageProps) {
+export function UploadDocument({ onBack, onNavigateHome }: UploadPageProps) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}

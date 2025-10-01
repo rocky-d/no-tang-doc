@@ -1,5 +1,21 @@
 import React, { useState } from 'react';
-import { Search, Upload, User, LogOut, BarChart3, FileText, Settings, Moon, Sun, ChevronRight, Tag, X, Sparkles } from 'lucide-react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import {
+  Search,
+  Upload,
+  User,
+  LogOut,
+  BarChart3,
+  FileText,
+  Settings,
+  Moon,
+  Sun,
+  ChevronRight,
+  Tag,
+  X,
+  Sparkles,
+  Users
+} from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
@@ -13,29 +29,54 @@ import { SearchDialog, SearchMode } from './SearchDialog';
 
 interface UserLayoutProps {
   children: React.ReactNode;
-  onUploadClick: () => void;
-  onNavigateHome?: () => void;
-  activeView?: 'dashboard' | 'documents' | 'manage' | 'profile';
-  onViewChange?: (view: 'dashboard' | 'documents' | 'manage' | 'profile') => void;
   onSearch?: (query: string, mode: SearchMode) => void;
   currentSearchQuery?: string;
   currentSearchMode?: SearchMode;
 }
 
-export function UserLayout({ 
-  children, 
-  onUploadClick, 
-  onNavigateHome,
-  activeView = 'dashboard',
-  onViewChange,
-  onSearch,
-  currentSearchQuery = '',
-  currentSearchMode = 'simple'
-}: UserLayoutProps) {
+export function UserLayout({
+                             children,
+                             onSearch,
+                             currentSearchQuery = '',
+                             currentSearchMode = 'simple'
+                           }: UserLayoutProps) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const [isManageOpen, setIsManageOpen] = useState(activeView === 'manage');
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Determine active view based on current path
+  const getActiveView = () => {
+    if (location.pathname === '/dashboard') return 'dashboard';
+    if (location.pathname === '/documents') return 'documents';
+    if (location.pathname === '/profile') return 'profile';
+    if (location.pathname.startsWith('/manage')) return 'manage';
+    if (location.pathname.startsWith('/teams')) return 'teams';
+    return 'dashboard';
+  };
+
+  const activeView = getActiveView();
+
+  // Determine if manage is open based on current path
+  const isManagePath = location.pathname.startsWith('/manage');
+  const isTeamsPath = location.pathname.startsWith('/teams');
+  const [isManageOpen, setIsManageOpen] = useState(isManagePath);
+  const [isTeamsOpen, setIsTeamsOpen] = useState(isTeamsPath);
   const [searchDialogOpen, setSearchDialogOpen] = useState(false);
+
+  // Update isManageOpen when location changes
+  React.useEffect(() => {
+    if (isManagePath) {
+      setIsManageOpen(true);
+    }
+  }, [isManagePath]);
+
+  // Update isTeamsOpen when location changes
+  React.useEffect(() => {
+    if (isTeamsPath) {
+      setIsTeamsOpen(true);
+    }
+  }, [isTeamsPath]);
 
   const handleSearchClick = () => {
     // Only open dialog for documents and dashboard views
@@ -87,206 +128,251 @@ export function UserLayout({
     {
       title: 'Dashboard',
       icon: BarChart3,
-      id: 'dashboard' as const,
+      path: '/dashboard',
       isActive: activeView === 'dashboard'
     },
     {
       title: 'Documents',
       icon: FileText,
-      id: 'documents' as const,
+      path: '/documents',
       isActive: activeView === 'documents'
     },
     {
       title: 'Profile',
       icon: User,
-      id: 'profile' as const,
+      path: '/profile',
       isActive: activeView === 'profile'
     }
   ];
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full">
-        {/* Sidebar */}
-        <Sidebar>
-          <SidebarHeader className="p-4">
-            <button 
-              className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
-              onClick={onNavigateHome}
-            >
-              <FileText className="h-6 w-6 text-primary" />
-              <span className="font-semibold">DocRepo</span>
-            </button>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-              {sidebarItems.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    isActive={item.isActive}
-                    onClick={() => onViewChange?.(item.id)}
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              
-              {/* Manage Menu with Submenu */}
-              <Collapsible
-                open={isManageOpen}
-                onOpenChange={setIsManageOpen}
-                className="group/collapsible"
+      <SidebarProvider>
+        <div className="min-h-screen flex w-full">
+          {/* Sidebar */}
+          <Sidebar>
+            <SidebarHeader className="p-4">
+              <button
+                  className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
+                  onClick={() => navigate('/')}
               >
-                <SidebarMenuItem>
-                  <CollapsibleTrigger asChild>
-                    <SidebarMenuButton
-                      isActive={activeView === 'manage'}
-                      className="w-full"
-                    >
-                      <Settings className="h-4 w-4" />
-                      <span>Manage</span>
-                      <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                    </SidebarMenuButton>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent>
-                    <SidebarMenuSub>
-                      <SidebarMenuSubItem>
-                        <SidebarMenuSubButton
-                          onClick={() => onViewChange?.('manage')}
-                          isActive={activeView === 'manage'}
-                        >
-                          <Tag className="h-4 w-4" />
-                          <span>Tag</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    </SidebarMenuSub>
-                  </CollapsibleContent>
-                </SidebarMenuItem>
-              </Collapsible>
-            </SidebarMenu>
-          </SidebarContent>
-          <SidebarFooter>
-            <div className="flex items-center justify-between px-2 py-2">
-              <div className="flex items-center gap-2">
-                {theme === 'dark' ? (
-                  <Moon className="h-4 w-4 text-sidebar-foreground" />
-                ) : (
-                  <Sun className="h-4 w-4 text-sidebar-foreground" />
-                )}
-                <span className="text-sm">Dark Mode</span>
-              </div>
-              <Switch
-                checked={theme === 'dark'}
-                onCheckedChange={toggleTheme}
-              />
-            </div>
-          </SidebarFooter>
-        </Sidebar>
+                <FileText className="h-6 w-6 text-primary" />
+                <span className="font-semibold">DocRepo</span>
+              </button>
+            </SidebarHeader>
+            <SidebarContent>
+              <SidebarMenu>
+                {sidebarItems.map((item) => (
+                    <SidebarMenuItem key={item.path}>
+                      <SidebarMenuButton
+                          isActive={item.isActive}
+                          onClick={() => navigate(item.path)}
+                      >
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                ))}
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          {/* Top Navigation */}
-          <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
-            <div className="flex h-16 items-center gap-4 px-6">
-              <SidebarTrigger />
-              
-              {/* Search Bar - always visible */}
-              <div className="flex-1 max-w-2xl">
+                {/* Manage Menu with Submenu */}
+                <Collapsible
+                    open={isManageOpen}
+                    onOpenChange={setIsManageOpen}
+                    className="group/collapsible"
+                >
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                          isActive={activeView === 'manage'}
+                          className="w-full"
+                      >
+                        <Settings className="h-4 w-4" />
+                        <span>Manage</span>
+                        <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                              onClick={() => navigate('/manage/tags')}
+                              isActive={location.pathname === '/manage/tags'}
+                          >
+                            <Tag className="h-4 w-4" />
+                            <span>Tags</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+
+                {/* Teams Menu with Submenu */}
+                <Collapsible
+                    open={isTeamsOpen}
+                    onOpenChange={setIsTeamsOpen}
+                    className="group/collapsible"
+                >
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton
+                          isActive={activeView === 'teams'}
+                          className="w-full"
+                      >
+                        <Users className="h-4 w-4" />
+                        <span>Teams</span>
+                        <ChevronRight className="ml-auto h-4 w-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                              onClick={() => navigate('/teams/my-teams')}
+                              isActive={location.pathname === '/teams/my-teams'}
+                          >
+                            <Users className="h-4 w-4" />
+                            <span>My Teams</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                              onClick={() => navigate('/teams/team-space')}
+                              isActive={location.pathname === '/teams/team-space'}
+                          >
+                            <Users className="h-4 w-4" />
+                            <span>TeamSpace</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              </SidebarMenu>
+            </SidebarContent>
+            <SidebarFooter>
+              <div className="flex items-center justify-between px-2 py-2">
                 <div className="flex items-center gap-2">
-                  <div 
-                    className="relative cursor-pointer flex-1"
-                    onClick={handleSearchClick}
-                  >
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-                    <div className={`pl-10 pr-20 h-10 flex items-center gap-2 border border-input rounded-md bg-background hover:bg-accent transition-colors ${isSearchActive ? 'border-primary' : ''}`}>
-                      {isSearchActive && currentSearchMode === 'advanced' && (
-                        <Badge variant="secondary" className="flex items-center gap-1 h-5">
-                          <Sparkles className="w-3 h-3" />
-                          AI
-                        </Badge>
-                      )}
-                      <span className={isSearchActive ? 'text-foreground' : 'text-muted-foreground'}>
+                  {theme === 'dark' ? (
+                      <Moon className="h-4 w-4 text-sidebar-foreground" />
+                  ) : (
+                      <Sun className="h-4 w-4 text-sidebar-foreground" />
+                  )}
+                  <span className="text-sm">Dark Mode</span>
+                </div>
+                <Switch
+                    checked={theme === 'dark'}
+                    onCheckedChange={toggleTheme}
+                />
+              </div>
+            </SidebarFooter>
+          </Sidebar>
+
+          {/* Main Content */}
+          <div className="flex-1 flex flex-col">
+            {/* Top Navigation */}
+            <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-40">
+              <div className="flex h-16 items-center gap-4 px-6">
+                <SidebarTrigger />
+
+                {/* Search Bar - always visible */}
+                <div className="flex-1 max-w-2xl">
+                  <div className="flex items-center gap-2">
+                    <div
+                        className="relative cursor-pointer flex-1"
+                        onClick={handleSearchClick}
+                    >
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
+                      <div className={`pl-10 pr-20 h-10 flex items-center gap-2 border border-input rounded-md bg-background hover:bg-accent transition-colors ${isSearchActive ? 'border-primary' : ''}`}>
+                        {isSearchActive && currentSearchMode === 'advanced' && (
+                            <Badge variant="secondary" className="flex items-center gap-1 h-5">
+                              <Sparkles className="w-3 h-3" />
+                              AI
+                            </Badge>
+                        )}
+                        <span className={isSearchActive ? 'text-foreground' : 'text-muted-foreground'}>
                         {currentSearchQuery || getSearchPlaceholder()}
                       </span>
+                      </div>
+                      {!isSearchActive && (activeView === 'documents' || activeView === 'dashboard') && (
+                          <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                            <span className="text-xs">⌘</span>K
+                          </kbd>
+                      )}
                     </div>
-                    {!isSearchActive && (activeView === 'documents' || activeView === 'dashboard') && (
-                      <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                        <span className="text-xs">⌘</span>K
-                      </kbd>
+                    {isSearchActive && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={handleClearSearch}
+                            className="h-10 px-3"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
                     )}
                   </div>
-                  {isSearchActive && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClearSearch}
-                      className="h-10 px-3"
-                    >
-                      <X className="w-4 h-4" />
-                    </Button>
-                  )}
+                </div>
+
+                {/* Search Dialog */}
+                <SearchDialog
+                    open={searchDialogOpen}
+                    onOpenChange={setSearchDialogOpen}
+                    onSearch={handleSearch}
+                    initialMode={currentSearchMode}
+                    placeholder={getSearchPlaceholder()}
+                />
+
+                {/* Actions */}
+                <div className="flex items-center gap-3">
+                <span className="text-sm text-muted-foreground hidden lg:inline">
+                  Welcome, <span className="text-foreground font-medium">{user?.name}</span>
+                </span>
+                  <Button onClick={() => navigate('/upload')} className="flex items-center gap-2">
+                    <Upload className="w-4 h-4" />
+                    Upload
+                  </Button>
+
+                  {/* User Menu */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+                        <Avatar className="h-9 w-9">
+                          <AvatarImage src={user?.avatar} alt={user?.name} />
+                          <AvatarFallback>
+                            {user?.name ? getUserInitials(user.name) : 'U'}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-56" align="end" forceMount>
+                      <div className="flex items-center justify-start gap-2 p-2">
+                        <div className="flex flex-col space-y-1 leading-none">
+                          <p className="font-medium">{user?.name}</p>
+                          <p className="w-[200px] truncate text-sm text-muted-foreground">
+                            {user?.email}
+                          </p>
+                        </div>
+                      </div>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => navigate('/profile')}>
+                        <User className="mr-2 h-4 w-4" />
+                        <span>Profile</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={logout}>
+                        <LogOut className="mr-2 h-4 w-4" />
+                        <span>Log out</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
+            </header>
 
-              {/* Search Dialog */}
-              <SearchDialog
-                open={searchDialogOpen}
-                onOpenChange={setSearchDialogOpen}
-                onSearch={handleSearch}
-                initialMode={currentSearchMode}
-                placeholder={getSearchPlaceholder()}
-              />
-
-              {/* Actions */}
-              <div className="flex items-center gap-3">
-                <Button onClick={onUploadClick} className="flex items-center gap-2">
-                  <Upload className="w-4 h-4" />
-                  Upload
-                </Button>
-
-                {/* User Menu */}
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={user?.avatar} alt={user?.name} />
-                        <AvatarFallback>
-                          {user?.name ? getUserInitials(user.name) : 'U'}
-                        </AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent className="w-56" align="end" forceMount>
-                    <div className="flex items-center justify-start gap-2 p-2">
-                      <div className="flex flex-col space-y-1 leading-none">
-                        <p className="font-medium">{user?.name}</p>
-                        <p className="w-[200px] truncate text-sm text-muted-foreground">
-                          {user?.email}
-                        </p>
-                      </div>
-                    </div>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => onViewChange?.('profile')}>
-                      <User className="mr-2 h-4 w-4" />
-                      <span>Profile</span>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={logout}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      <span>Log out</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </div>
-          </header>
-
-          {/* Page Content */}
-          <main className="flex-1 p-6">
-            {children}
-          </main>
+            {/* Page Content */}
+            <main className="flex-1 p-6">
+              {children}
+            </main>
+          </div>
         </div>
-      </div>
-    </SidebarProvider>
+      </SidebarProvider>
   );
 }
