@@ -79,3 +79,13 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     enabled: true
+
+digitalocean:
+  spaces:
+    endpoint: https://sgp1.digitaloceanspaces.com
+    region: sgp1
+    bucket: test-object-storageg
+    access-key: ${DO_SPACES_ACCESS_KEY:}
+    secret-key: ${DO_SPACES_SECRET_KEY:}
+    public-url: https://test-object-storage.sgp1.digitaloceanspaces.com
+    cdn-url: https://test-object-storage.sgq1.cdn.digitaloceanspaces.com
