@@ -12,6 +12,7 @@ import {ProfilePage} from "@/pages/ProfilePage.tsx";
 import {TagManagementPage} from "@/pages/TagManagementPage.tsx";
 import {MyTeamsPage} from "../pages/MyTeamsPage.tsx";
 import {TeamSpacePage} from "../pages/TeamSpacePage.tsx";
+import {useAuth} from "../components/AuthContext.tsx";
 
 function HomeRoute() {
     const navigate = useNavigate();
@@ -24,6 +25,27 @@ function HomeRoute() {
         />
     );
 }
+// Protected Route wrapper
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+    const { user } = useAuth();
+
+    if (!user) {
+        return <Navigate to="/login" replace />;
+    }
+
+    return <>{children}</>;
+}
+
+// Route wrapper to redirect authenticated users from auth pages
+function AuthRoute({ children }: { children: React.ReactNode }) {
+    const { user } = useAuth();
+
+    if (user) {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    return <>{children}</>;
+}
 
 export function AppRoutes() {
     return (
@@ -31,20 +53,55 @@ export function AppRoutes() {
             <Routes>
                 {/* Public routes */}
                 <Route path="/" element={<HomeRoute/>}/>
-                <Route path="/login" element={<LoginPage/>}/>
-                <Route path="/register" element={<RegisterPage/>}/>
-                {/* Public routes */}
-                <Route path="/dashboard" element={<DashboardPage/>}/>
-                <Route path="/documents" element={<DocumentsPage/>}/>
-                <Route path="/upload" element={<UploadDocumentPage/>}/>
-                <Route path="/profile" element={<ProfilePage/>}/>
-                <Route path="/manage/tags" element={<TagManagementPage/>}/>
-                <Route path="/teams/my-teams" element={<MyTeamsPage/>}/>
-                <Route path="/teams/team-space" element={<TeamSpacePage/>}/>
+                {/* Auth routes only UnAuth users can access*/}
+                <Route path="/login" element={
+                    <AuthRoute>
+                        <LoginPage/>
+                    </AuthRoute>
+                }/>
+                <Route path="/register" element={
+                    <AuthRoute>
+                        <RegisterPage/>
+                    </AuthRoute>
+                }/>
+                {/* Protected routes */}
+                <Route path="/dashboard" element={
+                    <ProtectedRoute>
+                        <DashboardPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="/documents" element={
+                    <ProtectedRoute>
+                        <DocumentsPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="/upload" element={
+                    <ProtectedRoute>
+                        <UploadDocumentPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="/profile" element={
+                    <ProtectedRoute>
+                        <ProfilePage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="/manage/tags" element={
+                    <ProtectedRoute>
+                        <TagManagementPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="/teams/my-teams" element={
+                    <ProtectedRoute>
+                        <MyTeamsPage/>
+                    </ProtectedRoute>
+                }/>
+                <Route path="/teams/team-space" element={
+                    <ProtectedRoute>
+                        <TeamSpacePage/>
+                    </ProtectedRoute>
+                }/>
                 {/* Invalid route */}
                 <Route path="*" element={<NotFoundPage/>}/>
-                {/* Fallback route  depends on the logic that redirect to home page or 404*/}
-                {/*<Route path="*" element={<Navigate to="/" replace />} />*/}
             </Routes>
         </Suspense>
     );
