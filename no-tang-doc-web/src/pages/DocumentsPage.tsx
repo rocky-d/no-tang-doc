@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { SearchMode } from '../components/SearchDialog';
-import { DocumentsList } from '../components/DocumentsList';
+import React, {useState} from 'react';
+import {SearchMode} from '../components/SearchDialog';
+import {DocumentsList} from '../components/DocumentsList';
+import {UserLayout} from "../components/UserLayout.tsx";
 
 interface Document {
     id: string;
@@ -13,11 +14,51 @@ interface Document {
 }
 
 const mockDocuments: Document[] = [
-    { id: '1', name: 'Project Proposal.pdf', type: 'PDF', size: '2.4 MB', uploadDate: '2024-01-15', category: 'Work', tags: ['Proposal','Q1 2024','Client','Important'] },
-    { id: '2', name: 'Invoice_2024_001.xlsx', type: 'Excel', size: '156 KB', uploadDate: '2024-01-14', category: 'Finance', tags: ['Invoice','Tax','Billing'] },
-    { id: '3', name: 'Meeting Notes.docx', type: 'Word', size: '89 KB', uploadDate: '2024-01-13', category: 'Work', tags: ['Meeting','Team','Action Items'] },
-    { id: '4', name: 'Design Mockups.fig', type: 'Figma', size: '5.2 MB', uploadDate: '2024-01-12', category: 'Design', tags: ['UI/UX','Mockup','Review','Version 2','Draft'] },
-    { id: '5', name: 'Tax Documents 2023.pdf', type: 'PDF', size: '1.8 MB', uploadDate: '2024-01-11', category: 'Finance', tags: ['Tax','Annual','2023','Important','Archive'] }
+    {
+        id: '1',
+        name: 'Project Proposal.pdf',
+        type: 'PDF',
+        size: '2.4 MB',
+        uploadDate: '2024-01-15',
+        category: 'Work',
+        tags: ['Proposal', 'Q1 2024', 'Client', 'Important']
+    },
+    {
+        id: '2',
+        name: 'Invoice_2024_001.xlsx',
+        type: 'Excel',
+        size: '156 KB',
+        uploadDate: '2024-01-14',
+        category: 'Finance',
+        tags: ['Invoice', 'Tax', 'Billing']
+    },
+    {
+        id: '3',
+        name: 'Meeting Notes.docx',
+        type: 'Word',
+        size: '89 KB',
+        uploadDate: '2024-01-13',
+        category: 'Work',
+        tags: ['Meeting', 'Team', 'Action Items']
+    },
+    {
+        id: '4',
+        name: 'Design Mockups.fig',
+        type: 'Figma',
+        size: '5.2 MB',
+        uploadDate: '2024-01-12',
+        category: 'Design',
+        tags: ['UI/UX', 'Mockup', 'Review', 'Version 2', 'Draft']
+    },
+    {
+        id: '5',
+        name: 'Tax Documents 2023.pdf',
+        type: 'PDF',
+        size: '1.8 MB',
+        uploadDate: '2024-01-11',
+        category: 'Finance',
+        tags: ['Tax', 'Annual', '2023', 'Important', 'Archive']
+    }
 ];
 
 const mockAdvancedSearch = async (query: string): Promise<Document[]> => {
@@ -58,29 +99,18 @@ export function DocumentsPage() {
     };
 
     return (
-        <div style={{ padding: 24 }}>
-            <h2 style={{ marginTop: 0 }}>Documents</h2>
-            <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-                <input
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={e => handleSearch(e.target.value, searchMode)}
-                    style={{ flex: 1 }}
-                />
-                <select
-                    value={searchMode}
-                    onChange={e => handleSearch(searchQuery, e.target.value as SearchMode)}
-                >
-                    <option value="simple">Simple</option>
-                    <option value="advanced">Advanced</option>
-                </select>
-            </div>
+        <UserLayout
+            onSearch={handleSearch}
+            currentSearchQuery={searchQuery}
+            currentSearchMode={searchMode}
+        >
             <DocumentsList
                 documents={searchMode === 'advanced' ? searchResults : mockDocuments}
                 searchTerm={searchMode === 'simple' ? searchQuery : ''}
                 searchMode={searchMode}
                 isSearching={isSearching}
             />
-        </div>
+        </UserLayout>
+
     );
 }

@@ -23,10 +23,10 @@ export function Header({ onNavigateToAuth, onNavigateToDashboard, onNavigateHome
         </button>
         
         <nav className="hidden md:flex items-center space-x-6">
-          <a href="#home" className="text-muted-foreground hover:text-foreground transition-colors">
+          <a href="/#home" className="text-muted-foreground hover:text-foreground transition-colors">
             Home
           </a>
-          <a href="#features" className="text-muted-foreground hover:text-foreground transition-colors">
+          <a href="/#features" className="text-muted-foreground hover:text-foreground transition-colors">
             Features
           </a>
         </nav>

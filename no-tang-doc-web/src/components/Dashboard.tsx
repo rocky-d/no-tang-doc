@@ -48,9 +48,9 @@ export function Dashboard({ onNavigateHome, onNavigateToUpload }: Readonly<Dashb
     switch (activeView) {
       case 'documents':
         return (
-          <DocumentsList 
-            documents={searchMode === 'advanced' ? searchResults : documents} 
-            searchTerm={searchMode === 'simple' ? searchQuery : ''} 
+          <DocumentsList
+            documents={searchMode === 'advanced' ? searchResults : documents}
+            searchTerm={searchMode === 'simple' ? searchQuery : ''}
             searchMode={searchMode}
             isSearching={isSearching}
           />
@@ -65,16 +65,8 @@ export function Dashboard({ onNavigateHome, onNavigateToUpload }: Readonly<Dashb
   };
 
   return (
-    <UserLayout
-      onUploadClick={onNavigateToUpload || (() => {})}
-      onNavigateHome={onNavigateHome}
-      activeView={activeView}
-      onViewChange={setActiveView}
-      onSearch={handleSearch}
-      currentSearchQuery={searchQuery}
-      currentSearchMode={searchMode}
-    >
-      {renderContent()}
-    </UserLayout>
+
+      <DashboardOverview documents={documents} />
+
   );
 }

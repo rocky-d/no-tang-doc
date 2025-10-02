@@ -1,20 +1,24 @@
 import { useEffect } from 'react';
 import { useAuth } from '../components/AuthContext';
-import { AuthPage } from '../components/AuthPage';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 export function RegisterPage() {
-    const { user } = useAuth();
+    const { isAuthenticated, register, isLoading } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
 
     useEffect(() => {
-        if (user) {
+        if (isLoading) return;
+        if (isAuthenticated) {
             const sp = new URLSearchParams(location.search);
-            const redirect = sp.get('redirect');
-            navigate(redirect || '/dashboard', { replace: true });
+            const redirect = sp.get('redirect') || '/dashboard';
+            navigate(redirect, { replace: true });
+        } else {
+            const sp = new URLSearchParams(location.search);
+            const redirect = sp.get('redirect') || '/dashboard';
+            register(redirect);
         }
-    }, [user, navigate, location.search]);
+    }, [isAuthenticated, isLoading, navigate, location, register]);
 
-    return <AuthPage initialMode="register" onBack={() => navigate('/')} />;
+    return <div style={{ padding: '2rem', textAlign: 'center' }}>Redirecting to authorization server (register)...</div>;
 }
