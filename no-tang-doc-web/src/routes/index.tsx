@@ -34,7 +34,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
         return <div style={{ padding: '2rem', textAlign: 'center' }}>Checking authentication...</div>;
     }
     if (!isAuthenticated) {
-        return <Navigate to="/login" replace />;
+        // 如果刚刚执行过登出，直接回首页，避免跳到 /login 触发自动 OIDC 流程
+        const recentLogoutTs = Number(sessionStorage.getItem('recent_logout') || '0');
+        const justLoggedOut = recentLogoutTs && Date.now() - recentLogoutTs < 8000; // 8秒窗口
+        if (justLoggedOut) {
+            return <Navigate to="/" replace />;
+        }
+        // 默认也返回首页，由用户主动点击登录
+        return <Navigate to="/" replace />;
     }
     return <>{children}</>;
 }

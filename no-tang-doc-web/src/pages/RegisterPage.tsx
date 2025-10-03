@@ -9,15 +9,14 @@ export function RegisterPage() {
 
     useEffect(() => {
         if (isLoading) return;
+        const sp = new URLSearchParams(location.search);
+        const redirect = sp.get('redirect') || '/dashboard';
         if (isAuthenticated) {
-            const sp = new URLSearchParams(location.search);
-            const redirect = sp.get('redirect') || '/dashboard';
             navigate(redirect, { replace: true });
-        } else {
-            const sp = new URLSearchParams(location.search);
-            const redirect = sp.get('redirect') || '/dashboard';
-            register(redirect);
+            return;
         }
+        // 直接触发注册（不再抑制）
+        register(redirect);
     }, [isAuthenticated, isLoading, navigate, location, register]);
 
     return <div style={{ padding: '2rem', textAlign: 'center' }}>Redirecting to authorization server (register)...</div>;
