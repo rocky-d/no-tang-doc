@@ -30,7 +30,7 @@ spring:
           keycloak:
             client-id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
             authorization-grant-type: authorization_code
-            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:http://localhost:8070/login/oauth2/code/*}
+            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:http://localhost:3000/auth/callback}
             scope: openid,profile,email
             client-secret: ${KEYCLOAK_CLIENT_SECRET:z1VI8bpLpOnDsqa5TeIHsOmstdk1SdMc} # 修改为你本地KeyClock的Client Secret
         provider:
@@ -39,6 +39,7 @@ spring:
             token-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/token
             user-info-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/userinfo
             jwk-set-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/certs
+            issuer-uri: http://localhost:8080/realms/ntdoc
 #  ai:
 #    openai:
 #      api-key: ${OPENAI_API_KEY:}
@@ -79,3 +80,11 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     enabled: true
+
+ntdoc:
+  auth:
+    allowed-redirect-uris:
+      - http://localhost:3000/auth/callback
+  cors:
+    allowed-origins:
+      - http://localhost:3000
