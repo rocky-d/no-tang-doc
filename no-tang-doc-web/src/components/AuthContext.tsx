@@ -18,7 +18,7 @@ interface AuthContextType {
   refreshToken: string | null;
   login: (redirectPath?: string) => Promise<void>;
   register: (redirectPath?: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: (options?: { redirect?: boolean; to?: string }) => Promise<void>;
   completeLogin: (tokens: { access_token: string; refresh_token?: string; expires_in: number; id_token?: string; refresh_expires_in?: number }) => void;
   hasRole: (role: string) => boolean;
   error: string | null;
@@ -32,6 +32,8 @@ const KC_CLIENT_ID = import.meta.env.VITE_KEYCLOAK_CLIENT_ID || 'your-client-id'
 const AUTH_ENDPOINT = `${KC_BASE}realms/${KC_REALM}/protocol/openid-connect/auth`;
 const OIDC_SCOPE = (import.meta.env.VITE_OIDC_SCOPES || 'openid profile email').trim();
 const PERSIST_KEY = 'auth_tokens_v1';
+const REFRESH_LEEWAY_MS = 60000; // 剩余 <= 60s 时触发刷新
+const TEST_REFRESH_INTERVAL_MS = Number((import.meta as any).env?.VITE_TEST_REFRESH_INTERVAL_MS || '0'); // 测试用强制刷新间隔（毫秒）
 
 interface PersistedTokens {
   access_token: string;
@@ -100,7 +102,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [persistTokens]);
 
   // 提前定义 logout，避免下方 useEffect 依赖数组在声明前访问它
-  const logout = useCallback(async () => {
+  const logout = useCallback(async (options?: { redirect?: boolean; to?: string }) => {
+    const { redirect = true, to } = options || {};
     if (loggedOut.current) return;
     loggedOut.current = true;
     setError(null);
@@ -116,29 +119,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIdToken(undefined);
     persistTokens(null);
     clearTemp(['pkce_verifier','oidc_state','oidc_nonce','post_login_redirect']);
-    window.location.replace('/');
+    if (redirect) {
+      window.location.replace(to || '/');
+    }
   }, [accessToken, refreshToken, idToken, persistTokens]);
 
   // Token refresh scheduler effect (runs after tokens / expiry change)
   useEffect(() => {
     if (loggedOut.current) return;
     if (!accessExpiresAt || !refreshToken) return;
+
+    // 测试模式：如果设置了 VITE_TEST_REFRESH_INTERVAL_MS，则忽略正常逻辑，按固定间隔刷新
+    if (TEST_REFRESH_INTERVAL_MS > 0) {
+      if (refreshTimer.current) window.clearTimeout(refreshTimer.current);
+      refreshTimer.current = window.setTimeout(async () => {
+        if (loggedOut.current) return;
+        console.log(`[auth][refresh][test] Triggering forced refresh after ${TEST_REFRESH_INTERVAL_MS}ms`);
+        const result = await refreshTokens(refreshToken);
+        if (result.success && result.tokens && !loggedOut.current) {
+          console.log('[auth][refresh][test] Success');
+          applyTokens(result.tokens);
+        } else if (!loggedOut.current) {
+          console.warn('[auth][refresh][test] Failed, staying on page (no redirect)');
+          await logout({ redirect: false });
+        }
+      }, TEST_REFRESH_INTERVAL_MS);
+      return () => { if (refreshTimer.current) window.clearTimeout(refreshTimer.current); };
+    }
+
     const now = Date.now();
     const msLeft = accessExpiresAt - now;
     if (msLeft <= 0) {
       logout();
       return;
     }
-    const triggerIn = Math.max(msLeft - 30000, 5000);
+    const triggerIn = Math.max(msLeft - REFRESH_LEEWAY_MS, 2000);
     if (refreshTimer.current) window.clearTimeout(refreshTimer.current);
     refreshTimer.current = window.setTimeout(async () => {
       if (loggedOut.current) return;
       if (!refreshToken) return;
+      console.log('[auth][refresh] scheduled refresh firing, msLeft=', accessExpiresAt - Date.now());
       const result = await refreshTokens(refreshToken);
       if (result.success && result.tokens && !loggedOut.current) {
         applyTokens(result.tokens);
       } else if (!loggedOut.current) {
-        await logout();
+        console.warn('[auth][refresh] Failed, staying on page (no redirect)');
+        await logout({ redirect: false });
       }
     }, triggerIn);
     return () => {
@@ -148,28 +174,39 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Restore persisted tokens on mount
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(PERSIST_KEY);
-      if (raw) {
-        const parsed: PersistedTokens = JSON.parse(raw);
-        if (parsed.access_expires_at > Date.now() + 5000) {
-          setAccessToken(parsed.access_token);
-          setRefreshToken(parsed.refresh_token || null);
-          setAccessExpiresAt(parsed.access_expires_at);
-          setRefreshExpiresAt(parsed.refresh_expires_at || null);
-          setIdToken(parsed.id_token);
-          const u = parseUserFromTokens(parsed.access_token, parsed.id_token);
-          setUser(u);
-        } else {
-          persistTokens(null);
+    (async () => {
+      try {
+        const raw = localStorage.getItem(PERSIST_KEY);
+        if (raw) {
+          const parsed: PersistedTokens = JSON.parse(raw);
+          const now = Date.now();
+          const msLeft = parsed.access_expires_at - now;
+          if (parsed.access_expires_at > now + 5000) {
+            setAccessToken(parsed.access_token);
+            setRefreshToken(parsed.refresh_token || null);
+            setAccessExpiresAt(parsed.access_expires_at);
+            setRefreshExpiresAt(parsed.refresh_expires_at || null);
+            setIdToken(parsed.id_token);
+            const u = parseUserFromTokens(parsed.access_token, parsed.id_token);
+            setUser(u);
+            // 如果剩余寿命 <= 60s 且有 refresh_token，立即刷新一次，避免马上过期导致跳转
+            if (msLeft <= REFRESH_LEEWAY_MS && parsed.refresh_token) {
+              const r = await refreshTokens(parsed.refresh_token);
+              if (r.success && r.tokens) {
+                applyTokens(r.tokens);
+              }
+            }
+          } else {
+            persistTokens(null);
+          }
         }
+      } catch (e) {
+        console.warn('Failed to restore tokens', e);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (e) {
-      console.warn('Failed to restore tokens', e);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [persistTokens]);
+    })();
+  }, [applyTokens, persistTokens]);
 
   const startAuth = useCallback(async (mode: 'login' | 'register', redirectPath?: string) => {
     setError(null);

@@ -54,19 +54,24 @@ export async function exchangeAuthorizationCode(params: {
 
 export async function refreshTokens(refreshToken: string): Promise<ExchangeResponse> {
   try {
+    console.log('[auth][refresh] start with refresh_token len=', refreshToken?.length);
+    // 后端接受字段名 refreshToken (camelCase)，之前发送 refresh_token 导致反序列化失败
     const res = await fetch(buildUrl('/api/auth/refresh'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ refresh_token: refreshToken })
+      body: JSON.stringify({ refreshToken }) // 修正字段名
     });
+    console.log('[auth][refresh] HTTP status =', res.status);
     if (!res.ok) return { success: false, error: `HTTP ${res.status}` };
     const data = await res.json().catch(() => ({}));
+    console.log('[auth][refresh] response json =', data);
     if (data.error) return { success: false, error: data.error };
     if (!data.access_token) return { success: false, error: 'missing_access_token' };
     return {
       success: true,
       tokens: {
         access_token: data.access_token,
+        // 后端透传 Keycloak 响应（Keycloak 使用 refresh_token 下划线命名），因此仍从 data.refresh_token 读取
         refresh_token: data.refresh_token || refreshToken,
         expires_in: data.expires_in ?? 300,
         refresh_expires_in: data.refresh_expires_in,
@@ -75,6 +80,7 @@ export async function refreshTokens(refreshToken: string): Promise<ExchangeRespo
       }
     };
   } catch (e: any) {
+    console.error('[auth][refresh] network / code error', e);
     return { success: false, error: e.message || 'network_error' };
   }
 }
