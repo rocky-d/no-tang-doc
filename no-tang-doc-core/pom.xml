@@ -55,12 +55,6 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- AI -->
-        <dependency>
-            <groupId>org.springframework.ai</groupId>
-            <artifactId>spring-ai-starter-model-openai</artifactId>
-        </dependency>
-
         <!-- Keycloak Admin -->
         <dependency>
             <groupId>org.keycloak</groupId>

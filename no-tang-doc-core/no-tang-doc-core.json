@@ -18,7 +18,7 @@
   "clients": [
     {
       "clientId": "no-tang-doc-core",
-      "secret": "zZ7L79d7nwRHbrZruLZoZgsWQQI5MtCn",
+      "secret": "no-tang-doc-core-secret",
       "directAccessGrantsEnabled": true,
       "standardFlowEnabled": true,
       "publicClient": false,

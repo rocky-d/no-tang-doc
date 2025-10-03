@@ -2,14 +2,12 @@ server:
   port: 8070
 
 spring:
-  profiles:
-    active: local
   application:
     name: no-tang-doc-core
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3305/notangdoc}
-    username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    url: jdbc:mysql://localhost:3305/notangdoc
+    username: root
+    password: root
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
@@ -30,11 +28,11 @@ spring:
       client:
         registration:
           keycloak:
-            client-id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
+            client-id: no-tang-doc-core
             authorization-grant-type: authorization_code
-            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:http://localhost:3000/auth/callback}
+            redirect-uri: http://localhost:3000/auth/callback
             scope: openid,profile,email
-            client-secret: ${KEYCLOAK_CLIENT_SECRET:no-tang-doc-core-secret}
+            client-secret: no-tang-doc-core-secret # 修改为你本地KeyClock的Client Secret
         provider:
           keycloak:
             authorization-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/auth
@@ -45,15 +43,14 @@ spring:
 
 keycloak:
   realm: ntdoc
-  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://auth.local:8080}
+  auth-server-url: http://auth.local:8080
   admin:
     realm: master
-    username: ${KEYCLOAK_ADMIN_USERNAME:admin}
-    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+    username: admin
+    password: admin
   client:
-    id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
-    secret: ${KEYCLOAK_CLIENT_SECRET:no-tang-doc-core-secret}
-
+    id: no-tang-doc-core
+    secret: no-tang-doc-core-secret
 management:
   endpoints:
     web:
