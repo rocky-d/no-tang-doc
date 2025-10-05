@@ -39,6 +39,15 @@ public interface DocumentService {
     List<Document> getUserDocuments(String kcUserId);
 
     /**
+     * 获取用户的所有文档，按状态过滤
+     *
+     * @param kcUserId Keycloak 用户ID
+     * @param status 文档状态（可选）
+     * @return 文档列表
+     */
+    List<Document> getUserDocuments(String kcUserId, Document.DocumentStatus status);
+
+    /**
      * 删除文档
      *
      * @param documentId 文档ID

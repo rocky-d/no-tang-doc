@@ -95,10 +95,18 @@ public class DocumentServiceImpl implements DocumentService {
         return downloadUrl;
     }
 
+    // 获取指定员工的文档列表，但不筛选状态
     @Override
     public List<Document> getUserDocuments(String kcUserId) {
         User user = findUserByKcUserId(kcUserId);
-        return documentRepository.findByUploadedByAndStatusOrderByCreatedAtDesc(user, Document.DocumentStatus.ACTIVE);
+        return documentRepository.findByUploadedByOrderByCreatedAtDesc(user);
+    }
+
+    // 获取指定员工的文档列表，且筛选指定状态
+    @Override
+    public List<Document> getUserDocuments(String kcUserId, Document.DocumentStatus status) {
+        User user = findUserByKcUserId(kcUserId);
+        return documentRepository.findByUploadedByAndStatusOrderByCreatedAtDesc(user, status);
     }
 
     @Override

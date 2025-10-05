@@ -32,11 +32,11 @@ spring:
       client:
         registration:
           keycloak:
-            client-id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
+            client-id: ${KEYCLOAK_CyLIENT_ID:no-tang-doc-core}
             authorization-grant-type: authorization_code
             redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:http://localhost:8070/login/oauth2/code/*}
             scope: openid,profile,email
-            client-secret: ${KEYCLOAK_CLIENT_SECRET:z1VI8bpLpOnDsqa5TeIHsOmstdk1SdMc} # 修改为你本地KeyClock的Client Secret
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:G6nJmwd0IqmlFlMtTQ7rXU59YnatRmf1} # 修改为你本地KeyClock的Client Secret
         provider:
           keycloak:
             authorization-uri: http://localhost:8080/realms/ntdoc/protocol/openid-connect/auth
@@ -60,7 +60,7 @@ keycloak:
     password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
   client:
     id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
-    secret: ${KEYCLOAK_CLIENT_SECRET:z1VI8bpLpOnDsqa5TeIHsOmstdk1SdMc}
+    secret: ${KEYCLOAK_CLIENT_SECRET:G6nJmwd0IqmlFlMtTQ7rXU59YnatRmf1}
 
 app:
   file:
@@ -96,7 +96,7 @@ digitalocean:
     endpoint: https://sgp1.digitaloceanspaces.com
     region: sgp1
     bucket: test-object-storageg
-    access-key: ${DO_SPACES_ACCESS_KEY:}
-    secret-key: ${DO_SPACES_SECRET_KEY:}
+    access-key: ${DO_SPACES_ACCESS_KEY:DO801QUMT7VE3VWUKQVC}
+    secret-key: ${DO_SPACES_SECRET_KEY:m4vJ09s0HH9K642/dMV77SiTtKE3ZFl2KGuTmOYBBK8}
     public-url: https://test-object-storage.sgp1.digitaloceanspaces.com
     cdn-url: https://test-object-storage.sgq1.cdn.digitaloceanspaces.com
