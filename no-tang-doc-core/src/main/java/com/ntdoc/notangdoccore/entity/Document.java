@@ -2,6 +2,8 @@ package com.ntdoc.notangdoccore.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 
@@ -62,10 +64,12 @@ public class Document {
     @Builder.Default
     private Integer downloadCount = 0;
 
-    @Column(name = "created_at", nullable = false, updatable = false, insertable = false)
+    @Column(name = "created_at", nullable = false, updatable = false)
+    @CreationTimestamp
     private Instant createdAt;
 
-    @Column(name = "updated_at", insertable = false, updatable = false)
+    @Column(name = "updated_at")
+    @UpdateTimestamp
     private Instant updatedAt;
 
     public enum DocumentStatus {

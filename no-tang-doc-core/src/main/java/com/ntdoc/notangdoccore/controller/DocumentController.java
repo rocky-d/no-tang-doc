@@ -1,25 +1,109 @@
 package com.ntdoc.notangdoccore.controller;
 
+import com.ntdoc.notangdoccore.dto.common.ApiResponse;
 import com.ntdoc.notangdoccore.dto.document.DeleteDocumentResponse;
+import com.ntdoc.notangdoccore.dto.document.DocumentDownloadResponse;
 import com.ntdoc.notangdoccore.dto.document.DocumentListResponse;
+import com.ntdoc.notangdoccore.dto.document.DocumentUploadResponse;
 import com.ntdoc.notangdoccore.entity.Document;
 import com.ntdoc.notangdoccore.service.DocumentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/documents")
 @RequiredArgsConstructor
+@Tag(name = "文档管理", description = "文档上传、下载、删除等操作")
 public class DocumentController {
     private final DocumentService documentService;
 
-    // 获取当前用户的所有文档
+    //文档上传
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "上传文档", description = "上传文档文件到系统")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "上传成功")
+    })
+    public ResponseEntity<ApiResponse<DocumentUploadResponse>> uploadDocument(
+            @Parameter(description = "上传的文件", required = true)
+            @RequestParam("file") MultipartFile file,
+
+            @Parameter(description = "自定义文件名（可选）")
+            @RequestParam(value = "fileName", required = false) String fileName,
+
+            @Parameter(description = "文档描述（可选）")
+            @RequestParam(value = "description", required = false) String description,
+
+            @AuthenticationPrincipal Jwt jwt) {
+
+        try {
+            log.info("Received document upload request: file={}, fileName={}",
+                    file.getOriginalFilename(), fileName);
+
+            String kcUserId = jwt.getClaimAsString("sub");
+
+            DocumentUploadResponse response = documentService.uploadDocument(file, fileName, description, kcUserId);
+
+            log.info("Document uploaded successfully: documentId={}, userId={}",
+                    response.getDocumentId(), kcUserId);
+
+            return ResponseEntity.ok(ApiResponse.success("文件上传成功", response));
+
+        } catch (IllegalArgumentException e) {
+            log.warn("Invalid upload request: {}", e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error(400, "请求参数错误: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("Failed to upload document", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(500, "文件上传失败: " + e.getMessage()));
+        }
+    }
+
+    //获取文档下载链接
+    @GetMapping("/download/{documentId}")
+    @Operation(summary = "获取文档下载链接", description = "获取指定文档的预签名下载链接")
+    public ResponseEntity<ApiResponse<DocumentDownloadResponse>> getDownloadUrl(
+            @Parameter(description = "文档ID", required = true)
+            @PathVariable Long documentId,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        try {
+            log.info("Received download request for document: {}", documentId);
+
+            String kcUserId = jwt.getClaimAsString("sub");
+
+            DocumentDownloadResponse response = documentService.getDocumentDownloadUrl(documentId, kcUserId);
+
+            log.info("Download URL generated successfully for document: {}", documentId);
+
+            return ResponseEntity.ok(ApiResponse.success("获取下载链接成功", response));
+
+        } catch (SecurityException e) {
+            log.warn("Access denied for document {}: {}", documentId, e.getMessage());
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(ApiResponse.error(403, "无权访问该文档: " + e.getMessage()));
+        } catch (Exception e) {
+            log.error("Failed to get download URL for document: {}", documentId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(500, "获取下载链接失败: " + e.getMessage()));
+        }
+    }
+
     @GetMapping
     public ResponseEntity<DocumentListResponse> getUserDocuments(
             @AuthenticationPrincipal Jwt jwt,
