@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 0002-create-document-table-291124
+      id: 0004-create-document-table-291124
       author: System
       changes:
         - createTable:
