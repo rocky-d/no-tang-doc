@@ -22,6 +22,10 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:/db/changelog/db.changelog-master.yaml
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
   security:
     oauth2:
       resourceserver:
@@ -53,6 +57,13 @@ keycloak:
   client:
     id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
     secret: ${KEYCLOAK_CLIENT_SECRET:no-tang-doc-core-secret}
+
+app:
+  file:
+    max-size: 52428800 # 50MB
+    allowed-types: pdf,doc,docx,txt,png,jpg,jpeg,gif,zip,rar
+    storage-path-pattern: documents/{userId}/{year}/{month}/
+    presigned-url-expiration: 900 # 15分钟
 
 management:
   endpoints:
@@ -87,8 +98,8 @@ digitalocean:
     endpoint: https://sgp1.digitaloceanspaces.com
     region: sgp1
     bucket: test-object-storageg
-    access-key: ${DO_SPACES_ACCESS_KEY:}
-    secret-key: ${DO_SPACES_SECRET_KEY:}
+    access-key: ${DO_SPACES_ACCESS_KEY:DO801QUMT7VE3VWUKQVC}
+    secret-key: ${DO_SPACES_SECRET_KEY:m4vJ09s0HH9K642/dMV77SiTtKE3ZFl2KGuTmOYBBK8}
     public-url: https://test-object-storage.sgp1.digitaloceanspaces.com
     cdn-url: https://test-object-storage.sgq1.cdn.digitaloceanspaces.com
 
