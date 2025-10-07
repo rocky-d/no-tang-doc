@@ -6,6 +6,9 @@ import com.ntdoc.notangdoccore.dto.document.DocumentDownloadResponse;
 import com.ntdoc.notangdoccore.dto.document.DocumentListResponse;
 import com.ntdoc.notangdoccore.dto.document.DocumentUploadResponse;
 import com.ntdoc.notangdoccore.entity.Document;
+import com.ntdoc.notangdoccore.entity.logenum.ActorType;
+import com.ntdoc.notangdoccore.entity.logenum.OperationType;
+import com.ntdoc.notangdoccore.event.UserOperationEvent;
 import com.ntdoc.notangdoccore.service.DocumentService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -13,6 +16,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -31,6 +35,8 @@ import java.util.List;
 @Tag(name = "文档管理", description = "文档上传、下载、删除等操作")
 public class DocumentController {
     private final DocumentService documentService;
+    //日志发布者
+    private final ApplicationEventPublisher eventPublisher;
 
     //文档上传
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -61,10 +67,36 @@ public class DocumentController {
             log.info("Document uploaded successfully: documentId={}, userId={}",
                     response.getDocumentId(), kcUserId);
 
+            // 成功后记录上传成功的日志
+            String username = jwt.getClaimAsString("preferred_username");
+
+            eventPublisher.publishEvent(
+                    UserOperationEvent.success(
+                            this,
+                            ActorType.USER,
+                            username,
+                            OperationType.UPLOAD_DOCUMENT,
+                            fileName
+                    )
+            );
+
             return ResponseEntity.ok(ApiResponse.success("文件上传成功", response));
 
         } catch (IllegalArgumentException e) {
             log.warn("Invalid upload request: {}", e.getMessage());
+            // 发布上传失败日志
+            String username = jwt.getClaimAsString("preferred_username");
+
+            eventPublisher.publishEvent(
+                    UserOperationEvent.fail(
+                            this,
+                            ActorType.USER,
+                            username,
+                            OperationType.UPLOAD_DOCUMENT,
+                            fileName,
+                            e.getMessage()
+                    )
+            );
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error(400, "请求参数错误: " + e.getMessage()));
         } catch (Exception e) {
@@ -91,10 +123,41 @@ public class DocumentController {
 
             log.info("Download URL generated successfully for document: {}", documentId);
 
+            // 记录下载日志
+            String username = jwt.getClaimAsString("preferred_username");
+            String documentName = documentService.getDocumentById(documentId,kcUserId).getStoredFilename();
+
+            eventPublisher.publishEvent(
+                    UserOperationEvent.success(
+                            this,
+                            ActorType.USER,
+                            username,
+                            OperationType.DOWNLOAD_DOCUMENT,
+                            documentName
+                    )
+            );
+
             return ResponseEntity.ok(ApiResponse.success("获取下载链接成功", response));
 
         } catch (SecurityException e) {
             log.warn("Access denied for document {}: {}", documentId, e.getMessage());
+
+            // 记录下载失败日志
+            String username = jwt.getClaimAsString("preferred_username");
+            String kcUserId = jwt.getClaimAsString("sub");
+            String documentName = documentService.getDocumentById(documentId,kcUserId).getStoredFilename();
+
+            eventPublisher.publishEvent(
+                    UserOperationEvent.fail(
+                            this,
+                            ActorType.USER,
+                            username,
+                            OperationType.DOWNLOAD_DOCUMENT,
+                            documentName,
+                            e.getMessage()
+                    )
+            );
+
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error(403, "无权访问该文档: " + e.getMessage()));
         } catch (Exception e) {
@@ -143,6 +206,20 @@ public class DocumentController {
                 .permanent(false)
                 .recoveryDeadline(Instant.now().plusSeconds(30 * 24 * 3600)) // 30天恢复期
                 .build();
+
+        // 记录删除文档日志
+        String username = jwt.getClaimAsString("preferred_username");
+        String documentName =document.getStoredFilename();
+
+        eventPublisher.publishEvent(
+                UserOperationEvent.success(
+                        this,
+                        ActorType.USER,
+                        username,
+                        OperationType.DELETE_DOCUMENT,
+                        documentName
+                )
+        );
 
         return ResponseEntity.ok(response);
     }

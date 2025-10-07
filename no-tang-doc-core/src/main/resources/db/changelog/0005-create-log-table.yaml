@@ -1,0 +1,59 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0005-create-log-table-251004
+      author: ZhongYi
+      changes:
+        - createTable:
+            tableName: log
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: actor_type
+                  type: VARCHAR(50)
+              - column:
+                  name: user_id
+                  type: BIGINT
+              - column:
+                  name: operation_type
+                  type: VARCHAR(50)
+              - column:
+                  name: target_name
+                  type: VARCHAR(255)
+              - column:
+                  name: operation_status
+                  type: VARCHAR(50)
+              - column:
+                  name: message
+                  type: TEXT
+              - column:
+                  name: timestamp
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: log
+            baseColumnNames: uuser_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_log_user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+      rollback:
+        - dropTable:
+            tableName: log
+            cascadeConstraints: true
+
+
+
+
+
+

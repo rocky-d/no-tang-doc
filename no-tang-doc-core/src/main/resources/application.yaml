@@ -95,7 +95,7 @@ digitalocean:
   spaces:
     endpoint: https://sgp1.digitaloceanspaces.com
     region: sgp1
-    bucket: test-object-storageg
+    bucket: test-object-storage
     access-key: ${DO_SPACES_ACCESS_KEY:DO801QUMT7VE3VWUKQVC}
     secret-key: ${DO_SPACES_SECRET_KEY:m4vJ09s0HH9K642/dMV77SiTtKE3ZFl2KGuTmOYBBK8}
     public-url: https://test-object-storage.sgp1.digitaloceanspaces.com
