@@ -50,7 +50,8 @@ public class UserOperationEvent extends ApplicationEvent {
                                              ActorType actorType,
                                              String username,
                                              OperationType operationType,
-                                             String targetName){
+                                             String targetName,
+                                             String message){
         return new UserOperationEvent(source, actorType, username, operationType, targetName, OperationStatus.FAILED, null);
     }
 }
