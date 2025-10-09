@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 000-create-document-tags-251005
+      id: 0006-create-document-tags-251005
       author: Chen Sirui
       preConditions:
         - tableExists:
