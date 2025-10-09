@@ -4,7 +4,6 @@ import com.ntdoc.notangdoccore.keycloak.KeycloakAdminService;
 import com.ntdoc.notangdoccore.dto.keycloak.RegistrationRequest;
 
 import com.ntdoc.notangdoccore.service.UserSyncService;
-import com.ntdoc.notangdoccore.service.WeatherService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,7 +28,7 @@ import java.util.Map;
 public class SampleController {
     private final KeycloakAdminService keycloakAdminService;
     private final UserSyncService userSyncService;
-    private final WeatherService weatherService;
+
 
 
     @PostMapping("/public/register")
@@ -56,15 +55,6 @@ public class SampleController {
                 "email", email,
                 "roles", jwt.getClaim("realm_access")
         );
-    }
-
-
-    @GetMapping(value = "/user/hello", produces = MediaType.TEXT_PLAIN_VALUE)
-    public String userHello(@RequestParam String city, Authentication authentication) {
-        Jwt jwt = (Jwt) authentication.getPrincipal();
-        String username = jwt.getClaimAsString("preferred_username");
-        String weather = weatherService.getWeather(city);
-        return "Hello, " + username + ", " + city + "今日天气：" + weather;
     }
 
 

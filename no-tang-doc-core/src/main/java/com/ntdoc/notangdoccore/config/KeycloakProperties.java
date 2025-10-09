@@ -1,4 +1,4 @@
-package com.ntdoc.notangdoccore.keycloak;
+package com.ntdoc.notangdoccore.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
