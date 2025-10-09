@@ -8,3 +8,4 @@ databaseChangeLog:
       file: db/changelog/0003-changelog-app-user-pk.yaml
   - include:
       file: db/changelog/0004-create-document-table.yaml
+
