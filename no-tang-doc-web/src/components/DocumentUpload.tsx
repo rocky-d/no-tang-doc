@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
 import { Badge } from "./ui/badge";
 import { Upload, File, X, CheckCircle2 } from "lucide-react";
+import { toast } from 'sonner@2.0.3';
 
 interface UploadedFile {
   id: string;
@@ -12,6 +13,15 @@ interface UploadedFile {
   type: string;
   status: 'uploading' | 'completed' | 'error';
   progress: number;
+}
+
+// Backend upload path can be overridden via VITE_UPLOAD_PATH
+const UPLOAD_PATH = (import.meta.env as any).VITE_UPLOAD_PATH || '/api/upload';
+const API_BASE = (import.meta.env as any).VITE_API_BASE_URL || '';
+function buildApiUrl(path: string) {
+  const base = (API_BASE as string).replace(/\/$/, '');
+  if (!path.startsWith('/')) return base ? `${base}/${path}` : `/${path}`;
+  return base ? `${base}${path}` : path;
 }
 
 export function DocumentUpload() {
@@ -27,6 +37,49 @@ export function DocumentUpload() {
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   };
 
+  // Real upload using XMLHttpRequest to support progress events
+  const uploadSingleFile = (file: File, onProgress: (percent: number) => void): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      // Optional fields supported by backend; you can wire real inputs later
+      formData.append('fileName', file.name);
+      // formData.append('description', ''); // add if you have an input
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', buildApiUrl(UPLOAD_PATH));
+
+      // Attach JWT if present (AuthContext persists to localStorage under auth_tokens_v1)
+      try {
+        const raw = localStorage.getItem('auth_tokens_v1');
+        if (raw) {
+          const parsed = JSON.parse(raw) as { access_token?: string; access_expires_at?: number };
+          if (parsed?.access_token && parsed?.access_expires_at && parsed.access_expires_at > Date.now()) {
+            xhr.setRequestHeader('Authorization', `Bearer ${parsed.access_token}`);
+          }
+        }
+      } catch { /* ignore */ }
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const percent = Math.min(100, Math.round((e.loaded / e.total) * 100));
+          onProgress(percent);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Upload failed: HTTP ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error('Network error during upload'));
+      xhr.send(formData);
+    });
+  };
+
   const handleFiles = (selectedFiles: FileList) => {
     const newFiles: UploadedFile[] = Array.from(selectedFiles).map(file => ({
       id: Math.random().toString(36).substr(2, 9),
@@ -39,21 +92,21 @@ export function DocumentUpload() {
 
     setFiles(prev => [...prev, ...newFiles]);
 
-    // Simulate upload progress
-    newFiles.forEach(file => {
-      const interval = setInterval(() => {
-        setFiles(prev => prev.map(f => {
-          if (f.id === file.id) {
-            const newProgress = f.progress + Math.random() * 20;
-            if (newProgress >= 100) {
-              clearInterval(interval);
-              return { ...f, progress: 100, status: 'completed' };
-            }
-            return { ...f, progress: newProgress };
-          }
-          return f;
-        }));
-      }, 200);
+    // Start real uploads
+    Array.from(selectedFiles).forEach((file, idx) => {
+      const tempId = newFiles[idx].id;
+      uploadSingleFile(file, (p) => {
+        setFiles(prev => prev.map(f => f.id === tempId ? { ...f, progress: p } : f));
+      })
+        .then(() => {
+          setFiles(prev => prev.map(f => f.id === tempId ? { ...f, progress: 100, status: 'completed' } : f));
+          toast.success(`${file.name} 上传成功`);
+        })
+        .catch((err) => {
+          console.error('Upload error:', err);
+          setFiles(prev => prev.map(f => f.id === tempId ? { ...f, status: 'error' } : f));
+          toast.error(`${file.name} 上传失败：${err?.message || '未知错误'}`);
+        });
     });
   };
 
