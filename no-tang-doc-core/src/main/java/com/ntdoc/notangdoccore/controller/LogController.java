@@ -58,7 +58,7 @@ public class LogController {
     * 获取当前用户的日志条数
     * 可以设置每周或者每月
     */
-    @GetMapping("/list")
+    @GetMapping("/count")
     public ResponseEntity<Map<String,Long>> getLogsCount(@AuthenticationPrincipal Jwt jwt,
                                                          @RequestParam(defaultValue = "week")
                                                          @Pattern(regexp = "^(week|month)$",message = "period can only be week or month")
