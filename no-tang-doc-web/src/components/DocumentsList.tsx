@@ -1,12 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { FileText, Download, MoreVertical, Trash2, Sparkles, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { toast } from 'sonner@2.0.3';
+import { http } from '../utils/request';
 
-interface Document {
+interface AppDocument {
   id: string;
   name: string;
   type: string;
@@ -17,13 +19,17 @@ interface Document {
 }
 
 interface DocumentsListProps {
-  documents: Document[];
+  documents: AppDocument[];
   searchTerm: string;
   searchMode?: 'simple' | 'advanced';
   isSearching?: boolean;
 }
 
+const DOCS_API_PREFIX = (import.meta.env as any).VITE_DOCS_API_PREFIX || 'http://localhost:8070/api/v1/documents';
+
 export function DocumentsList({ documents, searchTerm, searchMode = 'simple', isSearching = false }: DocumentsListProps) {
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+
   // For simple search, filter on the client side
   // For advanced search, documents are already filtered by the API
   const filteredDocuments = searchMode === 'simple' 
@@ -35,9 +41,76 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
       )
     : documents;
 
-  const handleDownload = (document: Document) => {
-    // Mock download functionality
-    console.log('Downloading:', document.name);
+  const handleDownload = async (doc: AppDocument) => {
+    // Predict preview type from name first to decide whether to pre-open a tab
+    const nameLower = (doc.name || '').toLowerCase();
+    const likelyPreviewByName = /\.(pdf|png|jpe?g|gif|webp|bmp|svg|tiff?)$/i.test(nameLower);
+    const preOpenedTab = likelyPreviewByName ? window.open('', '_blank', 'noopener') : null;
+
+    try {
+      setDownloadingId(doc.id);
+      // Call backend to get pre-signed download URL
+      const resp: any = await http.get(`${DOCS_API_PREFIX}/download/${doc.id}`);
+      const data = resp?.data ?? resp; // support ApiResponse wrapper or plain
+      const d = data?.data ?? data;    // unwrap ApiResponse.data
+      const url: string | undefined = d?.url || d?.downloadUrl || data?.url || data?.downloadUrl;
+      const fileName: string | undefined = d?.fileName || doc.name;
+      if (!url) throw new Error('download url not found');
+
+      const nameOrUrl = (fileName || url).toLowerCase();
+      const isPreviewType = /\.(pdf|png|jpe?g|gif|webp|bmp|svg|tiff?)($|\?)/i.test(nameOrUrl);
+
+      if (isPreviewType) {
+        // Use pre-opened tab if available to avoid popup blockers
+        if (preOpenedTab && !preOpenedTab.closed) {
+          preOpenedTab.location.href = url;
+        } else {
+          window.open(url, '_blank', 'noopener');
+        }
+        toast.success(`已在新标签页打开：${fileName || doc.name}`);
+      } else {
+        // Prefer blob download to avoid opening in current tab (works when CORS permits)
+        let blobDownloaded = false;
+        try {
+          const res = await fetch(url, { credentials: 'omit' });
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          const blob = await res.blob();
+          const objectUrl = URL.createObjectURL(blob);
+          const a = window.document.createElement('a');
+          a.href = objectUrl;
+          if (fileName) a.download = fileName;
+          a.style.display = 'none';
+          window.document.body.appendChild(a);
+          a.click();
+          window.document.body.removeChild(a);
+          setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+          blobDownloaded = true;
+        } catch (blobErr) {
+          console.warn('Blob download failed, falling back to direct link', blobErr);
+        }
+
+        // Fallback: direct link with download attribute (may be ignored by some browsers on cross-origin without Content-Disposition)
+        if (!blobDownloaded) {
+          const a = window.document.createElement('a');
+          a.href = url;
+          if (fileName) a.download = fileName;
+          a.style.display = 'none';
+          window.document.body.appendChild(a);
+          a.click();
+          window.document.body.removeChild(a);
+        }
+        toast.success(`开始下载：${fileName || doc.name}`);
+      }
+    } catch (e: any) {
+      // Close pre-opened tab on failure
+      if (preOpenedTab && !preOpenedTab.closed) {
+        preOpenedTab.close();
+      }
+      console.error('Download failed', e);
+      toast.error(`下载失败：${e?.message || '未知错误'}`);
+    } finally {
+      setDownloadingId(null);
+    }
   };
 
   const handleDelete = (documentId: string) => {
@@ -45,7 +118,7 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
     console.log('Deleting document:', documentId);
   };
 
-  const getFileIcon = (type: string) => {
+  const getFileIcon = (_type: string) => {
     // You could expand this to show different icons for different file types
     return <FileText className="w-5 h-5 text-primary" />;
   };
@@ -134,47 +207,47 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredDocuments.map((document) => (
-                  <TableRow key={document.id} className="hover:bg-muted/50">
+                {filteredDocuments.map((docItem) => (
+                  <TableRow key={docItem.id} className="hover:bg-muted/50">
                     <TableCell>
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-primary/10 rounded-lg flex items-center justify-center">
-                          {getFileIcon(document.type)}
+                          {getFileIcon(docItem.type)}
                         </div>
                         <div>
-                          <p className="font-medium">{document.name}</p>
+                          <p className="font-medium">{docItem.name}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="secondary">{document.type}</Badge>
+                      <Badge variant="secondary">{docItem.type}</Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1 max-w-xs">
-                        {document.tags.slice(0, 3).map((tag, index) => (
-                          <Badge 
-                            key={index} 
-                            variant="outline" 
+                        {docItem.tags.slice(0, 3).map((tag, index) => (
+                          <Badge
+                            key={`${tag}-${index}`}
+                            variant="outline"
                             className="text-xs px-2 py-0"
                           >
                             {tag}
                           </Badge>
                         ))}
-                        {document.tags.length > 3 && (
-                          <Badge 
+                        {docItem.tags.length > 3 && (
+                          <Badge
                             variant="secondary" 
                             className="text-xs px-2 py-0"
                           >
-                            +{document.tags.length - 3}
+                            +{docItem.tags.length - 3}
                           </Badge>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {document.size}
+                      {docItem.size}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {formatDate(document.uploadDate)}
+                      {formatDate(docItem.uploadDate)}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -184,12 +257,16 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleDownload(document)}>
-                            <Download className="w-4 h-4 mr-2" />
+                          <DropdownMenuItem onClick={() => handleDownload(docItem)} disabled={downloadingId === docItem.id}>
+                            {downloadingId === docItem.id ? (
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            ) : (
+                              <Download className="w-4 h-4 mr-2" />
+                            )}
                             Download
                           </DropdownMenuItem>
                           <DropdownMenuItem 
-                            onClick={() => handleDelete(document.id)}
+                            onClick={() => handleDelete(docItem.id)}
                             className="text-destructive"
                           >
                             <Trash2 className="w-4 h-4 mr-2" />
