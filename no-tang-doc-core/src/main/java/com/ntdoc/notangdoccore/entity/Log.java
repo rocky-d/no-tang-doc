@@ -49,5 +49,5 @@ public class Log {
     private String message;
 
     @CreationTimestamp
-    private Instant timestamp;
+    private Instant time;
 }

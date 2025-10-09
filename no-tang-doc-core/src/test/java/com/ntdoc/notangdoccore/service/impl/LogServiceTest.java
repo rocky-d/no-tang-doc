@@ -10,8 +10,12 @@ import com.ntdoc.notangdoccore.service.log.LogGroupStrategy;
 import com.ntdoc.notangdoccore.service.log.LogService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.boot.test.context.SpringBootTest;
+
 
 import java.time.Instant;
 import java.util.*;
@@ -19,6 +23,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 class LogServiceTest {
     @Mock
     private LogRepository logRepository;
@@ -46,13 +51,13 @@ class LogServiceTest {
         log.setTargetName(targetName);
         log.setOperationStatus(operationStatus);
         log.setMessage("");
-        log.setTimestamp(Instant.now());
+        log.setTime(Instant.now());
 
         return log;
     }
 
     @BeforeEach
-    void SetUp(){
+    void setUp(){
         logService = new LogService(logRepository);
 
         // Set Strategy

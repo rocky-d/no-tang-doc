@@ -16,7 +16,7 @@ public class UserOperationEvent extends ApplicationEvent {
     private final String targetName;
     private final OperationStatus operationStatus;
     private final String message;
-    private final Instant timestamp;
+    private final Instant time;
 
     public UserOperationEvent(Object source,
                               ActorType actorType,
@@ -32,7 +32,7 @@ public class UserOperationEvent extends ApplicationEvent {
         this.targetName = targetName;
         this.operationStatus = operationStatus;
         this.message = message;
-        this.timestamp = Instant.now();
+        this.time = Instant.now();
     }
 
     // success
