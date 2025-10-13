@@ -1,21 +1,21 @@
 package com.ntdoc.notangdoccore.controller;
 
 import com.ntdoc.notangdoccore.dto.common.ApiResponse;
-import com.ntdoc.notangdoccore.dto.document.DeleteDocumentResponse;
-import com.ntdoc.notangdoccore.dto.document.DocumentDownloadResponse;
-import com.ntdoc.notangdoccore.dto.document.DocumentListResponse;
-import com.ntdoc.notangdoccore.dto.document.DocumentUploadResponse;
+import com.ntdoc.notangdoccore.dto.document.*;
 import com.ntdoc.notangdoccore.entity.Document;
 import com.ntdoc.notangdoccore.entity.logenum.ActorType;
 import com.ntdoc.notangdoccore.entity.logenum.OperationType;
 import com.ntdoc.notangdoccore.event.UserOperationEvent;
 import com.ntdoc.notangdoccore.service.DocumentService;
+import com.ntdoc.notangdoccore.service.FileStorageService;
+import com.ntdoc.notangdoccore.service.impl.DigitalOceanSpacesService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -25,6 +25,8 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URL;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 
@@ -37,6 +39,8 @@ public class DocumentController {
     private final DocumentService documentService;
     //日志发布者
     private final ApplicationEventPublisher eventPublisher;
+
+    private final FileStorageService digitalOceanSpacesService;
 
     //文档上传
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -222,5 +226,61 @@ public class DocumentController {
         );
 
         return ResponseEntity.ok(response);
+    }
+
+    // 生成分享链接
+    @GetMapping("/share")
+    public ResponseEntity<DocumentShareResponse> generatePreviewShareLink(
+            @RequestParam Long documentId,
+            @RequestParam(defaultValue = "10") int expirationMinutes,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        if (expirationMinutes < 1 ) {
+            return ResponseEntity.badRequest().build();
+        }
+        try{
+            // 先验证用户权限
+            String kcUserId = jwt.getClaimAsString("sub");
+            Document document = documentService.getDocumentById(documentId, kcUserId);
+
+            if (document == null) {
+                log.error("Document with id {} not found", documentId);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        DocumentShareResponse.failure("Document not fount in storage")
+                );
+            }
+
+
+            String s3Key = document.getS3Key();
+
+            if (s3Key == null || s3Key.isBlank()) {
+                return ResponseEntity.badRequest().build();
+            }
+
+            //检查文件在文件存储中是否存在
+            if (!digitalOceanSpacesService.fileExists(s3Key)) {
+                log.warn("Document not fount in storage");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(
+                        DocumentShareResponse.failure("Document not fount in storage")
+                );
+            }
+
+            // 生成默认10分钟的有效预览链接
+            URL shareURL = digitalOceanSpacesService.generateShareUrl(s3Key, Duration.ofMinutes(expirationMinutes));
+
+            DocumentShareResponse response = DocumentShareResponse.success(
+                    shareURL.toString(),
+                    document.getId(),
+                    s3Key,
+                    expirationMinutes
+            );
+
+            return ResponseEntity.ok(response);
+        }catch (Exception e) {
+            log.error("Failed to generate share link for document");
+            return ResponseEntity.internalServerError().body(
+                    DocumentShareResponse.failure("generate share link failed")
+            );
+        }
     }
 }
