@@ -14,3 +14,4 @@ databaseChangeLog:
       file: db/changelog/0008-update-log-table.yaml
   - include:
       file: db/changelog/0009-update-log-table-add-documentid.yaml
+

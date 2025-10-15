@@ -1,5 +1,6 @@
 package com.ntdoc.notangdoccore.keycloak;
 
+import com.ntdoc.notangdoccore.config.KeycloakProperties;
 import jakarta.ws.rs.core.Response;
 import lombok.RequiredArgsConstructor;
 import org.keycloak.OAuth2Constants;

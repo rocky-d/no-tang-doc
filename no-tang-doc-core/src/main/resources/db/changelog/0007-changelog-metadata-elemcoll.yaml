@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0007-create-document-metadata-251005
+      author: Chen Sirui
+      preConditions:
+        - tableExists:
+            tableName: document
+      changes:
+        - createTable:
+            tableName: document_metadata
+            remarks: KV pairs of document metadat
+            columns:
+              - column:
+                  name: document_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: meta_key
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: meta_value
+                  type: VARCHAR(1024)
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: document_metadata
+            baseColumnNames: document_id
+            referencedTableName: document
+            referencedColumnNames: id
+            constraintName: fk_document_metadata_document
+            onDelete: CASCADE
+            onUpdate: RESTRICT
+        - addUniqueConstraint:
+            tableName: document_metadata
+            columnNames: document_id, meta_key
+            constraintName: uk_document_metadata_doc_key
+        - createIndex:
+            tableName: document_metadata
+            indexName: idx_document_metadata_doc
+            columns:
+              - column: { name: document_id }
+        - createIndex:
+            tableName: document_metadata
+            indexName: idx_document_metadata_key
+            columns:
+              - column: { name: meta_key }
+      rollback:
+        - dropTable:
+            tableName: document_metadata
+            cascadeConstraints: true

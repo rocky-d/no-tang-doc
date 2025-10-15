@@ -37,13 +37,17 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
       # 浏览器前端可见的 URL
-      KC_HOSTNAME_URL: http://localhost:8080
-      KC_HOSTNAME_ADMIN_URL: http://localhost:8080
+      KC_HOSTNAME_URL: http://auth.local:8080
+      KC_HOSTNAME_ADMIN_URL: http://auth.local:8080
     ports:
       - "8080:8080"
     depends_on:
       mysql:
         condition: service_healthy
+    networks:
+      default:
+        aliases:
+          - auth.local
 
   wait-for-keycloak:
     image: curlimages/curl:8.10.1
@@ -52,7 +56,7 @@ services:
         condition: service_started
     entrypoint: ["sh","-c"]
     command: >
-      sh -c "until curl -fsS --retry 30 --retry-delay 3 http://keycloak:8080/realms/ntdoc/.well-known/openid-configuration >/dev/null;
+      sh -c "until curl -fsS --retry 30 --retry-delay 3 http://auth.local:8080/realms/ntdoc/.well-known/openid-configuration >/dev/null;
       do echo 'waiting for keycloak realm ntdoc...'; sleep 3; done;
       echo 'keycloak is ready';"
 
@@ -64,23 +68,19 @@ services:
     ports:
       - "8070:8070"
     environment:
+      SPRING_PROFILES_ACTIVE: local
       SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/notangdoc?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&characterEncoding=UTF-8
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: root
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI: http://localhost:8080/realms/ntdoc/protocol/openid-connect/auth
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/token
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/userinfo
-      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_JWK_SET_URI: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/certs
-      # Resource Server：改用 jwk-set-uri，避免容器内请求 localhost
-      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://keycloak:8080/realms/ntdoc/protocol/openid-connect/certs
-
-      # 回调仍为浏览器可达的 localhost
-      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI: http://localhost:8070/login/oauth2/code/*
-      KEYCLOAK_AUTH_SERVER_URL: http://keycloak:8080
-
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_AUTHORIZATION_URI: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/auth
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_TOKEN_URI: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/token
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_USER_INFO_URI: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/userinfo
+      SPRING_SECURITY_OAUTH2_CLIENT_PROVIDER_KEYCLOAK_JWK_SET_URI: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/certs
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/certs
+      SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI: http://localhost:3000/auth/callback
+      KEYCLOAK_AUTH_SERVER_URL: http://auth.local:8080
       KEYCLOAK_CLIENT_ID: no-tang-doc-core
-      KEYCLOAK_CLIENT_SECRET: no-tang-doc-core-test-secret
-#      OPENAI_API_KEY:
+      KEYCLOAK_CLIENT_SECRET: no-tang-doc-core-secret
     depends_on:
       mysql:
         condition: service_healthy

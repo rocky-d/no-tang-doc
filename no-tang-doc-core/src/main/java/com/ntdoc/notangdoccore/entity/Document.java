@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.*;
 
 /**
  * Document entity class
@@ -59,6 +60,41 @@ public class Document {
 
     @Column(length = 500)
     private String description;
+
+    //Tags
+    @ElementCollection
+    @CollectionTable(
+            name = "document_tags",
+            joinColumns = @JoinColumn(name = "document_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"document_id", "tag"})
+    )
+    @Column(name = "tag", length = 64, nullable = false)
+    @Builder.Default
+    private Set<String> tags = new LinkedHashSet<>();
+
+    public void addTag(String tag) {
+        if (tag != null && !tag.isBlank()) {
+            tags.add(tag.trim());
+        }
+    }
+
+    //Metadata
+    @ElementCollection
+    @CollectionTable(
+            name = "document_metadata",
+            joinColumns = @JoinColumn(name = "document_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"document_id", "meta_key"})
+    )
+    @MapKeyColumn(name = "meta_key", length = 128)
+    @Column(name = "meta_value", length = 1024, nullable = false)
+    @Builder.Default
+    private Map<String, String> metadata = new LinkedHashMap<>();
+
+    public void putMetadata(String key, String value) {
+        if (key != null && !key.isBlank()) {
+            metadata.put(key.trim(), value == null ? "" : value.trim());
+        }
+    }
 
     @Column(name = "download_count", nullable = false)
     @Builder.Default

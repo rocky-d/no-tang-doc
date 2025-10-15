@@ -9,25 +9,25 @@
         "name": "USER",
         "description": "Doc USER"
       },
-        {
-            "name": "ADMIN",
-            "description": "Doc ADMIN"
-        }
+      {
+        "name": "ADMIN",
+        "description": "Doc ADMIN"
+      }
     ]
   },
   "clients": [
     {
       "clientId": "no-tang-doc-core",
-      "secret": "no-tang-doc-core-test-secret",
+      "secret": "no-tang-doc-core-secret",
       "directAccessGrantsEnabled": true,
       "standardFlowEnabled": true,
       "publicClient": false,
       "protocol": "openid-connect",
       "redirectUris": [
-        "http://localhost:8070/login/oauth2/code/*"
+        "http://localhost:3000/auth/callback"
       ],
       "webOrigins": [
-        "http://localhost:8070"
+        "http://localhost:3000"
       ],
       "protocolMappers": [
         {
@@ -41,7 +41,10 @@
             "access.token.claim": "true"
           }
         }
-      ]
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
     }
   ]
 }
