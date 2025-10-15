@@ -90,7 +90,7 @@ public class LogController {
             log.info("Get all documents log successfully");
             return ResponseEntity.ok(documentLogList);
         }catch (Exception e){
-            log.info("Get all documents log failed",e);
+            log.info("Get all documents log failed：{}",e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }

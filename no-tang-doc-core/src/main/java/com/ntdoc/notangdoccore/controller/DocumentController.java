@@ -296,7 +296,7 @@ public class DocumentController {
 
             return ResponseEntity.ok(response);
         }catch (Exception e) {
-            log.error("Failed to generate share link for document");
+            log.error("Failed to generate share link for document:{}",e.getMessage());
             return ResponseEntity.internalServerError().body(
                     DocumentShareResponse.failure("generate share link failed")
             );

@@ -40,7 +40,7 @@ databaseChangeLog:
 
         - addForeignKeyConstraint:
             baseTableName: log
-            baseColumnNames: uuser_id
+            baseColumnNames: user_id
             referencedTableName: app_user
             referencedColumnNames: id
             constraintName: fk_log_user_id

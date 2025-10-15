@@ -1,5 +1,6 @@
 package com.ntdoc.notangdoccore.repository;
 
+import com.ntdoc.notangdoccore.dto.log.LogsCountDTO;
 import com.ntdoc.notangdoccore.entity.Log;
 import com.ntdoc.notangdoccore.entity.logenum.OperationStatus;
 import com.ntdoc.notangdoccore.entity.logenum.OperationType;
@@ -22,10 +23,24 @@ public interface LogRepository extends JpaRepository<Log,Long> {
     List<Log> findByOperationStatus(OperationStatus status);
     List<Log> findByTargetId(Long targetId);
 
-    @Query("SELECT DATE_FORMAT(l.time,'%Y-%m-%d') as label,COUNT(l) as count FROM Log l WHERE l.userId = :userId AND l.time BETWEEN :start AND :end GROUP BY DATE_FORMAT(l.time,'%Y-%m-%d')")
-    Map<String,Long> countByDay(@Param("userId") Long uesrId,@Param("start") Instant start,@Param("end") Instant end);
+    @Query(value = """
+    SELECT DATE_FORMAT(l.time, '%Y-%m-%d') AS label, COUNT(*) AS cnt
+    FROM log l
+    WHERE l.user_id = :userId AND l.time BETWEEN :start AND :end
+    GROUP BY DATE_FORMAT(l.time, '%Y-%m-%d')
+    ORDER BY DATE_FORMAT(l.time, '%Y-%m-%d')
+    """, nativeQuery = true)
+    List<Object[]> countByDay(@Param("userId") Long userId, @Param("start") Instant start, @Param("end") Instant end);
 
-    @Query("SELECT CONCAT('Week',WEEK(l.time)) as label,COUNT(l) as count FROM Log l WHERE l.userId = :userId AND l.time BETWEEN :start AND :end GROUP BY WEEK(l.time)")
-    Map<String,Long> countByWeek(@Param("userId") Long userId,@Param("start") Instant start,@Param("end") Instant end);
+    @Query(value = """
+    SELECT CONCAT('W', YEARWEEK(l.time, 3)) AS label,
+           COUNT(*)                         AS cnt
+    FROM log l
+    WHERE l.user_id = :userId
+      AND l.time >= :start AND l.time < :end
+    GROUP BY CONCAT('W', YEARWEEK(l.time, 3))
+    ORDER BY CONCAT('W', YEARWEEK(l.time, 3))
+    """, nativeQuery = true)
+    List<Object[]> countByWeek(@Param("userId") Long userId,@Param("start") Instant start,@Param("end") Instant end);
 
 }

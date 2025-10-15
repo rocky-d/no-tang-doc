@@ -18,6 +18,7 @@ import java.time.Instant;
 @Getter
 @Setter
 @Builder
+@Table(name = "log")
 public class Log {
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)

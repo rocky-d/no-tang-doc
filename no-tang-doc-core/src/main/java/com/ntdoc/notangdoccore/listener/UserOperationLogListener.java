@@ -27,6 +27,8 @@ public class UserOperationLogListener {
 
         try{
             Log logEntity = new Log();
+            logEntity.setUserId(event.getUserId());
+            logEntity.setTargetId(event.getTargetId());
             logEntity.setActorType(event.getActorType());
             logEntity.setActorName(event.getActorName());
             logEntity.setOperationType(event.getOperationType());
