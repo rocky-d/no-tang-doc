@@ -12,7 +12,9 @@ import java.time.Instant;
 public class UserOperationEvent extends ApplicationEvent {
     private final ActorType actorType;
     private final String actorName;
+    private final Long userId;
     private final OperationType operationType;
+    private final Long targetId;
     private final String targetName;
     private final OperationStatus operationStatus;
     private final String message;
@@ -21,14 +23,18 @@ public class UserOperationEvent extends ApplicationEvent {
     public UserOperationEvent(Object source,
                               ActorType actorType,
                               String actorName,
+                              Long userId,
                               OperationType operationType,
+                              Long targetId,
                               String targetName,
                               OperationStatus operationStatus,
                               String message){
         super(source);
         this.actorType = actorType;
         this.actorName = actorName;
+        this.userId = userId;
         this.operationType = operationType;
+        this.targetId = targetId;
         this.targetName = targetName;
         this.operationStatus = operationStatus;
         this.message = message;
@@ -39,9 +45,11 @@ public class UserOperationEvent extends ApplicationEvent {
     public static UserOperationEvent success(Object source,
                                              ActorType actorType,
                                              String username,
+                                             Long userId,
+                                             Long targetId,
                                              OperationType operationType,
                                              String targetName){
-        return new UserOperationEvent(source, actorType, username, operationType, targetName, OperationStatus.SUCCESS, null);
+        return new UserOperationEvent(source, actorType, username, userId,operationType,targetId,targetName,OperationStatus.SUCCESS, null);
     }
 
 
@@ -49,9 +57,10 @@ public class UserOperationEvent extends ApplicationEvent {
     public static UserOperationEvent fail(Object source,
                                              ActorType actorType,
                                              String username,
+                                             Long userId,
                                              OperationType operationType,
                                              String targetName,
                                              String message){
-        return new UserOperationEvent(source, actorType, username, operationType, targetName, OperationStatus.FAILED, null);
+        return new UserOperationEvent(source, actorType, username, userId,operationType,targetName, OperationStatus.FAILED, null);
     }
 }

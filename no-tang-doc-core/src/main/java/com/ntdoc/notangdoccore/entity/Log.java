@@ -38,6 +38,9 @@ public class Log {
     private OperationType operationType;
 
     @Column
+    private Long targetId;
+
+    @Column
     private String targetName;
 
     @Enumerated(EnumType.STRING)

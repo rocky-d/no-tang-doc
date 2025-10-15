@@ -1,0 +1,18 @@
+     databaseChangeLog:
+       - changeSet:
+           id: 0009-update-log-table-add-documentid-251014
+           author: Zhong Yi
+           changes:
+             - addColumn:
+                 tableName: log
+                 columns:
+                   - column:
+                       name: target_id
+                       type: BIGINT
+
+           rollback:
+             - dropColumn:
+                 tableName: log
+                 columns:
+                   - column:
+                       name: target_id

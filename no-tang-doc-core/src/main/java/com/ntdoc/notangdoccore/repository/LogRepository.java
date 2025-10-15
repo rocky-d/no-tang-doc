@@ -20,6 +20,7 @@ public interface LogRepository extends JpaRepository<Log,Long> {
     List<Log> findByOperationType(OperationType operationType);
     List<Log> findByTimeBetween(Instant start, Instant end);
     List<Log> findByOperationStatus(OperationStatus status);
+    List<Log> findByTargetId(Long targetId);
 
     @Query("SELECT DATE_FORMAT(l.time,'%Y-%m-%d') as label,COUNT(l) as count FROM Log l WHERE l.userId = :userId AND l.time BETWEEN :start AND :end GROUP BY DATE_FORMAT(l.time,'%Y-%m-%d')")
     Map<String,Long> countByDay(@Param("userId") Long uesrId,@Param("start") Instant start,@Param("end") Instant end);

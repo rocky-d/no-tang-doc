@@ -78,4 +78,21 @@ public class LogController {
         }
     }
 
+    /*
+     * 获取当前文档的操作日志，查看对文档操作的log记录
+     */
+    @GetMapping("/documents")
+    public ResponseEntity<List<Log>> listDocumentsLog(@AuthenticationPrincipal Jwt jwt,@RequestParam Long documentId){
+        try{
+            log.info("Receive list documents log request");
+
+            List<Log> documentLogList = logService.getAllLogsByTargetId(documentId);
+            log.info("Get all documents log successfully");
+            return ResponseEntity.ok(documentLogList);
+        }catch (Exception e){
+            log.info("Get all documents log failed",e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        }
+    }
+
 }
