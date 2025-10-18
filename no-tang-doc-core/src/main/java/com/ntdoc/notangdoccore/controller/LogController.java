@@ -74,7 +74,7 @@ public class LogController {
             return ResponseEntity.ok(logsCount);
         }catch (Exception e){
             log.info("Get {} logs failed",period,e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
     }
 

@@ -10,18 +10,25 @@ import com.ntdoc.notangdoccore.entity.logenum.OperationType;
 import com.ntdoc.notangdoccore.repository.LogRepository;
 import com.ntdoc.notangdoccore.service.UserSyncService;
 import com.ntdoc.notangdoccore.service.log.LogService;
+import jakarta.servlet.ServletException;
+import jakarta.validation.ConstraintViolationException;
 import jdk.dynalink.Operation;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.web.util.NestedServletException;
 
 import java.time.Instant;
 import java.util.*;
 
 import static org.hamcrest.Matchers.*;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
@@ -30,7 +37,13 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 // LogController的单元测试
-@WebMvcTest(LogController.class)
+@WebMvcTest(controllers = LogController.class,
+        excludeAutoConfiguration = {
+        org.springframework.boot.autoconfigure.security.oauth2.client.OAuth2ClientAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.oauth2.resource.servlet.OAuth2ResourceServerAutoConfiguration.class,
+        org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyAutoConfiguration.class
+})
+@AutoConfigureMockMvc(addFilters = false)
 class LogControllerUnitTest {
     @Autowired
     private MockMvc mockMvc;
@@ -38,10 +51,10 @@ class LogControllerUnitTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Autowired
+    @MockitoBean
     private LogService logService;
 
-    @Autowired
+    @MockitoBean
     private UserSyncService userSyncService;
 
     private User mockUser;
@@ -96,7 +109,7 @@ class LogControllerUnitTest {
                 .andExpect(jsonPath("$",hasSize(2)))
                 .andExpect(jsonPath("$[0].id", is(1)))
                 .andExpect(jsonPath("$[0].actorName", is("mockUser")))
-                .andExpect(jsonPath("$[0].userId", is("100L")))
+                .andExpect(jsonPath("$[0].userId", is(100)))
                 .andExpect(jsonPath("$[0].operationType", is("UPLOAD_DOCUMENT")))
                 .andExpect(jsonPath("$[0].operationStatus", is("SUCCESS")))
                 .andExpect(jsonPath("$[1].id", is(2)))
@@ -217,10 +230,10 @@ class LogControllerUnitTest {
     void testGetLogsCount_Month_Success() throws Exception {
         // Given - 模拟过去4周的日志统计，key是 Week + 周数
         Map<String, Long> monthlyCount = new LinkedHashMap<>();
-        monthlyCount.put("Week38", 15L);  // 9月第3周
-        monthlyCount.put("Week39", 20L);  // 9月第4周
-        monthlyCount.put("Week40", 18L);  // 10月第1周
-        monthlyCount.put("Week41", 22L);  // 10月第2周
+        monthlyCount.put("W202538", 15L);  // 9月第3周
+        monthlyCount.put("W202539", 20L);  // 9月第4周
+        monthlyCount.put("W202540", 18L);  // 10月第1周
+        monthlyCount.put("W202541", 22L);  // 10月第2周
 
         when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
         when(logService.getLogsCountByUser(100L, "month")).thenReturn(monthlyCount);
@@ -232,10 +245,10 @@ class LogControllerUnitTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.Week38", is(15)))
-                .andExpect(jsonPath("$.Week39", is(20)))
-                .andExpect(jsonPath("$.Week40", is(18)))
-                .andExpect(jsonPath("$.Week41", is(22)))
+                .andExpect(jsonPath("$.W202538", is(15)))
+                .andExpect(jsonPath("$.W202539", is(20)))
+                .andExpect(jsonPath("$.W202540", is(18)))
+                .andExpect(jsonPath("$.W202541", is(22)))
                 .andExpect(jsonPath("$", aMapWithSize(4)));
 
         verify(userSyncService, times(1)).ensureFromJwt(any());
@@ -247,8 +260,8 @@ class LogControllerUnitTest {
     void testGetLogsCount_Month_PartialData() throws Exception {
         // Given - 只有2周有数据
         Map<String, Long> monthlyCount = new LinkedHashMap<>();
-        monthlyCount.put("Week40", 25L);
-        monthlyCount.put("Week41", 30L);
+        monthlyCount.put("W202540", 25L);
+        monthlyCount.put("W202541", 30L);
 
         when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
         when(logService.getLogsCountByUser(100L, "month")).thenReturn(monthlyCount);
@@ -260,8 +273,8 @@ class LogControllerUnitTest {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(content().contentType("application/json"))
-                .andExpect(jsonPath("$.Week40", is(25)))
-                .andExpect(jsonPath("$.Week41", is(30)))
+                .andExpect(jsonPath("$.W202540", is(25)))
+                .andExpect(jsonPath("$.W202541", is(30)))
                 .andExpect(jsonPath("$", aMapWithSize(2)));
 
         verify(logService, times(1)).getLogsCountByUser(100L, "month");
@@ -289,12 +302,24 @@ class LogControllerUnitTest {
     @Test
     @DisplayName("获取日志统计，无效period参数")
     void testGetLogsCount_InvalidPeriod() throws Exception {
-        mockMvc.perform(get("/api/v1/logs/count")
-                        .param("period", "year")
-                        .with(jwt()))
-                .andDo(print())
-                .andExpect(status().isBadRequest());
+        when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
 
+        ServletException ex = assertThrows(
+                ServletException.class,
+                () -> mockMvc.perform(get("/api/v1/logs/count")
+                                .param("period", "year"))
+                        .andReturn() // 触发执行
+        );
+
+        // 断言根因是参数校验异常（取根因链）
+        Throwable cause = ex.getCause();
+        while (cause != null && !(cause instanceof ConstraintViolationException)) {
+            cause = cause.getCause();
+        }
+        assertTrue(cause instanceof ConstraintViolationException,
+                "root cause should be ConstraintViolationException");
+
+        // 未进入 service
         verify(logService, never()).getLogsCountByUser(anyLong(), anyString());
     }
 

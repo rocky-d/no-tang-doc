@@ -17,11 +17,11 @@ spring:
         format_sql: true
     open-in-view: false
 
-  # ✅ 2) 禁用 Liquibase（关键！）
+  # 2) 禁用 Liquibase
   liquibase:
     enabled: false
 
-  # ✅ 3) 测试时不需要真正连 Keycloak（可选，看你测试是否用 jwt().jwt(...)）
+  # 3) 测试时不需要真正连 Keycloak
   security:
     oauth2:
       resourceserver:
@@ -37,6 +37,7 @@ spring:
             client-secret: fake-secret
         provider:
           keycloak:
+            issuer-uri: ""
             authorization-uri: http://localhost:9999/fake/auth
             token-uri: http://localhost:9999/fake/token
             user-info-uri: http://localhost:9999/fake/userinfo

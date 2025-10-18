@@ -6,9 +6,11 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nimbusds.oauth2.sdk.id.Actor;
 import com.ntdoc.notangdoccore.config.TestAsyncConfig;
+import com.ntdoc.notangdoccore.controller.DocumentController;
 import com.ntdoc.notangdoccore.dto.common.ApiResponse;
 import com.ntdoc.notangdoccore.dto.document.DocumentUploadResponse;
 import com.ntdoc.notangdoccore.entity.Log;
+import com.ntdoc.notangdoccore.entity.User;
 import com.ntdoc.notangdoccore.entity.logenum.ActorType;
 import com.ntdoc.notangdoccore.entity.logenum.OperationStatus;
 import com.ntdoc.notangdoccore.entity.logenum.OperationType;
@@ -17,17 +19,23 @@ import com.ntdoc.notangdoccore.listener.UserOperationLogListener;
 import com.ntdoc.notangdoccore.repository.LogRepository;
 import com.ntdoc.notangdoccore.service.DocumentService;
 
+import com.ntdoc.notangdoccore.service.FileStorageService;
+import com.ntdoc.notangdoccore.service.UserSyncService;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.system.OutputCaptureExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
@@ -54,10 +62,10 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@SpringBootTest
+@WebMvcTest(DocumentController.class)
 @AutoConfigureMockMvc
 @Slf4j
-@Import(TestAsyncConfig.class)
+@Import({TestAsyncConfig.class, UserOperationLogListener.class})
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class DocumentControllerIntegrationTest {
@@ -70,14 +78,31 @@ class DocumentControllerIntegrationTest {
 
     @MockitoBean
     private DocumentService documentService;
-
     @MockitoBean
     private LogRepository logRepository;
+    @MockitoBean
+    private UserSyncService userSyncService;
+    @MockitoBean
+    private FileStorageService fileStorageService;
+
+    @Autowired
+    private ApplicationEventPublisher eventPublisher;
+
+    @MockitoBean
+    private ClientRegistrationRepository clientRegistrationRepository;
+
+    @MockitoBean
+    private OAuth2AuthorizedClientManager authorizedClientManager;
 
     @BeforeEach
     void setUp() {
         log.info("Test Begin");
         reset(documentService,logRepository);
+        User u = new User();
+        u.setKcUserId("user-123");
+        u.setUsername("test_user");
+        when(userSyncService.ensureFromJwt(any())).thenReturn(u);
+
     }
 
     @AfterEach
