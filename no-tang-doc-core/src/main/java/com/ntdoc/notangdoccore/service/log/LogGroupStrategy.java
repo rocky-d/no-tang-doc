@@ -6,6 +6,7 @@ import com.ntdoc.notangdoccore.entity.Log;
 import java.time.Instant;
 import java.util.*;
 
+@FunctionalInterface
 public interface LogGroupStrategy {
 
     Map<String, Long> groupLogs(Long userId, Instant endTime);

@@ -1,5 +1,6 @@
 package com.ntdoc.notangdoccore.config;
 
+import lombok.NoArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -11,6 +12,7 @@ import java.util.concurrent.Executor;
 //异步支持配置
 @EnableAsync
 @Configuration
+@NoArgsConstructor
 @Profile("!test")
 public class AsyncConfig {
     @Bean(name="taskExecutor")

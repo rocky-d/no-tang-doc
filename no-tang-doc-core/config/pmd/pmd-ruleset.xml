@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ruleset name="NoTangDoc Core – Lean Ruleset"
+         xmlns="https://pmd.github.io/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="https://pmd.github.io/ruleset/2.0.0 https://pmd.github.io/ruleset_2_0_0.xsd">
+    <description>
+        Lean ruleset to suppress most noisy violations for the current codebase,
+        while keeping a few high-signal checks.
+    </description>
+
+    <!-- ========== Best Practices ========== -->
+    <rule ref="category/java/bestpractices.xml">
+        <exclude name="GuardLogStatement"/>
+        <exclude name="LooseCoupling"/>
+    </rule>
+
+    <!-- ========== Code Style ========== -->
+    <rule ref="category/java/codestyle.xml">
+        <exclude name="MethodArgumentCouldBeFinal"/>
+        <exclude name="LocalVariableCouldBeFinal"/>
+        <exclude name="OnlyOneReturn"/>
+        <exclude name="LongVariable"/>
+        <exclude name="ShortVariable"/>
+        <exclude name="UseExplicitTypes"/>
+        <exclude name="UnnecessaryAnnotationValueElement"/>
+        <exclude name="LambdaCanBeMethodReference"/>
+        <!-- <exclude name="ControlStatementBraces"/>  // 如也想关掉，取消本行注释 -->
+    </rule>
+
+    <!-- ========== Error Prone ========== -->
+    <rule ref="category/java/errorprone.xml">
+        <exclude name="AvoidDuplicateLiterals"/>
+        <exclude name="AvoidLiteralsInIfCondition"/>
+    </rule>
+
+    <!-- ========== Design (可选保留一些) ========== -->
+    <rule ref="category/java/design.xml">
+
+    </rule>
+
+    <!-- ========== Documentation（按需开启）=========== -->
+    <rule ref="category/java/documentation.xml">
+
+        <exclude name="CommentDefaultAccessModifier"/>
+    </rule>
+    <!-- ========== Security（按需开启）=========== -->
+    <rule ref="category/java/security.xml">
+
+    </rule>
+</ruleset>
