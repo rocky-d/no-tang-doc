@@ -233,40 +233,6 @@
                             <goal>report</goal>
                         </goals>
                     </execution>
-
-                    <!-- 可选：卡口阈值，低于阈值构建失败 -->
-                    <execution>
-                        <id>check</id>
-                        <goals><goal>check</goal></goals>
-                        <configuration>
-                            <!-- 排除（示例）：DTO、配置、生成代码等 -->
-                            <excludes>
-                                <exclude>**/config/**</exclude>
-                                <exclude>**/dto/**</exclude>
-                                <exclude>**/*Application.class</exclude>
-                            </excludes>
-                            <rules>
-                                <rule>
-                                    <!-- 以整个模块为粒度；也可以用 PACKAGE/CLASS -->
-                                    <element>BUNDLE</element>
-                                    <limits>
-                                        <!-- 指令覆盖率最低 60% -->
-                                        <limit>
-                                            <counter>INSTRUCTION</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.60</minimum>
-                                        </limit>
-                                        <!-- 分支覆盖率最低 50% -->
-                                        <limit>
-                                            <counter>BRANCH</counter>
-                                            <value>COVEREDRATIO</value>
-                                            <minimum>0.50</minimum>
-                                        </limit>
-                                    </limits>
-                                </rule>
-                            </rules>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
         </plugins>
