@@ -128,24 +128,44 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public void deleteDocument(Long documentId, String kcUserId) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        Document document = getDocumentById(documentId, kcUserId);
+
+        // 物理删除
+        documentRepository.delete(document);
+        // 软删除：只是更新状态，可恢复
+//        document.setStatus(Document.DocumentStatus.DELETED);
+//        documentRepository.save(document);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Document> getUserDocuments(String kcUserId) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        User user = getUserByKcUserId(kcUserId);
+        return documentRepository.findByUploadedByOrderByCreatedAtDesc(user);
     }
 
     @Override
     public List<Document> getUserDocuments(String kcUserId, Document.DocumentStatus status) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        User user = getUserByKcUserId(kcUserId);
+        return documentRepository.findByUploadedByAndStatusOrderByCreatedAtDesc(user, status);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Document getDocumentById(Long documentId, String kcUserId) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        User user = getUserByKcUserId(kcUserId);
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("文档不存在: " + documentId));
+
+//        if (!document.getUploadedBy().getId().equals(user.getId())) {
+//            throw new SecurityException("无权删除该文档");
+//        }
+        if (!document.getUploadedBy().equals(user)) {
+            throw new SecurityException("You are not allowed to delete this document.");
+        }
+
+        return document;
     }
 
     @Override

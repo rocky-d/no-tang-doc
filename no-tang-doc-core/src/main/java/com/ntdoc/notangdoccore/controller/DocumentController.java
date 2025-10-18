@@ -187,6 +187,7 @@ public class DocumentController {
         }
     }
 
+    // 获取指定用户的所有文档，支持按状态过滤
     @GetMapping
     public ResponseEntity<DocumentListResponse> getUserDocuments(
             @AuthenticationPrincipal Jwt jwt,
@@ -245,6 +246,7 @@ public class DocumentController {
         );
 
         return ResponseEntity.ok(response);
+//        return ResponseEntity.noContent().build(); // HTTP 204
     }
 
     // 生成分享链接
