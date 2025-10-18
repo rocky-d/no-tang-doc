@@ -36,6 +36,10 @@ public class LogService {
         return logRepository.findByActorName(username);
     }
 
+    public List<Log> getAllLogsByTargetId(Long targetId){
+        return logRepository.findByTargetId(targetId);
+    }
+
     public Map<String,Long> getLogsCountByUser(Long userId,String period){
         LogGroupStrategy logGroupStrategy = getLogGroupStrategy(period);
         return logGroupStrategy.groupLogs(userId, Instant.now());

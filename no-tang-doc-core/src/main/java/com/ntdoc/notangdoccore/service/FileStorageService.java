@@ -30,6 +30,16 @@ public interface FileStorageService {
     URL generateDownloadUrl(String s3Key, Duration expiration);
 
     /**
+     * 生成分享的预签名URL，用户只能网页浏览，不能下载
+     *
+     * @param s3Key 文件的S3键
+     * @param expiration 过期时间
+     * @return 预签名浏览URL
+     */
+    URL generateShareUrl(String s3Key, Duration expiration);
+
+
+    /**
      * 生成文件上传的预签名URL（用于前端直接上传）
      *
      * @param s3Key 文件的S3键
