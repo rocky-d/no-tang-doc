@@ -1,0 +1,105 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0006-create-team-member-table-20250117
+      author: System
+      changes:
+        - createTable:
+            tableName: team_member
+            remarks: 团队成员关系表
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_team_member
+                    nullable: false
+              - column:
+                  name: team_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: VARCHAR(20)
+                  defaultValue: 'MEMBER'
+                  remarks: 团队内角色：OWNER, ADMIN, MEMBER, VIEWER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: 'ACTIVE'
+                  remarks: 成员状态：ACTIVE, REMOVED, INVITED
+                  constraints:
+                    nullable: false
+              - column:
+                  name: joined_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: team_member
+            baseColumnNames: team_id
+            referencedTableName: team
+            referencedColumnNames: id
+            constraintName: fk_team_member_team_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: team_member
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_team_member_user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+        - addUniqueConstraint:
+            tableName: team_member
+            columnNames: team_id, user_id
+            constraintName: uq_team_member_team_user
+
+        - createIndex:
+            tableName: team_member
+            indexName: idx_team_member_team_id
+            columns:
+              - column:
+                  name: team_id
+
+        - createIndex:
+            tableName: team_member
+            indexName: idx_team_member_user_id
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            tableName: team_member
+            indexName: idx_team_member_role
+            columns:
+              - column:
+                  name: role
+
+        - createIndex:
+            tableName: team_member
+            indexName: idx_team_member_status
+            columns:
+              - column:
+                  name: status
+

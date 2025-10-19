@@ -1,0 +1,90 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0005-create-team-table-20250117
+      author: System
+      changes:
+        - createTable:
+            tableName: team
+            remarks: 团队信息表
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_team
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: owner_id
+                  type: BIGINT
+                  remarks: 团队创建者/拥有者
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: 'ACTIVE'
+                  constraints:
+                    nullable: false
+              - column:
+                  name: member_count
+                  type: INT
+                  defaultValue: 1
+                  remarks: 成员数量（含创建者）
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: team
+            baseColumnNames: owner_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_team_owner_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+        - createIndex:
+            tableName: team
+            indexName: idx_team_owner_id
+            columns:
+              - column:
+                  name: owner_id
+
+        - createIndex:
+            tableName: team
+            indexName: idx_team_status
+            columns:
+              - column:
+                  name: status
+
+        - createIndex:
+            tableName: team
+            indexName: idx_team_created_at
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
+
