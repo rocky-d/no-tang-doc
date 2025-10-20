@@ -1,0 +1,9 @@
+*log*
+*tmp*
+*temp*
+**/out
+
+.idea/
+.vscode/
+__pycache__/
+node_modules/
