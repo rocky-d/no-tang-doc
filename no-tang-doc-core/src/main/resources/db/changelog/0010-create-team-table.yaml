@@ -1,6 +1,6 @@
 databaseChangeLog:
   - changeSet:
-      id: 0005-create-team-table-20250117
+      id: 0010-create-team-table-20250117
       author: System
       changes:
         - createTable:
