@@ -20,8 +20,8 @@ output "keycloak_db_connection" {
     host     = digitalocean_database_cluster.keycloak-postgres-cluster.private_host
     port     = 25060
     database = digitalocean_database_db.ntdoc_keycloak.name
-    user     = digitalocean_database_user.keycloak_user.name
-    password = digitalocean_database_user.keycloak_user.password
+    user     = "doadmin"
+    password = digitalocean_database_cluster.keycloak-postgres-cluster.password
   }
   sensitive = true
 }
