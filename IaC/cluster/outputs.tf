@@ -21,3 +21,7 @@ output "actual_node_count" {
   value       = digitalocean_kubernetes_cluster.this.node_pool[0].actual_node_count
 }
 
+output "doks_cluster_id" {
+  value = digitalocean_kubernetes_cluster.this.id
+}
+
