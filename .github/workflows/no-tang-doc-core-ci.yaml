@@ -27,6 +27,12 @@ jobs:
   # SAST 静态代码分析
   ci:
     name: Build & Test
+    # mod/core和dev同步时不跑CI脚本
+    if: |
+      !(
+        (github.head_ref == 'mod/core' && github.base_ref == 'dev') ||
+        (github.head_ref == 'dev' && github.base_ref == 'mod/core')
+      )
     runs-on: ubuntu-latest
 
     steps:

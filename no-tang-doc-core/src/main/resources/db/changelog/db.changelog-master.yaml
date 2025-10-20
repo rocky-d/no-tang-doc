@@ -18,4 +18,8 @@ databaseChangeLog:
       file: db/changelog/0008-update-log-table.yaml
   - include:
       file: db/changelog/0009-update-log-table-add-documentid.yaml
+  - include:
+      file: db/changelog/0010-create-team-table.yaml
+  - include:
+      file: db/changelog/0011-create-team-member-table.yaml
 
