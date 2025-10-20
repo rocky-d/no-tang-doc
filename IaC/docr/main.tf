@@ -16,7 +16,7 @@ provider "digitalocean" {
 resource "digitalocean_container_registry" "this" {
   name                   = var.registry_name
   region                 = var.registry_region
-  subscription_tier_slug = "starter"
+  subscription_tier_slug = "basic"
 }
 
 # 方式 B：如果你已经在控制台里创建了，就用 data 源读取（与上面二选一）
