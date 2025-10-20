@@ -28,7 +28,28 @@ resource "digitalocean_database_db" "ntdoc" {
 # https://docs.digitalocean.com/reference/terraform/reference/resources/database_mysql_config/
 resource "digitalocean_database_mysql_config" "mysql_cfg" {
   cluster_id              = digitalocean_database_cluster.ntdoc-mysql-cluster.id
-  sql_require_primary_key = false
+  sql_require_primary_key = true
+}
+
+resource "digitalocean_database_cluster" "keycloak-postgres-cluster" {
+  name       = "ntdoc-postgres-cluster"
+  engine     = "pg"
+  version    = "16"                  # 建议使用最新稳定版 PostgreSQL
+  size       = "db-s-1vcpu-1gb"      # 对 Keycloak 足够；若 Realm 较多可改 2GB
+  region     = "sgp1"
+  node_count = 1                     # 1 节点即可；生产环境建议 >= 2 开启 HA
+}
+
+# 创建数据库 ntdoc_keycloak
+resource "digitalocean_database_db" "ntdoc_keycloak" {
+  cluster_id = digitalocean_database_cluster.keycloak-postgres-cluster.id
+  name       = "keycloak"
+}
+
+# 创建专用用户 keycloak_user
+resource "digitalocean_database_user" "keycloak_user" {
+  cluster_id = digitalocean_database_cluster.keycloak-postgres-cluster.id
+  name       = "keycloak"
 }
 
 # Digital Ocean API Token - u could set it in .tfvars file and keep it secret
