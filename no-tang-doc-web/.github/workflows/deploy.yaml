@@ -1,0 +1,53 @@
+name: ntdoc-web-dev-push
+
+on:
+  push:
+    branches: ["feat/web/do-app-platform-deploy-test"]
+
+env:
+  REGISTRY: registry.digitalocean.com
+  REGISTRY_NAME: ntdoc         # ← 你的 DOCR 注册表名
+  IMAGE_NAME: ntdoc-web        # ← 镜像名
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}   # 需要写 DOCR 的 PAT
+
+      - name: Docker login to DOCR via doctl
+        run: doctl registry login
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+
+      # 可选：如果你的 Docker 上下文/文件不在仓库根目录，请按需设置 context/file
+      # - name: Show build context
+      #   run: ls -la
+
+      - name: Compute tag
+        id: meta
+        run: echo "TAG=dev-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & Push
+        uses: docker/build-push-action@v6
+        with:
+          # 如果是 monorepo，前端在子目录，改成 ./apps/ntdoc-web 或类似
+          context: .
+          # 如果 Dockerfile 不在根目录，指定它：
+          # file: ./apps/ntdoc-web/Dockerfile
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.TAG }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

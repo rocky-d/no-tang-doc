@@ -176,20 +176,6 @@ export function TeamSpacePage() {
             .toUpperCase()
             .slice(0, 2);
     };
-
-    const getStatusColor = (status: TeamMember['status']) => {
-        switch (status) {
-            case 'online':
-                return 'bg-green-500';
-            case 'away':
-                return 'bg-yellow-500';
-            case 'offline':
-                return 'bg-gray-400';
-            default:
-                return 'bg-gray-400';
-        }
-    };
-
     return (
         <UserLayout
             onSearch={handleSearch}
