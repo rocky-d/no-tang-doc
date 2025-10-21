@@ -2,7 +2,7 @@
 *out*
 *tmp*
 *temp*
-
+docker-compose*.yml
 .idea/
 .vscode/
 node_modules/
