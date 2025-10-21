@@ -156,7 +156,7 @@ export function UserLayout({
                   onClick={() => navigate('/')}
               >
                 <FileText className="h-6 w-6 text-primary" />
-                <span className="font-semibold">DocRepo</span>
+                <span className="font-semibold">NTDoc</span>
               </button>
             </SidebarHeader>
             <SidebarContent>
