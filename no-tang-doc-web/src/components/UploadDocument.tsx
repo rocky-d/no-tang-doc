@@ -26,7 +26,7 @@ export function UploadDocument({ onBack, onNavigateHome }: UploadPageProps) {
             onClick={onNavigateHome}
           >
             <FileText className="h-6 w-6 text-primary" />
-            <span className="font-semibold">DocRepo</span>
+            <span className="font-semibold">NTDoc</span>
           </button>
           
           <div className="w-32"></div> {/* Spacer for center alignment */}

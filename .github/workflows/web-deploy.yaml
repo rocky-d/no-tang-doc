@@ -1,0 +1,50 @@
+name: ntdoc-web-dev-push
+
+on:
+  push:
+    branches: ["dev","mod/web"]
+    paths:
+      - "no-tang-doc-web/**"
+      - ".github/workflows/web-deploy.yaml"  # 工作流改动也触发
+
+env:
+  REGISTRY: registry.digitalocean.com
+  REGISTRY_NAME: ntdoc          # 你的 DOCR 注册表名
+  IMAGE_NAME: ntdoc-web         # 镜像名
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+
+      - name: Docker login to DOCR via doctl
+        run: doctl registry login
+
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Compute tag
+        id: meta
+        run: echo "TAG=dev-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & Push (only web subdir)
+        uses: docker/build-push-action@v6
+        with:
+          context: ./no-tang-doc-web                # ✅ 只发送前端目录作为上下文
+          file: ./no-tang-doc-web/Dockerfile        # ✅ 明确 Dockerfile 路径（可选但更清晰）
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.TAG }}
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:dev
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

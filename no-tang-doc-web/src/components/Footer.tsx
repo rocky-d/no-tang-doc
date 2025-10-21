@@ -8,13 +8,13 @@ export function Footer() {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <FileText className="h-6 w-6 text-primary" />
-              <span className="font-semibold">DocRepo</span>
+              <span className="font-semibold">NTDoc</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Your secure digital document repository for modern teams and individuals.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
+              <a href="https://github.com/rocky-d/no-tang-doc" className="text-muted-foreground hover:text-foreground transition-colors">
                 <Github className="h-5 w-5" />
               </a>
               <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
@@ -59,7 +59,7 @@ export function Footer() {
 
         <div className="border-t mt-8 pt-8 text-center">
           <p className="text-sm text-muted-foreground">
-            © 2024 DocRepo. All rights reserved.
+            © 2025 NTDoc. All rights reserved.
           </p>
         </div>
       </div>

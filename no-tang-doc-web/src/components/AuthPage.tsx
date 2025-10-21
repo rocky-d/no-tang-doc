@@ -26,7 +26,7 @@ export function AuthPage({ initialMode = 'login', onBack }: AuthPageProps) {
           
           <div className="flex items-center space-x-2">
             <FileText className="h-6 w-6 text-primary" />
-            <span className="font-semibold">DocRepo</span>
+            <span className="font-semibold">NTDoc</span>
           </div>
           
           <div className="w-32"></div> {/* Spacer for center alignment */}
