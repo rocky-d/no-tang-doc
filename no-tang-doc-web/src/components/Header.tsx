@@ -19,7 +19,7 @@ export function Header({ onNavigateToAuth, onNavigateToDashboard, onNavigateHome
           onClick={onNavigateHome}
         >
           <FileText className="h-6 w-6 text-primary" />
-          <span className="font-semibold">DocRepo</span>
+          <span className="font-semibold">NTDoc</span>
         </button>
         
         <nav className="hidden md:flex items-center space-x-6">

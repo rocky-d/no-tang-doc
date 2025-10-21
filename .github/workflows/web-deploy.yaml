@@ -2,7 +2,7 @@ name: ntdoc-web-dev-push
 
 on:
   push:
-    branches: ["feat/web/ui-refactor"]
+    branches: ["dev","mod/web"]
     paths:
       - "no-tang-doc-web/**"
       - ".github/workflows/web-deploy.yaml"  # 工作流改动也触发
