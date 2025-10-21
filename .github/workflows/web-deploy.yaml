@@ -25,7 +25,7 @@ jobs:
       - name: Setup doctl
         uses: digitalocean/action-doctl@v2
         with:
-          token: 'dop_v1_5e7cc310cb97f2819ef294c547bd18786a5248c2903f438a2fc897365d773009'
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
 
       - name: Docker login to DOCR via doctl
         run: doctl registry login
