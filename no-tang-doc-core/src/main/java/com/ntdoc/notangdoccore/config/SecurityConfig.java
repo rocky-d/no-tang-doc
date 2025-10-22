@@ -25,7 +25,7 @@ import java.util.List;
 @EnableWebSecurity
 @EnableConfigurationProperties(KeycloakProperties.class)
 public class SecurityConfig {
-    @Value("${ntdoc.cors.allowed-origins:http://localhost:3000}")
+    @Value("${ntdoc.cors.allowed-origins}")
     private List<String> allowedOrigins;
 
     @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")

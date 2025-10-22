@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "ntdoc-core.fullname" . }}
+  labels: {{- include "ntdoc-core.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort | default .Values.containerPort }}
+      protocol: TCP
+      name: http
+  selector: {{- include "ntdoc-core.selectorLabels" . | nindent 4 }}

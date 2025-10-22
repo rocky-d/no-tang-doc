@@ -1,0 +1,42 @@
+{{- if .Values.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "ntdoc-core.fullname" . }}
+  labels: {{- include "ntdoc-core.labels" . | nindent 4 }}
+  annotations:
+    {{- with .Values.ingress.annotations }}
+    {{- toYaml . | nindent 4 }}
+    {{- end }}
+spec:
+  ingressClassName: {{ .Values.ingress.className | default "nginx" | quote }}
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+  {{- range $host := .Values.ingress.hosts }}
+    - host: {{ $host.host | quote }}
+      http:
+        paths:
+          {{- if $host.paths }}
+          {{- range $p := $host.paths }}
+          - path: {{ $p.path | default "/" }}
+            pathType: {{ $p.pathType | default "Prefix" }}
+            backend:
+              service:
+                name: {{ include "ntdoc-core.fullname" $ }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+          {{- else }}
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "ntdoc-core.fullname" $ }}
+                port:
+                  number: {{ $.Values.service.port }}
+          {{- end }}
+  {{- end }}
+{{- end }}
