@@ -98,3 +98,17 @@ jobs:
             no-tang-doc-core/target/checkstyle-result.xml
             no-tang-doc-core/target/site/checkstyle.html
           compression-level: 9
+  push-to-docr:
+    name: Push image to DOCR
+    needs: ci                         # 你的构建测试 job 的 id 就叫 "ci"
+    if: >-
+      ${{
+        needs.ci.result == 'success' &&
+        contains(fromJson('["main","dev","mod/core","feat/core/NTDOC-11-Setup-CI-CD-pipeline","feat/core/doks-deploy-test"]'), github.ref_name) &&
+        github.event_name == 'push'
+      }}
+    uses: ./.github/workflows/push-to-docr.yaml
+    with:
+      sha: ${{ github.sha }}
+      branch: ${{ github.ref_name }}
+    secrets: inherit                  # 让 DO_ACCESS_TOKEN 等 secrets 透传

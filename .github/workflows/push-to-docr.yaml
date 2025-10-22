@@ -1,15 +1,19 @@
 name: push-to-docr
 
 on:
-  workflow_run:
-    workflows: ["no-tang-doc-core CI"]
-    types: [completed]
-    branches:
-      - main
-      - dev
-      - mod/core
-      - feat/core/NTDOC-11-Setup-CI-CD-pipeline
-      - feat/core/doks-deploy-test
+  workflow_call:
+    inputs:
+      sha:
+        description: Commit SHA to build
+        required: true
+        type: string
+      branch:
+        description: Branch name
+        required: true
+        type: string
+    secrets:
+      DO_ACCESS_TOKEN:
+        required: true
 
 env:
   REGISTRY: registry.digitalocean.com
@@ -22,34 +26,19 @@ env:
   INGRESS_HOST: api.ntdoc.site
 
 concurrency:
-  group: push-to-docr-${{ github.event.workflow_run.head_branch }}
+  group: push-to-docr-${{ inputs.branch }}
   cancel-in-progress: true
 
 jobs:
   build-and-push:
-    if: >-
-      ${{
-        github.event.workflow_run.conclusion == 'success' &&
-        contains(fromJson('["main","dev","mod/core","feat/core/NTDOC-11-Setup-CI-CD-pipeline","feat/core/doks-deploy-test"]'), github.event.workflow_run.head_branch) &&
-        (github.event.workflow_run.event == 'push' || github.event.workflow_run.event == 'pull_request' || github.event.workflow_run.event == 'workflow_dispatch')
-      }}
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.TAG }}
-
     steps:
-      - name: Checkout same commit that passed CI
+      - name: Checkout at input commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
-
-      - name: Debug upstream context (optional)
-        if: always()
-        run: |
-          echo "conclusion=${{ github.event.workflow_run.conclusion }}"
-          echo "head_branch=${{ github.event.workflow_run.head_branch }}"
-          echo "event=${{ github.event.workflow_run.event }}"
-          echo "head_sha=${{ github.event.workflow_run.head_sha }}"
+          ref: ${{ inputs.sha }}
 
       - name: Setup doctl
         uses: digitalocean/action-doctl@v2
@@ -64,12 +53,9 @@ jobs:
 
       - name: Compute tag
         id: meta
-        env:
-          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
-          BRANCH:   ${{ github.event.workflow_run.head_branch }}
         run: |
-          short="${HEAD_SHA::7}"
-          if [ "$BRANCH" = "main" ]; then
+          short="${{ inputs.sha }}" ; short="${short::7}"
+          if [ "${{ inputs.branch }}" = "main" ]; then
             echo "TAG=sha-${short}" >> "$GITHUB_OUTPUT"
             echo "EXTRA=latest" >> "$GITHUB_OUTPUT"
           else
