@@ -4,45 +4,52 @@ on:
   workflow_run:
     workflows: ["no-tang-doc-core CI"]
     types: [completed]
-    branches:                  # ✅ 让触发 CI 的分支受控（推荐）
+    branches:
       - main
       - dev
       - mod/core
       - feat/core/NTDOC-11-Setup-CI-CD-pipeline
-      - feat/core/doks-deploy-test   # ✅ 新增
+      - feat/core/doks-deploy-test
+
 env:
   REGISTRY: registry.digitalocean.com
   REGISTRY_NAME: ntdoc
   IMAGE_NAME: ntdoc-core
+  APP_DIR: no-tang-doc-core
   CHART_DIR: charts/ntdoc-core
   RELEASE: ntdoc-core
   NAMESPACE: ntdoc-core
   INGRESS_HOST: api.ntdoc.site
-  APP_DIR: no-tang-doc-core          # ✅ 新增，指向子目录
 
 concurrency:
-  group: ntdoc-doks-dev
+  group: push-to-docr-${{ github.event.workflow_run.head_branch }}
   cancel-in-progress: true
-# Only proceed when CI succeeded on specific branches
+
 jobs:
   build-and-push:
     if: >-
       ${{
         github.event.workflow_run.conclusion == 'success' &&
         contains(fromJson('["main","dev","mod/core","feat/core/NTDOC-11-Setup-CI-CD-pipeline","feat/core/doks-deploy-test"]'), github.event.workflow_run.head_branch) &&
-        github.event.workflow_run.event == 'push'
+        (github.event.workflow_run.event == 'push')
       }}
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.TAG }}
 
     steps:
-      - uses: actions/checkout@v4
-
       - name: Checkout same commit that passed CI
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}        # ✅ 关键
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Debug upstream context (optional)
+        if: always()
+        run: |
+          echo "conclusion=${{ github.event.workflow_run.conclusion }}"
+          echo "head_branch=${{ github.event.workflow_run.head_branch }}"
+          echo "event=${{ github.event.workflow_run.event }}"
+          echo "head_sha=${{ github.event.workflow_run.head_sha }}"
 
       - name: Setup doctl
         uses: digitalocean/action-doctl@v2
@@ -57,16 +64,27 @@ jobs:
 
       - name: Compute tag
         id: meta
-        run: echo "TAG=dev-${GITHUB_SHA:0:7}" >> "$GITHUB_OUTPUT"
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          BRANCH:   ${{ github.event.workflow_run.head_branch }}
+        run: |
+          short="${HEAD_SHA::7}"
+          if [ "$BRANCH" = "main" ]; then
+            echo "TAG=sha-${short}" >> "$GITHUB_OUTPUT"
+            echo "EXTRA=latest" >> "$GITHUB_OUTPUT"
+          else
+            echo "TAG=dev-${short}" >> "$GITHUB_OUTPUT"
+            echo "EXTRA=dev" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Build & Push
         uses: docker/build-push-action@v6
         with:
-          context: ${{ env.APP_DIR }}                             # ✅ 指向子目录
-          file: ${{ env.APP_DIR }}/Dockerfile                     # ✅ 指向子目录的 Dockerfile
+          context: ${{ env.APP_DIR }}
+          file: ${{ env.APP_DIR }}/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.TAG }}
-            ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:dev
+            ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.EXTRA }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
