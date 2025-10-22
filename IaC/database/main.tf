@@ -28,7 +28,7 @@ resource "digitalocean_database_db" "ntdoc" {
 # https://docs.digitalocean.com/reference/terraform/reference/resources/database_mysql_config/
 resource "digitalocean_database_mysql_config" "mysql_cfg" {
   cluster_id              = digitalocean_database_cluster.ntdoc-mysql-cluster.id
-  sql_require_primary_key = true
+  sql_require_primary_key = false
 }
 
 resource "digitalocean_database_cluster" "keycloak-postgres-cluster" {
