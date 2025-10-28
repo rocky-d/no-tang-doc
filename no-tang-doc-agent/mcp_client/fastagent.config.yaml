@@ -1,0 +1,58 @@
+# FastAgent Configuration File
+
+# Default Model Configuration:
+#
+# Takes format:
+#   <provider>.<model_string>.<reasoning_effort?> (e.g. anthropic.claude-3-5-sonnet-20241022 or openai.o3-mini.low)
+# Accepts aliases for Anthropic Models: haiku, haiku3, sonnet, sonnet35, opus, opus3
+# and OpenAI Models: gpt-4.1, gpt-4.1-mini, o1, o1-mini, o3-mini
+#
+# If not specified, defaults to "gpt-5-mini.low".
+# Can be overriden with a command line switch --model=<model>, or within the Agent constructor.
+
+default_model: gpt-4.1
+# mcp-ui support: disabled, enabled or auto. "auto" opens the web browser on the asset automatically
+# mcp_ui_output_dir: ".fast-agent/ui"  # Where to write MCP-UI HTML files (relative to CWD if not absolute)
+# mcp_ui_mode: enabled
+
+# MCP timeline display (adjust activity window/intervals in MCP UI + fast-agent check)
+mcp_timeline:
+  steps: 20 # number of timeline buckets to render
+  step_seconds: 15 # seconds per bucket (accepts values like "45s", "2m")
+
+# Logging and Console Configuration:
+logger:
+  # level: "debug" | "info" | "warning" | "error"
+  # type: "none" | "console" | "file" | "http"
+  # path: "/path/to/logfile.jsonl"
+
+  # Switch the progress display on or off
+  progress_display: true
+  # Show chat User/Assistant messages on the console
+  show_chat: true
+  # Show tool calls on the console
+  show_tools: true
+  # Truncate long tool responses on the console
+  truncate_tools: true
+  # Streaming renderer for assistant responses: "markdown", "plain", or "none"
+  streaming: markdown
+
+# MCP Servers
+mcp:
+  servers:
+    fetch:
+      command: "uvx"
+      args: ["mcp-server-fetch"]
+    filesystem:
+      command: "npx"
+      args: ["-y", "@modelcontextprotocol/server-filesystem", "."]
+    huggingface:
+      url: "https://huggingface.co/mcp?login"
+    no-tang-doc-agent-mcp-server:
+      transport: http
+      url: http://localhost:8001/mcp
+      auth:
+        oauth: true
+        scope: ["mcp-user"]
+      headers:  # Optional HTTP headers
+        Authorization: "Bearer eyJhbGciOiJSUzI1NiIsInR5cCIgOiAiSldUIiwia2lkIiA6ICJvcFpRQ0oyZ1hUQ1VGbzIweFVtYWhnR0pKT0phVGtOQi1TMDZuWVNTTHM4In0.eyJleHAiOjE3NjExODcxNTEsImlhdCI6MTc2MTE4MzU1MSwiYXV0aF90aW1lIjoxNzYxMTgzNTUxLCJqdGkiOiJvbnJ0YWM6NjE2Mzk3MGMtOTM1Yy02Y2IxLTQ2YTQtNzJjOWM4NTU3OWQzIiwiaXNzIjoiaHR0cHM6Ly9hdXRoLm50ZG9jLnNpdGUvcmVhbG1zL250ZG9jIiwiYXVkIjpbIm5vLXRhbmctZG9jLWNvcmUiLCJhY2NvdW50Il0sInN1YiI6IjAwMTdjMTlhLWYzNTYtNDgxOS04YjFjLTExZDA1MzczODM3ZCIsInR5cCI6IkJlYXJlciIsImF6cCI6Im5vLXRhbmctZG9jLW1jcCIsInNpZCI6IjUxM2NiNjkzLTRiNzgtNDVjMy04MzA4LWRiMjE2YzgxMzliNSIsImFjciI6IjEiLCJhbGxvd2VkLW9yaWdpbnMiOlsiaHR0cDovL2xvY2FsaG9zdDo2Mjc0Il0sInJlYWxtX2FjY2VzcyI6eyJyb2xlcyI6WyJkZWZhdWx0LXJvbGVzLW50ZG9jIiwib2ZmbGluZV9hY2Nlc3MiLCJ1bWFfYXV0aG9yaXphdGlvbiJdfSwicmVzb3VyY2VfYWNjZXNzIjp7ImFjY291bnQiOnsicm9sZXMiOlsibWFuYWdlLWFjY291bnQiLCJtYW5hZ2UtYWNjb3VudC1saW5rcyIsInZpZXctcHJvZmlsZSJdfX0sInNjb3BlIjoibWNwLXVzZXIgcHJvZmlsZSBlbWFpbCIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwibmFtZSI6IkhBT1RJQU4gRFUiLCJwcmVmZXJyZWRfdXNlcm5hbWUiOiJyb2NreSIsImdpdmVuX25hbWUiOiJIQU9USUFOIiwiZmFtaWx5X25hbWUiOiJEVSIsImVtYWlsIjoiZTE1ODMwODNAdS5udXMuZWR1In0.BrXQ-gFinwnIsr1lZmdMmDoTRlu8JH5fSNvA3d_MqhlSmBm7W_hd0NwW2pPiiwa8OAkpU3yTFL9dqc7UMDoMRo3ugAqh6kmbhvvF-K-FVRTXKm4VmKmbJtPQO42eDS_g4I1rMJZ_VRNxk0KGFMudtak3cgcyOENUf3r2_KcLHBlHusNFamywJjz-5m1zSKDun8rIlpNjeVj7sbdNuCdqQwn5_Jp3iUBlgwR3kCvAQpXgbAI8WqD-I3-koOeF5sS9X3P4bl2TDomG5KF6Pq5bx3QMViLRJCESfKronl-HneqXbGPw92Il2CFWcx_RfF6aWuJrUCCLiI8T_D7ou9TCaw"

@@ -221,7 +221,7 @@ async def post_api_v1_team_members_leave(
 @mcp.tool()
 async def post_api_v1_documents_upload(
     ctx: Context[ServerSession, None],
-    file: bytes,
+    file_content: str,
     file_name: str | None = None,
     description: str | None = None,
 ) -> Any:
@@ -236,7 +236,7 @@ async def post_api_v1_documents_upload(
         response = await client.post(
             f"{BASE_URL}/api/v1/documents/upload",
             params=params,
-            files={"file": file},
+            files={"file": file_content.encode()},
         )
         response.raise_for_status()
         return response.json()
