@@ -53,4 +53,6 @@ mcp:
       url: http://localhost:8001/mcp
       auth:
         oauth: true
+        redirect_port: 3030
+        redirect_path: /callback
         scope: ["mcp-user"]

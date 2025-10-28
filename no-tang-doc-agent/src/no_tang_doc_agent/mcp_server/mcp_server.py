@@ -1,3 +1,4 @@
+from urllib.parse import urlparse
 import httpx
 from pydantic import AnyHttpUrl
 from typing import Any, Literal
@@ -295,6 +296,25 @@ async def get_api_v1_documents_download_documentid(
         )
         response.raise_for_status()
         return response.json()
+
+
+@mcp.tool()
+async def get_api_v1_documents_download_documentid__content(
+    ctx: Context[ServerSession, None],
+    document_id: int,
+) -> Any:
+    async with httpx.AsyncClient(
+        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
+    ) as client:
+        response = await client.get(
+            f"{BASE_URL}/api/v1/documents/download/{document_id}",
+        )
+        response.raise_for_status()
+        download_url = response.json()["data"]["downloadUrl"]
+        async with httpx.AsyncClient() as client:
+            response = await client.get(download_url)
+            response.raise_for_status()
+            return response.content
 
 
 @mcp.tool()
