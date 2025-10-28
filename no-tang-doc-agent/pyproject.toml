@@ -1,10 +1,10 @@
 [project]
 name = "no-tang-doc-agent"
 version = "0.1.0"
-description = ""
+description = "no-tang-doc-agent"
 readme = "README.md"
-requires-python = ">=3.13"
+requires-python = ">=3.13.5, <3.14"
 dependencies = [
-    "fast-agent-mcp>=0.2.25",
-    "mcp[cli]>=1.18.0",
+    "fast-agent-mcp>=0.3.17",
+    "mcp[cli]>=1.19.0",
 ]
