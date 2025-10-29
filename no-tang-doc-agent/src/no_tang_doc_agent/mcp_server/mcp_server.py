@@ -7,473 +7,497 @@ from mcp.server.auth.provider import AccessToken, TokenVerifier
 from mcp.server.auth.settings import AuthSettings
 
 __all__ = [
-    "mcp",
+    "start_mcp_server",
 ]
 
-BASE_URL = "https://api.ntdoc.site"
 
+def start_mcp_server(
+    base_url: AnyHttpUrl = AnyHttpUrl("https://api.ntdoc.site"),
+    transport: Literal["streamable-http"] = "streamable-http",
+    mount_path: str | None = None,
+) -> None:
+    class JWTTokenVerifier(TokenVerifier):
+        async def verify_token(
+            self,
+            token: str,
+        ) -> AccessToken:
+            return AccessToken(
+                token=token,
+                client_id="no-tang-doc-mcp",
+                scopes=["mcp-user"],
+            )
 
-class JWTTokenVerifier(TokenVerifier):
-    async def verify_token(
-        self,
-        token: str,
-    ) -> AccessToken:
-        return AccessToken(
-            token=token,
-            client_id="no-tang-doc-mcp",
-            scopes=["mcp-user"],
-        )
+    mcp = FastMCP(
+        name="no-tang-doc-agent-mcp-server",
+        instructions="",
+        debug=True,
+        log_level="INFO",
+        host="localhost",
+        port=8001,
+        token_verifier=JWTTokenVerifier(),
+        auth=AuthSettings(
+            issuer_url=AnyHttpUrl("https://auth.ntdoc.site/realms/ntdoc"),
+            resource_server_url=AnyHttpUrl("http://localhost:8001/mcp"),
+            required_scopes=["mcp-user"],
+        ),
+    )
 
-
-mcp = FastMCP(
-    name="no-tang-doc-agent-mcp-server",
-    instructions="",
-    debug=True,
-    log_level="INFO",
-    host="localhost",
-    port=8001,
-    token_verifier=JWTTokenVerifier(),
-    auth=AuthSettings(
-        issuer_url=AnyHttpUrl("https://auth.ntdoc.site/realms/ntdoc"),
-        resource_server_url=AnyHttpUrl("http://localhost:8001/mcp"),
-        required_scopes=["mcp-user"],
-    ),
-)
-
-
-@mcp.tool(
-    name="get-team-by-id",
-    title="get-team-by-id",
-    description="Fetch a team by its ID.",
-)
-async def get_api_v1_teams_teamid(
-    ctx: Context[ServerSession, None],
-    team_id: int,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(f"{BASE_URL}/api/v1/teams/{team_id}")
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="update-team-by-id",
-    title="update-team-by-id",
-    description="Update a team's information by its ID.",
-)
-async def put_api_v1_teams_teamid(
-    ctx: Context[ServerSession, None],
-    team_id: int,
-    name: str,
-    description: str,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.put(
-            f"{BASE_URL}/api/v1/teams/{team_id}",
-            json={
-                "name": name,
-                "description": description,
+    @mcp.tool(
+        name="get-team-by-id",
+        title="get-team-by-id",
+        description="Fetch a team by its ID.",
+    )
+    async def get_api_v1_teams_teamid(
+        ctx: Context[ServerSession, None],
+        team_id: int,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
             },
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="delete-team-by-id",
-    title="delete-team-by-id",
-    description="Delete a team by its ID.",
-)
-async def delete_api_v1_teams_teamid(
-    ctx: Context[ServerSession, None],
-    team_id: int,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.delete(
-            f"{BASE_URL}/api/v1/teams/{team_id}",
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="get-teams",
-    title="get-teams",
-    description="Fetch a list of teams.",
-)
-async def get_api_v1_teams(
-    ctx: Context[ServerSession, None],
-    active_only: bool | None = None,
-) -> Any:
-    params = {}
-    if active_only is not None:
-        params["activeOnly"] = active_only
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/teams",
-            params=params,
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="create-team",
-    title="create-team",
-    description="Create a new team.",
-)
-async def post_api_v1_teams(
-    ctx: Context[ServerSession, None],
-    name: str,
-    description: str,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.post(
-            f"{BASE_URL}/api/v1/teams",
-            json={
-                "name": name,
-                "description": description,
-            },
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="update-team-member-role",
-    title="update-team-member-role",
-    description="Update a team member's role.",
-)
-async def put_api_v1_teams_teamid_members_memberid(
-    ctx: Context[ServerSession, None],
-    team_id: int,
-    member_id: int,
-    role: str,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.put(
-            f"{BASE_URL}/api/v1/teams/{team_id}/members/{member_id}",
-            json={
-                "role": role,
-            },
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="remove-team-member",
-    title="remove-team-member",
-    description="Remove a member from a team.",
-)
-async def delete_api_v1_teams_teamid_members_memberid(
-    ctx: Context[ServerSession, None],
-    team_id: int,
-    member_id: int,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.delete(
-            f"{BASE_URL}/api/v1/teams/{team_id}/members/{member_id}",
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="get-team-members",
-    title="get-team-members",
-    description="Fetch members of a team.",
-)
-async def get_api_v1_team_members(
-    ctx: Context[ServerSession, None],
-    team_id: int,
-    active_only: bool | None = None,
-) -> Any:
-    params = {}
-    if active_only is not None:
-        params["activeOnly"] = active_only
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/teams/{team_id}/members",
-            params=params,
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="add-team-member",
-    title="add-team-member",
-    description="Add a member to a team.",
-)
-async def post_api_v1_team_members(
-    ctx: Context[ServerSession, None],
-    team_id: int,
-    user_kc_id: int,
-    role: str,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.post(
-            f"{BASE_URL}/api/v1/teams/{team_id}/members",
-            json={
-                "userKcId": user_kc_id,
-                "role": role,
-            },
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="leave-team",
-    title="leave-team",
-    description="Leave a team.",
-)
-async def post_api_v1_team_members_leave(
-    ctx: Context[ServerSession, None],
-    team_id: int,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.post(
-            f"{BASE_URL}/api/v1/teams/{team_id}/members/leave",
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="upload-document",
-    title="upload-document",
-    description="Upload a document.",
-)
-async def post_api_v1_documents_upload(
-    ctx: Context[ServerSession, None],
-    file_content: str,
-    file_name: str | None = None,
-    description: str | None = None,
-) -> Any:
-    params = {}
-    if file_name is not None:
-        params["fileName"] = file_name
-    if description is not None:
-        params["description"] = description
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.post(
-            f"{BASE_URL}/api/v1/documents/upload",
-            params=params,
-            files={"file": file_content.encode()},
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="get-documents",
-    title="get-documents",
-    description="Fetch a list of documents.",
-)
-async def get_api_v1_documents(
-    ctx: Context[ServerSession, None],
-    status: Literal["UPLOADING", "ACTIVE", "DELETED", "PROCESSING"] | None = None,
-) -> Any:
-    params = {}
-    if status is not None:
-        params["status"] = status
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/documents",
-            params=params,
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="share-document",
-    title="share-document",
-    description="Generate a shareable link for a document.",
-)
-async def get_api_v1_documents_share(
-    ctx: Context[ServerSession, None],
-    document_id: int,
-    expiration_minutes: int | None = None,
-) -> Any:
-    params = {}
-    params["documentId"] = document_id
-    if expiration_minutes is not None:
-        params["expirationMinutes"] = expiration_minutes
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/documents/share",
-            params=params,
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="download-document-metadata",
-    title="download-document-metadata",
-    description="Download metadata for a document.",
-)
-async def get_api_v1_documents_download_documentid(
-    ctx: Context[ServerSession, None],
-    document_id: int,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/documents/download/{document_id}",
-        )
-        response.raise_for_status()
-        return response.json()
-
-
-@mcp.tool(
-    name="download-document-content",
-    title="download-document-content",
-    description="Download the content of a document.",
-)
-async def get_api_v1_documents_download_documentid__content(
-    ctx: Context[ServerSession, None],
-    document_id: int,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/documents/download/{document_id}",
-        )
-        response.raise_for_status()
-        download_url = response.json()["data"]["downloadUrl"]
-        async with httpx.AsyncClient() as client:
-            response = await client.get(download_url)
+        ) as client:
+            response = await client.get(f"{base_url}/api/v1/teams/{team_id}")
             response.raise_for_status()
-            return response.content
+            return response.json()
 
+    @mcp.tool(
+        name="update-team-by-id",
+        title="update-team-by-id",
+        description="Update a team's information by its ID.",
+    )
+    async def put_api_v1_teams_teamid(
+        ctx: Context[ServerSession, None],
+        team_id: int,
+        name: str,
+        description: str,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.put(
+                f"{base_url}/api/v1/teams/{team_id}",
+                json={
+                    "name": name,
+                    "description": description,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
 
-@mcp.tool(
-    name="delete-document",
-    title="delete-document",
-    description="Delete a document.",
-)
-async def delete_api_v1_documents_documentid(
-    ctx: Context[ServerSession, None],
-    document_id: int,
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.delete(
-            f"{BASE_URL}/api/v1/documents/{document_id}",
-        )
-        response.raise_for_status()
-        return response.json()
+    @mcp.tool(
+        name="delete-team-by-id",
+        title="delete-team-by-id",
+        description="Delete a team by its ID.",
+    )
+    async def delete_api_v1_teams_teamid(
+        ctx: Context[ServerSession, None],
+        team_id: int,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.delete(
+                f"{base_url}/api/v1/teams/{team_id}",
+            )
+            response.raise_for_status()
+            return response.json()
 
+    @mcp.tool(
+        name="get-teams",
+        title="get-teams",
+        description="Fetch a list of teams.",
+    )
+    async def get_api_v1_teams(
+        ctx: Context[ServerSession, None],
+        active_only: bool | None = None,
+    ) -> Any:
+        params = {}
+        if active_only is not None:
+            params["activeOnly"] = active_only
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.get(
+                f"{base_url}/api/v1/teams",
+                params=params,
+            )
+            response.raise_for_status()
+            return response.json()
 
-@mcp.tool(
-    name="get-logs-list",
-    title="get-logs-list",
-    description="Fetch a list of logs.",
-)
-async def get_api_v1_logs_list(
-    ctx: Context[ServerSession, None],
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/logs/list",
-        )
-        response.raise_for_status()
-        return response.json()
+    @mcp.tool(
+        name="create-team",
+        title="create-team",
+        description="Create a new team.",
+    )
+    async def post_api_v1_teams(
+        ctx: Context[ServerSession, None],
+        name: str,
+        description: str,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.post(
+                f"{base_url}/api/v1/teams",
+                json={
+                    "name": name,
+                    "description": description,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
 
+    @mcp.tool(
+        name="update-team-member-role",
+        title="update-team-member-role",
+        description="Update a team member's role.",
+    )
+    async def put_api_v1_teams_teamid_members_memberid(
+        ctx: Context[ServerSession, None],
+        team_id: int,
+        member_id: int,
+        role: str,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.put(
+                f"{base_url}/api/v1/teams/{team_id}/members/{member_id}",
+                json={
+                    "role": role,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
 
-@mcp.tool(
-    name="get-logs-documents",
-    title="get-logs-documents",
-    description="Fetch log documents by document ID.",
-)
-async def get_api_v1_logs_documents(
-    ctx: Context[ServerSession, None],
-    document_id: int,
-) -> Any:
-    params = {}
-    params["documentId"] = document_id
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(
-            f"{BASE_URL}/api/v1/logs/documents",
-            params=params,
-        )
-        response.raise_for_status()
-        return response.json()
+    @mcp.tool(
+        name="remove-team-member",
+        title="remove-team-member",
+        description="Remove a member from a team.",
+    )
+    async def delete_api_v1_teams_teamid_members_memberid(
+        ctx: Context[ServerSession, None],
+        team_id: int,
+        member_id: int,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.delete(
+                f"{base_url}/api/v1/teams/{team_id}/members/{member_id}",
+            )
+            response.raise_for_status()
+            return response.json()
 
+    @mcp.tool(
+        name="get-team-members",
+        title="get-team-members",
+        description="Fetch members of a team.",
+    )
+    async def get_api_v1_team_members(
+        ctx: Context[ServerSession, None],
+        team_id: int,
+        active_only: bool | None = None,
+    ) -> Any:
+        params = {}
+        if active_only is not None:
+            params["activeOnly"] = active_only
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.get(
+                f"{base_url}/api/v1/teams/{team_id}/members",
+                params=params,
+            )
+            response.raise_for_status()
+            return response.json()
 
-@mcp.tool(
-    name="get-logs-count",
-    title="get-logs-count",
-    description="Fetch the count of logs over a specified period.",
-)
-async def post_api_v1_logs_count(
-    ctx: Context[ServerSession, None],
-    period: Literal["week", "month"] | None = None,
-) -> Any:
-    params = {}
-    if period is not None:
-        params["period"] = period
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.post(
-            f"{BASE_URL}/api/v1/logs/count",
-            params=params,
-        )
-        response.raise_for_status()
-        return response.json()
+    @mcp.tool(
+        name="add-team-member",
+        title="add-team-member",
+        description="Add a member to a team.",
+    )
+    async def post_api_v1_team_members(
+        ctx: Context[ServerSession, None],
+        team_id: int,
+        user_kc_id: int,
+        role: str,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.post(
+                f"{base_url}/api/v1/teams/{team_id}/members",
+                json={
+                    "userKcId": user_kc_id,
+                    "role": role,
+                },
+            )
+            response.raise_for_status()
+            return response.json()
 
+    @mcp.tool(
+        name="leave-team",
+        title="leave-team",
+        description="Leave a team.",
+    )
+    async def post_api_v1_team_members_leave(
+        ctx: Context[ServerSession, None],
+        team_id: int,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.post(
+                f"{base_url}/api/v1/teams/{team_id}/members/leave",
+            )
+            response.raise_for_status()
+            return response.json()
 
-@mcp.tool(
-    name="get-api-auth-me",
-    title="get-api-auth-me",
-    description="Fetch information about the authenticated user.",
-)
-async def get_api_auth_me(
-    ctx: Context[ServerSession, None],
-) -> Any:
-    async with httpx.AsyncClient(
-        headers={"Authorization": ctx.request_context.request.headers["authorization"]},
-    ) as client:
-        response = await client.get(
-            f"{BASE_URL}/api/auth/me",
-        )
-        response.raise_for_status()
-        return response.json()
+    @mcp.tool(
+        name="upload-document",
+        title="upload-document",
+        description="Upload a document.",
+    )
+    async def post_api_v1_documents_upload(
+        ctx: Context[ServerSession, None],
+        file_content: str,
+        file_name: str | None = None,
+        description: str | None = None,
+    ) -> Any:
+        params = {}
+        if file_name is not None:
+            params["fileName"] = file_name
+        if description is not None:
+            params["description"] = description
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.post(
+                f"{base_url}/api/v1/documents/upload",
+                params=params,
+                files={"file": file_content.encode()},
+            )
+            response.raise_for_status()
+            return response.json()
+
+    @mcp.tool(
+        name="get-documents",
+        title="get-documents",
+        description="Fetch a list of documents.",
+    )
+    async def get_api_v1_documents(
+        ctx: Context[ServerSession, None],
+        status: Literal["UPLOADING", "ACTIVE", "DELETED", "PROCESSING"] | None = None,
+    ) -> Any:
+        params = {}
+        if status is not None:
+            params["status"] = status
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.get(
+                f"{base_url}/api/v1/documents",
+                params=params,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    @mcp.tool(
+        name="share-document",
+        title="share-document",
+        description="Generate a shareable link for a document.",
+    )
+    async def get_api_v1_documents_share(
+        ctx: Context[ServerSession, None],
+        document_id: int,
+        expiration_minutes: int | None = None,
+    ) -> Any:
+        params = {}
+        params["documentId"] = document_id
+        if expiration_minutes is not None:
+            params["expirationMinutes"] = expiration_minutes
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.get(
+                f"{base_url}/api/v1/documents/share",
+                params=params,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    @mcp.tool(
+        name="download-document-metadata",
+        title="download-document-metadata",
+        description="Download metadata for a document.",
+    )
+    async def get_api_v1_documents_download_documentid(
+        ctx: Context[ServerSession, None],
+        document_id: int,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.get(
+                f"{base_url}/api/v1/documents/download/{document_id}",
+            )
+            response.raise_for_status()
+            return response.json()
+
+    @mcp.tool(
+        name="download-document-content",
+        title="download-document-content",
+        description="Download the content of a document.",
+    )
+    async def get_api_v1_documents_download_documentid__content(
+        ctx: Context[ServerSession, None],
+        document_id: int,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.get(
+                f"{base_url}/api/v1/documents/download/{document_id}",
+            )
+            response.raise_for_status()
+            download_url = response.json()["data"]["downloadUrl"]
+            async with httpx.AsyncClient() as client:
+                response = await client.get(download_url)
+                response.raise_for_status()
+                return response.content
+
+    @mcp.tool(
+        name="delete-document",
+        title="delete-document",
+        description="Delete a document.",
+    )
+    async def delete_api_v1_documents_documentid(
+        ctx: Context[ServerSession, None],
+        document_id: int,
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.delete(
+                f"{base_url}/api/v1/documents/{document_id}",
+            )
+            response.raise_for_status()
+            return response.json()
+
+    @mcp.tool(
+        name="get-logs-list",
+        title="get-logs-list",
+        description="Fetch a list of logs.",
+    )
+    async def get_api_v1_logs_list(
+        ctx: Context[ServerSession, None],
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.get(
+                f"{base_url}/api/v1/logs/list",
+            )
+            response.raise_for_status()
+            return response.json()
+
+    @mcp.tool(
+        name="get-logs-documents",
+        title="get-logs-documents",
+        description="Fetch log documents by document ID.",
+    )
+    async def get_api_v1_logs_documents(
+        ctx: Context[ServerSession, None],
+        document_id: int,
+    ) -> Any:
+        params = {}
+        params["documentId"] = document_id
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.get(
+                f"{base_url}/api/v1/logs/documents",
+                params=params,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    @mcp.tool(
+        name="get-logs-count",
+        title="get-logs-count",
+        description="Fetch the count of logs over a specified period.",
+    )
+    async def post_api_v1_logs_count(
+        ctx: Context[ServerSession, None],
+        period: Literal["week", "month"] | None = None,
+    ) -> Any:
+        params = {}
+        if period is not None:
+            params["period"] = period
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.post(
+                f"{base_url}/api/v1/logs/count",
+                params=params,
+            )
+            response.raise_for_status()
+            return response.json()
+
+    @mcp.tool(
+        name="get-api-auth-me",
+        title="get-api-auth-me",
+        description="Fetch information about the authenticated user.",
+    )
+    async def get_api_auth_me(
+        ctx: Context[ServerSession, None],
+    ) -> Any:
+        async with httpx.AsyncClient(
+            headers={
+                "Authorization": ctx.request_context.request.headers["authorization"]
+            },
+        ) as client:
+            response = await client.get(
+                f"{base_url}/api/auth/me",
+            )
+            response.raise_for_status()
+            return response.json()
+
+    mcp.run(transport=transport, mount_path=mount_path)

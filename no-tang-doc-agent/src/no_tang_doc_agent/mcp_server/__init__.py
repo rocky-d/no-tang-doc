@@ -1,5 +1,5 @@
-from .mcp_server import mcp
+from .mcp_server import start_mcp_server
 
 __all__ = [
-    "mcp",
+    "start_mcp_server",
 ]
