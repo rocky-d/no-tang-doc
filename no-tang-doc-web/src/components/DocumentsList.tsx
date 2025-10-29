@@ -1,10 +1,12 @@
-import { useState } from 'react';
-import { FileText, Download, MoreVertical, Trash2, Sparkles, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { FileText, Download, MoreVertical, Trash2, Sparkles, Loader2, Share2, Copy, Check } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from './ui/dropdown-menu';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Input } from './ui/input';
 import { toast } from 'sonner';
 import { http } from '../utils/request';
 
@@ -25,21 +27,35 @@ interface DocumentsListProps {
   isSearching?: boolean;
 }
 
-const DOCS_API_PREFIX = (import.meta.env as any).VITE_DOCS_API_PREFIX || 'http://localhost:8070/api/v1/documents';
+const DOCS_API_PREFIX = (import.meta.env as any).VITE_DOCS_API_PREFIX;
 
 export function DocumentsList({ documents, searchTerm, searchMode = 'simple', isSearching = false }: DocumentsListProps) {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  // Add local docs state for immediate UI update on delete
+  const [localDocs, setLocalDocs] = useState<AppDocument[]>(documents || []);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  // Added: share dialog states
+  const [selectedDocument, setSelectedDocument] = useState<AppDocument | null>(null);
+  const [copied, setCopied] = useState(false);
+  // New: share url + loading state
+  const [shareUrl, setShareUrl] = useState<string>('');
+  const [shareLoading, setShareLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    setLocalDocs(documents || []);
+  }, [documents]);
 
   // For simple search, filter on the client side
   // For advanced search, documents are already filtered by the API
   const filteredDocuments = searchMode === 'simple'
-      ? documents.filter(doc =>
+      ? localDocs.filter(doc =>
           doc.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
           doc.category.toLowerCase().includes(searchTerm.toLowerCase()) ||
           doc.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
           doc.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
       )
-      : documents;
+      : localDocs;
 
   const handleDownload = async (doc: AppDocument) => {
     // Predict preview type from name first to decide whether to pre-open a tab
@@ -67,7 +83,7 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
         } else {
           window.open(url, '_blank', 'noopener');
         }
-        toast.success(`已在新标签页打开：${fileName || doc.name}`);
+        toast.success(`Open in new Tab：${fileName || doc.name}`);
       } else {
         // Prefer blob download to avoid opening in current tab (works when CORS permits)
         let blobDownloaded = false;
@@ -99,7 +115,7 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
           a.click();
           window.document.body.removeChild(a);
         }
-        toast.success(`开始下载：${fileName || doc.name}`);
+        toast.success(`Start Downloading：${fileName || doc.name}`);
       }
     } catch (e: any) {
       // Close pre-opened tab on failure
@@ -113,9 +129,61 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
     }
   };
 
-  const handleDelete = (documentId: string) => {
-    // Mock delete functionality
-    console.log('Deleting document:', documentId);
+  const handleDelete = async (documentId: string) => {
+    try {
+      // simple confirm to avoid accidental deletion
+      const ok = window.confirm('Are you sure? Deletion can not undo。');
+      if (!ok) return;
+      setDeletingId(documentId);
+      // Call backend DELETE API: `${DOCS_API_PREFIX}/{documentId}`
+      const resp: any = await http.delete(`${DOCS_API_PREFIX}/${documentId}`);
+      // success when 200/204; some backends return body with success flag
+      const success = (resp?.status && resp.status >= 200 && resp.status < 300) || resp?.data?.success !== false;
+      if (!success) throw new Error(resp?.data?.message || 'Delete failed');
+
+      // Update UI
+      setLocalDocs(prev => prev.filter(d => d.id !== documentId));
+      toast.success('Deleted successfully');
+    } catch (e: any) {
+      console.error('Delete failed', e);
+      toast.error(`Delete failed：${e?.message || 'Unexpected error'}`);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleShare = async (doc: AppDocument) => {
+    setSelectedDocument(doc);
+    setShareDialogOpen(true);
+    setCopied(false);
+    setShareUrl('');
+    setShareLoading(true);
+    try {
+      const resp: any = await http.get(`${DOCS_API_PREFIX}/share?documentId=${encodeURIComponent(doc.id)}`);
+      const url: string | undefined = resp?.data?.url ?? resp?.url;
+      if (!url) throw new Error('share url not found');
+      setShareUrl(url);
+      toast.success('Shared URL generated');
+    } catch (e: any) {
+      console.error('Get share url failed', e.getMessage());
+      toast.error(`Get share url failed：Please try again later`);
+      // Close dialog if failed
+      setShareDialogOpen(false);
+    } finally {
+      setShareLoading(false);
+    }
+  };
+
+  const handleCopyLink = () => {
+    if (shareUrl) {
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        toast.success('链接已复制');
+      });
+    } else {
+      toast.error('暂无可复制的链接');
+    }
   };
 
   const getFileIcon = (_type: string) => {
@@ -156,7 +224,7 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
                   <>
                     {filteredDocuments.length} {filteredDocuments.length === 1 ? 'document' : 'documents'}
                     {searchTerm && ` matching "${searchTerm}"`}
-                    {!searchTerm && documents.length > 0 && ` (${documents.length} total)`}
+                    {!searchTerm && localDocs.length > 0 && ` (${localDocs.length} total)`}
                   </>
               )}
             </p>
@@ -267,12 +335,21 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
                                   )}
                                   Download
                                 </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleShare(docItem)}>
+                                  <Share2 className="w-4 h-4 mr-2" />
+                                  Share
+                                </DropdownMenuItem>
                                 <DropdownMenuItem
                                     onClick={() => handleDelete(docItem.id)}
                                     className="text-destructive"
+                                    disabled={deletingId === docItem.id}
                                 >
-                                  <Trash2 className="w-4 h-4 mr-2" />
-                                  Delete
+                                  {deletingId === docItem.id ? (
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                  ) : (
+                                    <Trash2 className="w-4 h-4 mr-2" />
+                                  )}
+                                  {deletingId === docItem.id ? 'Deleting...' : 'Delete'}
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -284,6 +361,41 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
             )}
           </CardContent>
         </Card>
+        {/* Share Dialog */}
+        <Dialog open={shareDialogOpen} onOpenChange={setShareDialogOpen}>
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Share Document</DialogTitle>
+              <DialogDescription>
+                The generated sharing link is only valid for 10 minutes
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex items-center gap-2">
+              <Input
+                  value={shareUrl}
+                  placeholder={shareLoading ? 'Generating the sharing link' : 'Sharing link'}
+                  readOnly
+                  disabled={shareLoading}
+                  className="w-full"
+              />
+              <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyLink}
+                  disabled={!shareUrl || shareLoading}
+                  className="h-8 w-8 p-0"
+              >
+                {copied ? (
+                    <Check className="w-4 h-4" />
+                ) : shareLoading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                    <Copy className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
   );
 }

@@ -30,10 +30,7 @@ export function Hero({ onStartUploading }: HeroProps) {
                 <Upload className="mr-2 h-5 w-5" />
                 Start Uploading
               </Button>
-              <Button size="lg" variant="outline" className="text-base">
-                <FileText className="mr-2 h-5 w-5" />
-                View Demo
-              </Button>
+
             </div>
 
             <div className="flex items-center space-x-8 pt-8">

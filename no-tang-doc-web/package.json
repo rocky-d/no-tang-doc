@@ -2,7 +2,9 @@
   "name": "Web Document Repository",
   "version": "0.1.0",
   "private": true,
-  "engines": { "node": "22.x" },
+  "engines": {
+    "node": "22.x"
+  },
   "dependencies": {
     "@radix-ui/react-accordion": "^1.2.3",
     "@radix-ui/react-alert-dialog": "^1.1.6",
@@ -37,7 +39,7 @@
     "embla-carousel-react": "^8.6.0",
     "hono": "*",
     "input-otp": "^1.4.2",
-    "lucide-react": "^0.487.0",
+    "lucide-react": "^0.546.0",
     "next-themes": "^0.4.6",
     "react": "^18.3.1",
     "react-day-picker": "^8.10.1",

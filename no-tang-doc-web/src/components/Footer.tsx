@@ -17,42 +17,36 @@ export function Footer() {
               <a href="https://github.com/rocky-d/no-tang-doc" className="text-muted-foreground hover:text-foreground transition-colors">
                 <Github className="h-5 w-5" />
               </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a href="#" className="text-muted-foreground hover:text-foreground transition-colors">
-                <Linkedin className="h-5 w-5" />
-              </a>
+              {/*<a href="#" className="text-muted-foreground hover:text-foreground transition-colors">*/}
+              {/*  <Twitter className="h-5 w-5" />*/}
+              {/*</a>*/}
+              {/*<a href="#" className="text-muted-foreground hover:text-foreground transition-colors">*/}
+              {/*  <Linkedin className="h-5 w-5" />*/}
+              {/*</a>*/}
             </div>
           </div>
 
           <div>
             <h3 className="font-medium mb-4">Product</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Features</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Security</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">API</a></li>
+              <li><a href="/#features">Features</a></li>
+              <li><a href="/#performance">Performance</a></li>
+              <li><a href="/#agent">AI Agent</a></li>
+              <li><a href="http://api.ntdoc.site/swagger-ui.html" target="_blank" rel="noopener noreferrer">API</a></li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-medium mb-4">Support</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Help Center</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Contact Us</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Status</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Community</a></li>
+              <li><a href="mailto:chendoshowcn@gmail.com">Contact Us</a></li>
             </ul>
           </div>
 
           <div>
             <h3 className="font-medium mb-4">Company</h3>
             <ul className="space-y-2 text-sm">
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">About</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Blog</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Careers</a></li>
-              <li><a href="#" className="text-muted-foreground hover:text-foreground transition-colors">Privacy</a></li>
+              <li><a href="/#about">About</a></li>
             </ul>
           </div>
         </div>

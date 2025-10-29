@@ -2,8 +2,9 @@ import { useEffect, useState } from 'react';
 import { FileText, TrendingUp, Calendar, HardDrive } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+
 import { getAllDocuments } from '../utils/documentApi';
+import { http } from '../utils/request';
 
 interface Document {
   id: string;
@@ -16,31 +17,25 @@ interface Document {
   sizeBytes?: number; // raw size for accurate totals
 }
 
-interface DashboardOverviewProps {
-  documents: Document[];
+// Minimal LogEntry shape reused from LogsPage for success rate
+interface LogEntry {
+  operationStatus: 'SUCCESS' | 'FAILURE';
 }
 
-// Mock data for charts
-const monthlyData = [
-  { month: 'Sep', uploads: 8 },
-  { month: 'Oct', uploads: 12 },
-  { month: 'Nov', uploads: 15 },
-  { month: 'Dec', uploads: 18 },
-  { month: 'Jan', uploads: 22 },
-  { month: 'Feb', uploads: 25 }
-];
+interface DashboardOverviewProps {
+  readonly documents: Document[];
+}
 
-// const categoryData = [
-//   { name: 'Work', value: 40, color: '#8884d8' },
-//   { name: 'Finance', value: 30, color: '#82ca9d' },
-//   { name: 'Design', value: 20, color: '#ffc658' },
-//   { name: 'Personal', value: 10, color: '#ff7c7c' }
-// ];
+// Reuse LogsPage endpoint logic
+const LOGS_LIST_ALL = (import.meta.env as any).VITE_LOGS_LIST_ALL || '/api/v1/logs';
 
 export function DashboardOverview({ documents }: DashboardOverviewProps) {
   // Fetch real documents and prefer them over props
   const [apiDocs, setApiDocs] = useState<Document[]>([]);
-  const [loading, setLoading] = useState<boolean>(false);
+
+  // Success rate state (from logs API)
+  const [successRate, setSuccessRate] = useState<number | null>(null);
+  const [successLoading, setSuccessLoading] = useState<boolean>(false);
 
   useEffect(() => {
     let mounted = true;
@@ -50,21 +45,46 @@ export function DashboardOverview({ documents }: DashboardOverviewProps) {
         setApiDocs([]);
         return;
       }
-      setLoading(true);
       try {
         const docs = await getAllDocuments();
         if (!mounted) return;
         setApiDocs(docs);
       } catch (e) {
         console.warn('DashboardOverview: failed to load documents from API, falling back to props', e);
-      } finally {
-        if (mounted) setLoading(false);
       }
     })();
     return () => {
       mounted = false;
     };
   }, [documents]);
+
+  // Fetch logs and compute success rate (same logic as LogsPage)
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      setSuccessLoading(true);
+      try {
+        const resp: any = await http.get(LOGS_LIST_ALL);
+        const data = resp?.data ?? resp;
+        if (!Array.isArray(data)) {
+          console.warn('DashboardOverview: logs API returned non-array payload');
+          if (mounted) setSuccessRate(0);
+          return;
+        }
+        const logs = data as LogEntry[];
+        const total = logs.length;
+        const success = logs.filter(l => l.operationStatus === 'SUCCESS').length;
+        const rate = total > 0 ? Math.round((success / total) * 100) : 0;
+        if (mounted) setSuccessRate(rate);
+      } catch (e) {
+        console.warn('DashboardOverview: failed to load logs for success rate', e);
+        if (mounted) setSuccessRate(0);
+      } finally {
+        if (mounted) setSuccessLoading(false);
+      }
+    })();
+    return () => { mounted = false; };
+  }, []);
 
   const dataSource: Document[] = (documents && documents.length > 0) ? documents : apiDocs;
 
@@ -87,6 +107,11 @@ export function DashboardOverview({ documents }: DashboardOverviewProps) {
       .sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime())
       .slice(0, 3);
 
+  // Precompute success rate text (avoid nested ternary in JSX)
+  let successRateText: string;
+  if (successRate !== null) successRateText = `${successRate}%`;
+  else successRateText = successLoading ? '...' : '0%';
+
   return (
       <div className="space-y-6">
         {/* Overview Cards */}
@@ -98,9 +123,9 @@ export function DashboardOverview({ documents }: DashboardOverviewProps) {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </div>
               <div className="text-2xl font-bold">{totalDocuments}</div>
-              <p className="text-xs text-muted-foreground">
-                <span className="text-emerald-500">+2</span> from last month
-              </p>
+              {/*<p className="text-xs text-muted-foreground">*/}
+              {/*  <span className="text-emerald-500">+2</span> from last month*/}
+              {/*</p>*/}
             </CardContent>
           </Card>
 
@@ -112,7 +137,7 @@ export function DashboardOverview({ documents }: DashboardOverviewProps) {
               </div>
               <div className="text-2xl font-bold">{thisMonthUploads}</div>
               <p className="text-xs text-muted-foreground">
-                <span className="text-emerald-500">+12%</span> from last month
+                <span className="text-emerald-500">+{thisMonthUploads}</span> from last month
               </p>
             </CardContent>
           </Card>
@@ -134,12 +159,12 @@ export function DashboardOverview({ documents }: DashboardOverviewProps) {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between space-y-0 pb-2">
-                <h3 className="tracking-tight text-sm font-medium">Growth Rate</h3>
+                <h3 className="tracking-tight text-sm font-medium">Success Rate</h3>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </div>
-              <div className="text-2xl font-bold">+15%</div>
+              <div className="text-2xl font-bold">{successRateText}</div>
               <p className="text-xs text-muted-foreground">
-                Upload growth this quarter
+                Based on NTDoc Logs
               </p>
             </CardContent>
           </Card>
@@ -148,52 +173,7 @@ export function DashboardOverview({ documents }: DashboardOverviewProps) {
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Upload Trends */}
-          {/*<Card>*/}
-          {/*  <CardHeader>*/}
-          {/*    <CardTitle>Upload Trends</CardTitle>*/}
-          {/*  </CardHeader>*/}
-          {/*  <CardContent>*/}
-          {/*<ResponsiveContainer width="100%" height={300}>*/}
-          {/*  <BarChart data={monthlyData}>*/}
-          {/*    <CartesianGrid strokeDasharray="3 3" />*/}
-          {/*    <XAxis dataKey="month" />*/}
-          {/*    <YAxis />*/}
-          {/*    <Tooltip />*/}
-          {/*    <Bar dataKey="uploads" fill="#8884d8" />*/}
-          {/*  </BarChart>*/}
-          {/*</ResponsiveContainer>*/}
-          {/*  </CardContent>*/}
-          {/*</Card>*/}
-
-          {/* Category Distribution (temporarily hidden) */}
-          {/**
-           <Card>
-           <CardHeader>
-           <CardTitle>Category Distribution</CardTitle>
-           </CardHeader>
-           <CardContent>
-           <ResponsiveContainer width="100%" height={300}>
-           <PieChart>
-           <Pie
-           data={categoryData}
-           cx="50%"
-           cy="50%"
-           labelLine={false}
-           label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-           outerRadius={80}
-           fill="#8884d8"
-           dataKey="value"
-           >
-           {categoryData.map((entry, index) => (
-           <Cell key={`cell-${index}`} fill={entry.color} />
-           ))}
-           </Pie>
-           <Tooltip />
-           </PieChart>
-           </ResponsiveContainer>
-           </CardContent>
-           </Card>
-           */}
+          {/* Chart temporarily disabled */}
         </div>
 
         {/* Recent Documents */}

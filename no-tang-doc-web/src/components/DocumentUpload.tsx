@@ -4,7 +4,7 @@ import { Button } from "./ui/button";
 import { Progress } from "./ui/progress";
 import { Badge } from "./ui/badge";
 import { Upload, File, X, CheckCircle2 } from "lucide-react";
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 interface UploadedFile {
   id: string;
@@ -157,7 +157,7 @@ export function DocumentUpload() {
           <CardHeader>
             <CardTitle>Upload Files</CardTitle>
             <CardDescription>
-              Supported formats: PDF, DOC, DOCX, TXT, PPT, PPTX, XLS, XLSX (Max 10MB per file)
+              Supported formats: PDF, DOC, DOCX, TXT, MD/Markdown, PPT, PPTX, XLS, XLSX (Max 50MB per file)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -186,7 +186,7 @@ export function DocumentUpload() {
                 multiple
                 onChange={handleFileSelect}
                 className="hidden"
-                accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx"
+                accept=".pdf,.doc,.docx,.txt,.md,.markdown,.ppt,.pptx,.xls,.xlsx"
               />
             </div>
           </CardContent>
