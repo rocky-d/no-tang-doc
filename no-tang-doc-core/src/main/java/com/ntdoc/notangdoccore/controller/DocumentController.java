@@ -8,6 +8,7 @@ import com.ntdoc.notangdoccore.entity.logenum.ActorType;
 import com.ntdoc.notangdoccore.entity.logenum.OperationType;
 import com.ntdoc.notangdoccore.event.UserOperationEvent;
 import com.ntdoc.notangdoccore.service.DocumentService;
+import com.ntdoc.notangdoccore.service.DocumentTagService;
 import com.ntdoc.notangdoccore.service.UserSyncService;
 import com.ntdoc.notangdoccore.service.FileStorageService;
 import com.ntdoc.notangdoccore.service.impl.DigitalOceanSpacesService;
@@ -42,6 +43,7 @@ public class DocumentController {
     private final UserSyncService userSyncService;
 
     private final FileStorageService digitalOceanSpacesService;
+    private final DocumentTagService documentTagService;
 
     //文档上传
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -230,6 +232,111 @@ public class DocumentController {
             return ResponseEntity.internalServerError().body(
                     DocumentShareResponse.failure("generate share link failed")
             );
+        }
+    }
+
+    // Tag Function
+    /**
+     * Upload Document with Tags
+     */
+    @PostMapping("/upload-with-tags")
+    public ResponseEntity<ApiResponse<DocumentUploadResponse>> uploadDocumentsWithTags(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value="fileName",required = false) String fileName,
+            @RequestParam(value="description",required = false) String description,
+            @RequestParam(value="tags",required = false) List<String> tags,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        try {
+            String kcUserId = jwt.getClaimAsString("sub");
+            DocumentUploadResponse response =
+                    documentService.uploadDocument(file, fileName, description, kcUserId);
+
+            if (tags != null && !tags.isEmpty()) {
+                documentTagService.addTags(response.getDocumentId(), tags, kcUserId);
+            }
+
+            return ResponseEntity.ok(ApiResponse.success("文件上传并添加标签成功", response));
+        } catch (Exception e) {
+            log.error("Failed to upload document with tags", e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(500, "文件上传或标签添加失败: " + e.getMessage()));
+        }
+    }
+
+
+    /**
+     * Add Tags For ExistDocument
+     */
+    @PostMapping("/{documentId}/tags")
+    @Operation(summary = "为文档添加标签")
+    public ResponseEntity<ApiResponse<Document>> addTagsToDocument(
+            @PathVariable Long documentId,
+            @RequestBody List<String> tags,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        try {
+            String kcUserId = jwt.getClaimAsString("sub");
+            Document updated = documentTagService.addTags(documentId, tags, kcUserId);
+            return ResponseEntity.ok(ApiResponse.success("标签添加成功", updated));
+        } catch (Exception e) {
+            log.error("Failed to add tags for document {}", documentId, e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(500, "标签添加失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get All Tags in Document
+     */
+    @GetMapping("/{documentId}/tags")
+    @Operation(summary = "获取文档的所有标签")
+    public ResponseEntity<ApiResponse<List<String>>> getTagsByDocument(
+            @PathVariable Long documentId
+    ) {
+        List<String> tagNames = documentTagService.getTags(documentId)
+                .stream()
+                .map(com.ntdoc.notangdoccore.entity.Tag::getTag)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success("查询成功", tagNames));
+    }
+
+    /**
+     * Delete one tag in document
+     */
+    @DeleteMapping("/{documentId}/tags/{tagName}")
+    @Operation(summary = "删除文档标签")
+    public ResponseEntity<ApiResponse<Document>> removeTagFromDocument(
+            @PathVariable Long documentId,
+            @PathVariable String tagName,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        try {
+            String kcUserId = jwt.getClaimAsString("sub");
+            Document updated = documentTagService.removeTag(documentId, tagName, kcUserId);
+            return ResponseEntity.ok(ApiResponse.success("标签删除成功", updated));
+        } catch (Exception e) {
+            log.error("Failed to remove tag {} from document {}", tagName, documentId, e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(500, "标签删除失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * find document by Tag
+     */
+    @GetMapping("/by-tag/{tagName}")
+    @Operation(summary = "根据标签名获取文档列表")
+    public ResponseEntity<ApiResponse<?>> getDocumentsByTag(@PathVariable String tagName) {
+        try {
+            List<Document> docs = documentTagService.getDocumentsByTag(tagName);
+            DocumentListResponse response = DocumentListResponse.fromDocuments(docs);
+            return ResponseEntity.ok(ApiResponse.success("获取文档列表成功", response));
+        } catch (Exception e) {
+            log.error("Failed to get documents by tag '{}': {}", tagName, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(500, "查询失败: " + e.getMessage()));
         }
     }
 }
