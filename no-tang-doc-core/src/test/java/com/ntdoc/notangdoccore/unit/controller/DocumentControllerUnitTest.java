@@ -936,9 +936,8 @@ public class DocumentControllerUnitTest {
                 )
                 .andDo(print())
                 .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.code").value(500))
-                .andExpect(jsonPath("$.message").value("查询失败: 数据库查询失败"));
+                .andExpect(jsonPath("$.message").value("Get documents by tag fail: 数据库查询失败"));
 
         verify(tagService).getDocumentsByTag("AI");
     }

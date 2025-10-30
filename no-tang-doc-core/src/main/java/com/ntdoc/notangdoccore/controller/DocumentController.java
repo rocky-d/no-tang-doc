@@ -328,15 +328,15 @@ public class DocumentController {
      */
     @GetMapping("/by-tag/{tagName}")
     @Operation(summary = "根据标签名获取文档列表")
-    public ResponseEntity<ApiResponse<?>> getDocumentsByTag(@PathVariable String tagName) {
+    public ResponseEntity<DocumentListResponse> getDocumentsByTag(@PathVariable String tagName) {
         try {
             List<Document> docs = documentTagService.getDocumentsByTag(tagName);
             DocumentListResponse response = DocumentListResponse.fromDocuments(docs);
-            return ResponseEntity.ok(ApiResponse.success("获取文档列表成功", response));
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
             log.error("Failed to get documents by tag '{}': {}", tagName, e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error(500, "查询失败: " + e.getMessage()));
+                    .body(DocumentListResponse.error("Get documents by tag fail: " + e.getMessage()));
         }
     }
 }
