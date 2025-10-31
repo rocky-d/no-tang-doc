@@ -115,7 +115,7 @@ public class TeamController {
             return ResponseEntity.ok(ApiResponse.success("获取团队信息成功", response));
 
         } catch (RuntimeException e) {
-            log.warn("Team not found: teamId={}", teamId);
+            log.warn("Team not found: teamId={},{}", teamId,e.getMessage());
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error(404, "团队不存在"));
         } catch (Exception e) {

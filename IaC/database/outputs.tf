@@ -13,3 +13,15 @@ output "mysql_conn" {
   }
   sensitive = true
 }
+
+output "keycloak_db_connection" {
+  description = "Connection parameters for Keycloak PostgreSQL"
+  value = {
+    host     = digitalocean_database_cluster.keycloak-postgres-cluster.private_host
+    port     = 25060
+    database = digitalocean_database_db.ntdoc_keycloak.name
+    user     = "doadmin"
+    password = digitalocean_database_cluster.keycloak-postgres-cluster.password
+  }
+  sensitive = true
+}

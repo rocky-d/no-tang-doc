@@ -8,6 +8,7 @@ import com.ntdoc.notangdoccore.entity.logenum.ActorType;
 import com.ntdoc.notangdoccore.entity.logenum.OperationType;
 import com.ntdoc.notangdoccore.event.UserOperationEvent;
 import com.ntdoc.notangdoccore.service.DocumentService;
+import com.ntdoc.notangdoccore.service.DocumentTagService;
 import com.ntdoc.notangdoccore.service.UserSyncService;
 import com.ntdoc.notangdoccore.service.FileStorageService;
 import com.ntdoc.notangdoccore.service.impl.DigitalOceanSpacesService;
@@ -39,11 +40,10 @@ import java.util.List;
 @Tag(name = "文档管理", description = "文档上传、下载、删除等操作")
 public class DocumentController {
     private final DocumentService documentService;
-    //日志发布者
-    private final ApplicationEventPublisher eventPublisher;
     private final UserSyncService userSyncService;
 
     private final FileStorageService digitalOceanSpacesService;
+    private final DocumentTagService documentTagService;
 
     //文档上传
     @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -71,47 +71,16 @@ public class DocumentController {
 
             DocumentUploadResponse response = documentService.uploadDocument(file, fileName, description, kcUserId);
 
-            log.info("Document uploaded successfully: documentId={}, userId={}",
-                    response.getDocumentId(), kcUserId);
-
-            // 成功后记录上传成功的日志
-            User user = userSyncService.ensureFromJwt(jwt);
-            Long documentId = response.getDocumentId();
-            String username = jwt.getClaimAsString("preferred_username");
-
-
-            eventPublisher.publishEvent(
-                    UserOperationEvent.success(
-                            this,
-                            ActorType.USER,
-                            username,
-                            user.getId(),
-                            documentId,
-                            OperationType.UPLOAD_DOCUMENT,
-                            fileName
-                    )
-            );
+            if (response != null) {
+                log.info("Document uploaded successfully: documentId={}, userId={}",
+                        response.getDocumentId(), kcUserId);
+            }
 
             return ResponseEntity.ok(ApiResponse.success("文件上传成功", response));
 
         } catch (IllegalArgumentException e) {
             log.warn("Invalid upload request: {}", e.getMessage());
-            // 发布上传失败日志
-            String username = jwt.getClaimAsString("preferred_username");
 
-            User user = userSyncService.ensureFromJwt(jwt);
-
-            eventPublisher.publishEvent(
-                    UserOperationEvent.fail(
-                            this,
-                            ActorType.USER,
-                            username,
-                            user.getId(),
-                            OperationType.UPLOAD_DOCUMENT,
-                            fileName,
-                            e.getMessage()
-                    )
-            );
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error(400, "请求参数错误: " + e.getMessage()));
         } catch (Exception e) {
@@ -138,45 +107,11 @@ public class DocumentController {
 
             log.info("Download URL generated successfully for document: {}", documentId);
 
-            // 记录下载日志
-            String username = jwt.getClaimAsString("preferred_username");
-            String documentName = documentService.getDocumentById(documentId,kcUserId).getStoredFilename();
-            User user = userSyncService.ensureFromJwt(jwt);
-
-            eventPublisher.publishEvent(
-                    UserOperationEvent.success(
-                            this,
-                            ActorType.USER,
-                            username,
-                            user.getId(),
-                            documentId,
-                            OperationType.DOWNLOAD_DOCUMENT,
-                            documentName
-                    )
-            );
 
             return ResponseEntity.ok(ApiResponse.success("获取下载链接成功", response));
 
         } catch (SecurityException e) {
             log.warn("Access denied for document {}: {}", documentId, e.getMessage());
-
-            // 记录下载失败日志
-            String username = jwt.getClaimAsString("preferred_username");
-            String kcUserId = jwt.getClaimAsString("sub");
-            String documentName = documentService.getDocumentById(documentId,kcUserId).getStoredFilename();
-            User user = userSyncService.ensureFromJwt(jwt);
-
-            eventPublisher.publishEvent(
-                    UserOperationEvent.fail(
-                            this,
-                            ActorType.USER,
-                            username,
-                            user.getId(),
-                            OperationType.DOWNLOAD_DOCUMENT,
-                            documentName,
-                            e.getMessage()
-                    )
-            );
 
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(ApiResponse.error(403, "无权访问该文档: " + e.getMessage()));
@@ -187,7 +122,9 @@ public class DocumentController {
         }
     }
 
-    // 获取指定用户的所有文档，支持按状态过滤
+    /**
+     * 获取指定用户的所有文档，支持按状态过滤
+     */
     @GetMapping
     public ResponseEntity<DocumentListResponse> getUserDocuments(
             @AuthenticationPrincipal Jwt jwt,
@@ -207,45 +144,42 @@ public class DocumentController {
         return ResponseEntity.ok(response);
     }
 
-    // 删除指定文档
+    /**
+     * 删除指定文档
+     */
     @DeleteMapping("/{documentId}")
     public ResponseEntity<DeleteDocumentResponse> deleteDocument(
             @PathVariable Long documentId,
             @AuthenticationPrincipal Jwt jwt) {
-        String kcUserId = jwt.getClaimAsString("sub");
+        try{
+            String kcUserId = jwt.getClaimAsString("sub");
 
-        Document document = documentService.getDocumentById(documentId, kcUserId);
+            Document document = documentService.getDocumentById(documentId, kcUserId);
 
-        documentService.deleteDocument(documentId, kcUserId);
+            documentService.deleteDocument(documentId, kcUserId);
 
-        DeleteDocumentResponse response = DeleteDocumentResponse.builder()
-                .code(200)
-                .message("文档删除成功")
-                .documentId(documentId)
-                .fileName(document.getOriginalFilename()) //.fileName(jwt.getClaimAsString("filename"))
-                .deletedAt(Instant.now())
-                .permanent(false)
-                .recoveryDeadline(Instant.now().plusSeconds(30 * 24 * 3600)) // 30天恢复期
-                .build();
+            DeleteDocumentResponse response = DeleteDocumentResponse.builder()
+                    .code(200)
+                    .message("文档删除成功")
+                    .documentId(documentId)
+                    .fileName(document.getOriginalFilename()) //.fileName(jwt.getClaimAsString("filename"))
+                    .deletedAt(Instant.now())
+                    .permanent(false)
+                    .recoveryDeadline(Instant.now().plusSeconds(30 * 24 * 3600)) // 30天恢复期
+                    .build();
 
-        // 记录删除文档日志
-        String username = jwt.getClaimAsString("preferred_username");
-        String documentName =document.getStoredFilename();
-        User user = userSyncService.ensureFromJwt(jwt);
+            return ResponseEntity.ok(response);
+        }catch (Exception e) {
+            log.error("Failed to delete document: documentId={}",
+                    documentId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(DeleteDocumentResponse.builder()
+                            .code(500)
+                            .message("删除文档失败: " + e.getMessage())
+                            .documentId(documentId)
+                            .build());
+        }
 
-        eventPublisher.publishEvent(
-                UserOperationEvent.success(
-                        this,
-                        ActorType.USER,
-                        username,
-                        user.getId(),
-                        documentId,
-                        OperationType.DELETE_DOCUMENT,
-                        documentName
-                )
-        );
-
-        return ResponseEntity.ok(response);
 //        return ResponseEntity.noContent().build(); // HTTP 204
     }
 
@@ -304,4 +238,144 @@ public class DocumentController {
             );
         }
     }
+
+    // Tag Function
+    /**
+     * Upload Document with Tags
+     */
+    @PostMapping("/upload-with-tags")
+    public ResponseEntity<ApiResponse<DocumentUploadResponse>> uploadDocumentsWithTags(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam(value="fileName",required = false) String fileName,
+            @RequestParam(value="description",required = false) String description,
+            @RequestParam(value="tags",required = false) List<String> tags,
+            @AuthenticationPrincipal Jwt jwt
+    ){
+        try {
+            String kcUserId = jwt.getClaimAsString("sub");
+            DocumentUploadResponse response =
+                    documentService.uploadDocument(file, fileName, description, kcUserId);
+
+            if (tags != null && !tags.isEmpty()) {
+                documentTagService.addTags(response.getDocumentId(), tags, kcUserId);
+            }
+
+            return ResponseEntity.ok(ApiResponse.success("文件上传并添加标签成功", response));
+        } catch (Exception e) {
+            log.error("Failed to upload document with tags", e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(500, "文件上传或标签添加失败: " + e.getMessage()));
+        }
+    }
+
+
+    /**
+     * Add Tags For ExistDocument
+     */
+    @PostMapping("/{documentId}/tags")
+    @Operation(summary = "为文档添加标签")
+    public ResponseEntity<ApiResponse<Document>> addTagsToDocument(
+            @PathVariable Long documentId,
+            @RequestBody List<String> tags,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        try {
+            String kcUserId = jwt.getClaimAsString("sub");
+            Document updated = documentTagService.addTags(documentId, tags, kcUserId);
+            return ResponseEntity.ok(ApiResponse.success("标签添加成功", updated));
+        } catch (Exception e) {
+            log.error("Failed to add tags for document {}", documentId, e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(500, "标签添加失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * Get All Tags in Document
+     */
+    @GetMapping("/{documentId}/tags")
+    @Operation(summary = "获取文档的所有标签")
+    public ResponseEntity<ApiResponse<List<String>>> getTagsByDocument(
+            @PathVariable Long documentId
+    ) {
+        List<String> tagNames = documentTagService.getTags(documentId)
+                .stream()
+                .map(com.ntdoc.notangdoccore.entity.Tag::getTag)
+                .toList();
+
+        return ResponseEntity.ok(ApiResponse.success("查询成功", tagNames));
+    }
+
+    /**
+     * Delete one tag in document
+     */
+    @DeleteMapping("/{documentId}/tags/{tagName}")
+    @Operation(summary = "删除文档标签")
+    public ResponseEntity<ApiResponse<Document>> removeTagFromDocument(
+            @PathVariable Long documentId,
+            @PathVariable String tagName,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        try {
+            String kcUserId = jwt.getClaimAsString("sub");
+            Document updated = documentTagService.removeTag(documentId, tagName, kcUserId);
+            return ResponseEntity.ok(ApiResponse.success("标签删除成功", updated));
+        } catch (Exception e) {
+            log.error("Failed to remove tag {} from document {}", tagName, documentId, e);
+            return ResponseEntity.internalServerError()
+                    .body(ApiResponse.error(500, "标签删除失败: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * find document by Tag
+     */
+    @GetMapping("/by-tag/{tagName}")
+    @Operation(summary = "根据标签名获取文档列表")
+    public ResponseEntity<DocumentListResponse> getDocumentsByTag(@PathVariable String tagName) {
+        try {
+            List<Document> docs = documentTagService.getDocumentsByTag(tagName);
+            DocumentListResponse response = DocumentListResponse.fromDocuments(docs);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            log.error("Failed to get documents by tag '{}': {}", tagName, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(DocumentListResponse.error("Get documents by tag fail: " + e.getMessage()));
+        }
+    }
+    /**
+     * 根据文件名搜索文档
+     */
+    @GetMapping("/search")
+    public ResponseEntity<DocumentListResponse> searchByFilename(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam("keyword") String keyword
+    ) {
+        String kcUserId = jwt.getClaimAsString("sub");
+        List<Document> docs = documentService.searchDocumentsByFilename(kcUserId, keyword);
+        DocumentListResponse response = DocumentListResponse.fromDocuments(docs);
+        return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 根据所有者、文件类型、上传日期进行过滤
+     */
+    @GetMapping("/filter")
+    public ResponseEntity<DocumentListResponse> filterDocuments(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam(value = "contentType", required = false) String contentType,
+            @RequestParam(value = "startDate", required = false) String startDateStr,
+            @RequestParam(value = "endDate", required = false) String endDateStr
+    ) {
+        String kcUserId = jwt.getClaimAsString("sub");
+
+        Instant start = startDateStr != null ? Instant.parse(startDateStr) : null;
+        Instant end = endDateStr != null ? Instant.parse(endDateStr) : null;
+
+        List<Document> docs = documentService.filterDocuments(kcUserId, contentType, start, end);
+
+        DocumentListResponse response = DocumentListResponse.fromDocuments(docs);
+        return ResponseEntity.ok(response);
+    }
+
 }

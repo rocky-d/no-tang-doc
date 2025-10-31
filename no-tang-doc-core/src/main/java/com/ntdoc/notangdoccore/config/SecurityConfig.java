@@ -1,6 +1,7 @@
 package com.ntdoc.notangdoccore.config;
 
 import com.ntdoc.notangdoccore.security.KeycloakJwtGrantedAuthoritiesConverter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -23,10 +24,10 @@ import java.util.List;
 @Configuration
 @EnableMethodSecurity
 @EnableWebSecurity
-@EnableConfigurationProperties(KeycloakProperties.class)
+@EnableConfigurationProperties({KeycloakProperties.class, CorsProps.class})
 public class SecurityConfig {
-    @Value("${ntdoc.cors.allowed-origins:http://localhost:3000}")
-    private List<String> allowedOrigins;
+    @Autowired
+    private CorsProps corsProps;
 
     @Value("${spring.security.oauth2.client.registration.keycloak.client-id}")
     private String keycloakClientId;
@@ -40,13 +41,15 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(auth -> auth
                         // Public endpoints
-                        .requestMatchers("/actuator/health", "/actuator/info", "/api/public/**").permitAll()
+                        .requestMatchers("/actuator/health", "/actuator/info", "/api/public/**", "/actuator/prometheus").permitAll()
                         // Allow preflight CORS requests
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // JWT token exchange and refresh endpoints
                         .requestMatchers("/api/auth/**").permitAll() // JWT token exchange and refresh endpoints
                         // Swagger/OpenAPI endpoints
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/api-docs/**", "/v3/api-docs/**").permitAll()
+                        // Test endpoint will be removed
+                        .requestMatchers("/test", "/test/**").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
@@ -65,7 +68,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration cfg = new CorsConfiguration();
-        cfg.setAllowedOrigins(allowedOrigins);
+        cfg.setAllowedOrigins(corsProps.getAllowedOrigins());
         cfg.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
         cfg.setAllowedHeaders(List.of("Authorization","Content-Type","Accept"));
         cfg.setAllowCredentials(true);

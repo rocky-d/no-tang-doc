@@ -2,6 +2,11 @@ databaseChangeLog:
   - changeSet:
       id: 0011-create-team-member-table-20250117
       author: System
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: team_member
       changes:
         - createTable:
             tableName: team_member
@@ -102,4 +107,3 @@ databaseChangeLog:
             columns:
               - column:
                   name: status
-

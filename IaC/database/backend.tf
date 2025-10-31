@@ -7,7 +7,7 @@ terraform {
     }
 
     bucket = "ntdoc-tfstate-spaces"
-    key    = "ntdoc/mysql-cluster/mysql-cluster.tfstate" # 文件名和文件路径，可自定义
+    key    = "ntdoc/database-cluster/database-cluster.tfstate" # 文件名和文件路径，可自定义
 
     # 关闭 AWS 特有校验（Spaces 是 S3 兼容）
     skip_credentials_validation = true
