@@ -46,23 +46,33 @@ jobs:
           distribution: "oracle"
           cache: maven
 
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml', '**/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
       - name: Build (compile only)
-        run: mvn -B -U -DskipTests clean compile
+        run: mvn -B -DskipTests clean compile
 
       - name: Test + Converage
-        run: mvn -B -U -Dspring.profiles.active-test verify
+        run: mvn -B clean verify -Dspring.profiles.active=test
 
       - name: PMD
-        run: mvn -B -U pmd:pmd pmd:check
+        run: mvn -B pmd:pmd pmd:check
         continue-on-error: true
 
       - name: Checkstyle
-        run: mvn -B -U checkstyle:check
+        run: mvn -B checkstyle:check
         continue-on-error: true
 
       - name: Surefire HTML report
         if: always()
-        run: mvn -B -U surefire-report:report
+        run: mvn -B surefire-report:report
 
       - name: Upload JUnit & Jacoco reports
         if: always()
