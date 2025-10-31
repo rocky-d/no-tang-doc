@@ -10,6 +10,7 @@ import com.ntdoc.notangdoccore.dto.document.DocumentUploadResponse;
 import com.ntdoc.notangdoccore.entity.Document;
 import com.ntdoc.notangdoccore.entity.User;
 import com.ntdoc.notangdoccore.service.DocumentService;
+import com.ntdoc.notangdoccore.service.DocumentTagService;
 import com.ntdoc.notangdoccore.service.FileStorageService;
 import com.ntdoc.notangdoccore.service.UserSyncService;
 import lombok.extern.slf4j.Slf4j;
@@ -62,6 +63,9 @@ public class DocumentControllerUnitTest {
 
     @MockitoBean
     private FileStorageService fileStorageService;
+
+    @MockitoBean
+    private DocumentTagService tagService;
 
     @MockitoBean
     private ClientRegistrationRepository clientRegistrationRepository;
@@ -751,4 +755,300 @@ public class DocumentControllerUnitTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("generate share link failed"));
     }
+
+    // Tag Function Test
+    @Test
+    @Order(50)
+    @DisplayName("AddTagToDocument - Success")
+    void addTagToDocument_Success() throws Exception{
+        log.info("Test: Add Tags to Document - Success");
+
+        Document mockDocument = createMockDocument(100L, "tagged.pdf", testUser);
+
+        when(tagService.addTags(eq(100L), anyList(), eq("user-123")))
+                .thenReturn(mockDocument);
+
+        mockMvc.perform(
+                        post("/api/v1/documents/100/tags")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(List.of("AI", "Cloud")))
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("标签添加成功"));
+
+        verify(tagService).addTags(eq(100L), anyList(), eq("user-123"));
+    }
+
+    @Test
+    @Order(51)
+    @DisplayName("addTagsToDocument - Failure")
+    void addTagsToDocument_Failure() throws Exception {
+        log.info("Test: Add Tags to Document - Failure");
+
+        when(tagService.addTags(eq(100L), anyList(), eq("user-123")))
+                .thenThrow(new RuntimeException("数据库写入失败"));
+
+        mockMvc.perform(
+                        post("/api/v1/documents/100/tags")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(List.of("AI", "Cloud")))
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.message").value("标签添加失败: 数据库写入失败"));
+
+        verify(tagService).addTags(eq(100L), anyList(), eq("user-123"));
+    }
+
+    @Test
+    @Order(52)
+    @DisplayName("GetTagsByDocument - Success")
+    void getTagsByDocument_Success() throws Exception {
+        log.info("Test: Get Tags by Document - Success");
+
+        com.ntdoc.notangdoccore.entity.Tag tag1 = com.ntdoc.notangdoccore.entity.Tag.builder().id(1L).tag("AI").build();
+        com.ntdoc.notangdoccore.entity.Tag tag2 = com.ntdoc.notangdoccore.entity.Tag.builder().id(2L).tag("Cloud").build();
+
+        when(tagService.getTags(100L))
+                .thenReturn(List.of(tag1, tag2));
+
+        mockMvc.perform(
+                        get("/api/v1/documents/100/tags")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data[0]").value("AI"))
+                .andExpect(jsonPath("$.data[1]").value("Cloud"));
+
+        verify(tagService).getTags(100L);
+    }
+
+    /**
+     * 获取文档标签 - 空结果
+     */
+    @Test
+    @Order(53)
+    @DisplayName("getTagsByDocument - Empty")
+    void getTagsByDocument_Empty() throws Exception {
+        log.info("Test: Get Tags by Document - Empty");
+
+        when(tagService.getTags(200L)).thenReturn(List.of());
+
+        mockMvc.perform(
+                        get("/api/v1/documents/200/tags")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.data.length()").value(0));
+
+        verify(tagService).getTags(200L);
+    }
+
+    @Test
+    @Order(54)
+    @DisplayName("removeTagFromDocument - Success")
+    void removeTagFromDocument_Success() throws Exception {
+        log.info("Test: Remove Tag from Document - Success");
+
+        Document mockDocument = createMockDocument(100L, "tagged.pdf", testUser);
+
+        when(tagService.removeTag(100L, "AI", "user-123"))
+                .thenReturn(mockDocument);
+
+        mockMvc.perform(
+                        delete("/api/v1/documents/100/tags/AI")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("标签删除成功"));
+
+        verify(tagService).removeTag(100L, "AI", "user-123");
+    }
+    @Test
+    @Order(55)
+    @DisplayName("removeTagFromDocument - Failure")
+    void removeTagFromDocument_Failure() throws Exception {
+        log.info("Test: Remove Tag from Document - Failure");
+
+        when(tagService.removeTag(eq(100L), eq("AI"), eq("user-123")))
+                .thenThrow(new RuntimeException("标签不存在"));
+
+        mockMvc.perform(
+                        delete("/api/v1/documents/100/tags/AI")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("标签删除失败: 标签不存在"));
+
+        verify(tagService).removeTag(eq(100L), eq("AI"), eq("user-123"));
+    }
+    @Test
+    @Order(56)
+    @DisplayName("getDocumentsByTag - Success")
+    void getDocumentsByTag_Success() throws Exception {
+        log.info("Test: Get Documents by Tag - Success");
+
+        Document doc1 = createMockDocument(1L, "AI1.pdf", testUser);
+        Document doc2 = createMockDocument(2L, "AI2.pdf", testUser);
+
+        when(tagService.getDocumentsByTag("AI"))
+                .thenReturn(List.of(doc1, doc2));
+
+        mockMvc.perform(
+                        get("/api/v1/documents/by-tag/AI")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.documents[0].fileName").value("AI1.pdf"))
+                .andExpect(jsonPath("$.data.documents[1].fileName").value("AI2.pdf"));
+
+        verify(tagService).getDocumentsByTag("AI");
+    }
+
+    @Test
+    @Order(57)
+    @DisplayName("getDocumentsByTag - Failure")
+    void getDocumentsByTag_Failure() throws Exception {
+        log.info("Test: Get Documents by Tag - Failure");
+
+        when(tagService.getDocumentsByTag("AI"))
+                .thenThrow(new RuntimeException("数据库查询失败"));
+
+        mockMvc.perform(
+                        get("/api/v1/documents/by-tag/AI")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.message").value("Get documents by tag fail: 数据库查询失败"));
+
+        verify(tagService).getDocumentsByTag("AI");
+    }
+
+    @Test
+    @Order(58)
+    @DisplayName("uploadDocumentWithTags - Success")
+    void uploadDocumentWithTags_Success() throws Exception {
+        log.info("Test: Upload Document With Tags - Success");
+
+        DocumentUploadResponse mockResponse = DocumentUploadResponse.builder()
+                .documentId(100L)
+                .fileName("tagged_upload.pdf")
+                .fileSize(2048L)
+                .mimeType("application/pdf")
+                .s3Key("user-123/docs/tagged_upload.pdf")
+                .userId("user-123")
+                .description("desc")
+                .build();
+
+        when(documentService.uploadDocument(
+                any(),
+                eq("tagged_upload.pdf"),
+                eq("desc"),
+                eq("user-123"))
+        ).thenReturn(mockResponse);
+
+        Document mockDocument = Document.builder()
+                .id(100L)
+                .originalFilename("tagged_upload.pdf")
+                .description("desc")
+                .status(Document.DocumentStatus.ACTIVE)
+                .build();
+
+        when(tagService.addTags(eq(100L), anyList(), eq("user-123")))
+                .thenReturn(mockDocument);
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "tagged_upload.pdf",
+                MediaType.APPLICATION_PDF_VALUE,
+                "content".getBytes()
+        );
+
+        mockMvc.perform(
+                        multipart("/api/v1/documents/upload-with-tags")
+                                .file(file)
+                                .param("fileName", "tagged_upload.pdf")
+                                .param("description", "desc")
+                                .param("tags", "AI")
+                                .param("tags", "ML")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.message").value("文件上传并添加标签成功"))
+                .andExpect(jsonPath("$.data.documentId").value(100L))
+                .andExpect(jsonPath("$.data.fileName").value("tagged_upload.pdf"));
+
+        verify(documentService).uploadDocument(any(), eq("tagged_upload.pdf"), eq("desc"), eq("user-123"));
+        verify(tagService).addTags(eq(100L), anyList(), eq("user-123"));
+    }
+
+    @Test
+    @Order(59)
+    @DisplayName("uploadDocumentWithTags - TagFailure")
+    void uploadDocumentWithTags_TagFailure() throws Exception {
+        log.info("Test: Upload Document With Tags - Tag Failure");
+
+        DocumentUploadResponse mockResponse = DocumentUploadResponse.builder()
+                .documentId(200L)
+                .fileName("error_upload.pdf")
+                .fileSize(512L)
+                .mimeType("application/pdf")
+                .s3Key("user-123/docs/error_upload.pdf")
+                .userId("user-123")
+                .build();
+
+        when(documentService.uploadDocument(any(), eq("error_upload.pdf"), eq("desc"), eq("user-123")))
+                .thenReturn(mockResponse);
+
+        doThrow(new RuntimeException("标签写入失败"))
+                .when(tagService)
+                .addTags(eq(200L), anyList(), eq("user-123"));
+
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "error_upload.pdf",
+                MediaType.APPLICATION_PDF_VALUE,
+                "content".getBytes()
+        );
+
+        mockMvc.perform(
+                        multipart("/api/v1/documents/upload-with-tags")
+                                .file(file)
+                                .param("fileName", "error_upload.pdf")
+                                .param("description", "desc")
+                                .param("tags", "AI")
+                                .param("tags", "ML")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("文件上传或标签添加失败")));
+
+        verify(documentService).uploadDocument(any(), eq("error_upload.pdf"), eq("desc"), eq("user-123"));
+        verify(tagService).addTags(eq(200L), anyList(), eq("user-123"));
+    }
+
+
 }
