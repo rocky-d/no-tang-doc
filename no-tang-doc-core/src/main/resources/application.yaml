@@ -1,0 +1,105 @@
+server:
+  port: 8070
+
+spring:
+  profiles:
+    active: local
+  application:
+    name: no-tang-doc-core
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3305/notangdoc}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:root}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none      # none, validate, update, create, create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak:
+            client-id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
+            authorization-grant-type: authorization_code
+            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:http://localhost:3000/auth/callback}
+            scope: openid,profile,email
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:no-tang-doc-core-secret}
+        provider:
+          keycloak:
+            authorization-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/auth
+            token-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/token
+            user-info-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/userinfo
+            jwk-set-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/certs
+            issuer-uri: http://auth.local:8080/realms/ntdoc
+
+keycloak:
+  realm: ntdoc
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://auth.local:8080}
+  admin:
+    realm: master
+    username: ${KEYCLOAK_ADMIN_USERNAME:admin}
+    password: ${KEYCLOAK_ADMIN_PASSWORD:admin}
+  client:
+    id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
+    secret: ${KEYCLOAK_CLIENT_SECRET:no-tang-doc-core-secret}
+
+app:
+  file:
+    max-size: 52428800 # 50MB
+    allowed-types: pdf,doc,docx,txt,png,jpg,jpeg,gif,zip,rar
+    storage-path-pattern: documents/{userId}/{year}/{month}/
+    presigned-url-expiration: 900 # 15分钟
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,loggers
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    # org.hibernate.SQL: DEBUG
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+ntdoc:
+  auth:
+    allowed-redirect-uris:
+      - http://localhost:3000/auth/callback
+  cors:
+    allowed-origins:
+      - http://localhost:3000
+digitalocean:
+  spaces:
+    endpoint: https://sgp1.digitaloceanspaces.com
+    region: sgp1
+    bucket: test-object-storage
+    access-key: ${DO_SPACES_ACCESS_KEY:DO801QUMT7VE3VWUKQVC}
+    secret-key: ${DO_SPACES_SECRET_KEY:m4vJ09s0HH9K642/dMV77SiTtKE3ZFl2KGuTmOYBBK8}
+    public-url: https://test-object-storage.sgp1.digitaloceanspaces.com
+    cdn-url: https://test-object-storage.sgq1.cdn.digitaloceanspaces.com
+

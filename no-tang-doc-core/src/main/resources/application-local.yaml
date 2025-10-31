@@ -1,0 +1,82 @@
+server:
+  port: 8070
+
+spring:
+  application:
+    name: no-tang-doc-core
+  datasource:
+    url: jdbc:mysql://localhost:3305/notangdoc
+    username: root
+    password: root
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none      # none, validate, update, create, create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak:
+            client-id: no-tang-doc-core
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:3000/auth/callback
+            scope: openid,profile,email
+            client-secret: no-tang-doc-core-secret # 修改为你本地KeyClock的Client Secret
+        provider:
+          keycloak:
+            authorization-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/auth
+            token-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/token
+            user-info-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/userinfo
+            jwk-set-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/certs
+            issuer-uri: http://auth.local:8080/realms/ntdoc
+
+keycloak:
+  realm: ntdoc
+  auth-server-url: http://auth.local:8080
+  admin:
+    realm: master
+    username: admin
+    password: admin
+  client:
+    id: no-tang-doc-core
+    secret: no-tang-doc-core-secret
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,loggers
+  endpoint:
+    health:
+      show-details: when_authorized
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    # org.hibernate.SQL: DEBUG
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+
+ntdoc:
+  auth:
+    allowed-redirect-uris:
+      - http://localhost:3000/auth/callback
+  cors:
+    allowed-origins:
+      - http://localhost:3000

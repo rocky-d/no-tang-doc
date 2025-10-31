@@ -1,0 +1,54 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0008-update-log-table-251009
+      author: Zhong Yi
+      changes:
+        - addColumn:
+            tableName: log
+            columns:
+              - column:
+                  name: actor_name
+                  type: VARCHAR(50)
+        - renameColumn:
+            tableName: log
+            oldColumnName: timestamp
+            newColumnName: time
+            columnDataType: TIMESTAMP
+        - dropForeignKeyConstraint:
+            baseTableName: log
+            constraintName: fk_log_user_id
+
+        - addForeignKeyConstraint:
+            baseTableName: log
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_log_user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+      rollback:
+        - dropForeignKeyConstraint:
+            baseTableName: log
+            constraintName: fk_log_user_id
+
+        - renameColumn:
+            tableName: log
+            oldColumnName: time
+            newColumnName: timestamp
+            columnDataType: TIMESTAMP
+
+        - dropColumn:
+            tableName: log
+            columns:
+              - column:
+                  name: actor_name
+
+        - addForeignKeyConstraint:
+            baseTableName: log
+            baseColumnNames: uuser_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_log_user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE

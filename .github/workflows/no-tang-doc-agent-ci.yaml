@@ -1,0 +1,153 @@
+name: no-tang-doc-agent CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - mod/agent
+      - feat/agent/**
+    paths:
+      - 'no-tang-doc-agent/**'
+      - '.github/workflows/no-tang-doc-agent-ci.yaml'
+  pull_request:
+    branches:
+      - main
+      - dev
+      - mod/agent
+    paths:
+      - 'no-tang-doc-agent/**'
+
+defaults:
+  run:
+    working-directory: no-tang-doc-agent
+
+jobs:
+  lint:
+    name: Lint
+    # Skip CI when syncing between mod/agent and dev
+    if: |
+      !(
+        (github.head_ref == 'mod/agent' && github.base_ref == 'dev') ||
+        (github.head_ref == 'dev' && github.base_ref == 'mod/agent')
+      )
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Run ruff check
+        run: uv run ruff check src/ tests/ --output-format=github
+
+      - name: Run ruff format check
+        run: uv run ruff format --check src/ tests/
+
+  test:
+    name: Test
+    # Skip CI when syncing between mod/agent and dev
+    if: |
+      !(
+        (github.head_ref == 'mod/agent' && github.base_ref == 'dev') ||
+        (github.head_ref == 'dev' && github.base_ref == 'mod/agent')
+      )
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+
+      - name: Set up Python
+        run: uv python install
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Run tests with coverage
+        run: |
+          uv run pytest tests/test_mcp_server.py \
+            --cov=src/no_tang_doc_agent/mcp_server \
+            --cov-report=xml \
+            --cov-report=term-missing \
+            --cov-report=html
+
+      - name: Check coverage threshold
+        run: |
+          uv run pytest tests/test_mcp_server.py \
+            --cov=src/no_tang_doc_agent/mcp_server \
+            --cov-fail-under=90 \
+            --cov-report=term
+
+      - name: Upload coverage to Codecov (optional)
+        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+        uses: codecov/codecov-action@v4
+        with:
+          file: ./no-tang-doc-agent/coverage.xml
+          flags: agent,unittests
+          name: no-tang-doc-agent-coverage
+          fail_ci_if_error: false
+        continue-on-error: true
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-test-results
+          path: |
+            no-tang-doc-agent/coverage.xml
+            no-tang-doc-agent/coverage_html/
+          compression-level: 9
+
+      - name: Comment PR with coverage
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Read coverage percentage from coverage.xml
+            let coveragePercent = 'N/A';
+            try {
+              const coverageXml = fs.readFileSync('no-tang-doc-agent/coverage.xml', 'utf8');
+              const match = coverageXml.match(/line-rate="([0-9.]+)"/);
+              if (match) {
+                coveragePercent = (parseFloat(match[1]) * 100).toFixed(2) + '%';
+              }
+            } catch (error) {
+              console.log('Could not read coverage file:', error.message);
+            }
+            
+            const comment = `## 🧪 Agent Test Results
+            
+            ✅ Tests completed successfully!
+            
+            **Coverage**: ${coveragePercent}
+            **Target**: 90%
+            
+            📊 [View detailed coverage report in artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: comment
+            });
+        continue-on-error: true

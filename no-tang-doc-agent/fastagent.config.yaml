@@ -56,3 +56,5 @@ mcp:
         redirect_port: 3030
         redirect_path: /callback
         scope: ["mcp-user"]
+      headers:
+        Authorization: "Bearer <token>"
