@@ -33,9 +33,6 @@ EXPOSE 8002
 # Set PATH to include virtual environment binaries
 ENV PATH="/app/.venv/bin:$PATH"
 
-# Add src directory to PYTHONPATH
-ENV PYTHONPATH="/app/src:${PYTHONPATH}"
-
 # Configure Python to run in unbuffered mode for better logging
 ENV PYTHONUNBUFFERED=1
 
@@ -43,8 +40,8 @@ ENV PYTHONUNBUFFERED=1
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
     CMD python -c "import socket; s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', 8002)); s.close()" || exit 1
 
-# Use uv to run the application (this ensures proper environment)
-ENTRYPOINT ["uv", "run", "--frozen", "--no-dev", "python", "-m", "no_tang_doc_agent.mcp_server"]
+# Use uv to run the application via the defined script
+ENTRYPOINT ["uv", "run", "--frozen", "--no-dev", "no-tang-doc-agent-mcp-server"]
 
 # Default arguments (can be overridden)
 CMD ["--host", "0.0.0.0", "--port", "8002"]

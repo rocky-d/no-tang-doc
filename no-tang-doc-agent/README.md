@@ -27,12 +27,15 @@ uv sync
 ### Running Locally
 
 ```bash
-# Run the MCP server
-uv run python -m no_tang_doc_agent.mcp_server \
+# Run the MCP server using the defined script
+uv run no-tang-doc-agent-mcp-server \
   --base-url http://localhost:8070 \
   --host 0.0.0.0 \
   --port 8002 \
   --issuer-url http://auth.local:8080/realms/ntdoc
+
+# Or view help for all options
+uv run no-tang-doc-agent-mcp-server --help
 ```
 
 ### Running Tests
