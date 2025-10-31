@@ -151,3 +151,18 @@ jobs:
               body: comment
             });
         continue-on-error: true
+
+  deploy:
+    name: Deploy to DOKS
+    # Only deploy on push to dev or main branches after CI passes
+    if: |
+      github.event_name == 'push' &&
+      (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
+    needs: [lint, test]
+    uses: ./.github/workflows/deploy-agent-to-doks.yaml
+    with:
+      sha: ${{ github.sha }}
+      branch: ${{ github.ref_name }}
+    secrets:
+      DO_ACCESS_TOKEN: ${{ secrets.DO_ACCESS_TOKEN }}
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
