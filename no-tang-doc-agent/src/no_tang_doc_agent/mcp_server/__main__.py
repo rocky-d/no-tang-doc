@@ -1,3 +1,4 @@
+import click
 from mcp.server.auth.settings import AuthSettings
 from pydantic import AnyHttpUrl
 
@@ -8,16 +9,72 @@ from no_tang_doc_agent.mcp_server import (
     start_mcp_server,
 )
 
-if __name__ == "__main__":
-    apply_datetime_excepthook()
-    base_url = "http://localhost:8070"
-    name = "no-tang-doc-agent-mcp-server"
-    debug = True
-    log_level = "INFO"
-    host = "localhost"
-    port = 8002
-    issuer_url = "http://auth.local:8080/realms/ntdoc"
-    required_scopes = ["mcp-user"]
+
+@click.command()
+@click.option(
+    "--base-url",
+    default="http://localhost:8070",
+    help="Base URL for the MCP server",
+    show_default=True,
+)
+@click.option(
+    "--name",
+    default="no-tang-doc-agent-mcp-server",
+    help="Name of the MCP server",
+    show_default=True,
+)
+@click.option(
+    "--debug",
+    is_flag=True,
+    default=True,
+    help="Enable debug mode",
+    show_default=True,
+)
+@click.option(
+    "--log-level",
+    default="INFO",
+    type=click.Choice(
+        ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"], case_sensitive=False
+    ),
+    help="Logging level",
+    show_default=True,
+)
+@click.option(
+    "--host",
+    default="localhost",
+    help="Host address to bind the server",
+    show_default=True,
+)
+@click.option(
+    "--port",
+    default=8002,
+    type=int,
+    help="Port number to bind the server",
+    show_default=True,
+)
+@click.option(
+    "--issuer-url",
+    default="http://auth.local:8080/realms/ntdoc",
+    help="OAuth2/OIDC issuer URL",
+    show_default=True,
+)
+@click.option(
+    "--required-scopes",
+    multiple=True,
+    default=["mcp-user"],
+    help="Required OAuth2 scopes (can be specified multiple times)",
+    show_default=True,
+)
+def main(
+    base_url: str,
+    name: str,
+    debug: bool,
+    log_level: str,
+    host: str,
+    port: int,
+    issuer_url: str,
+    required_scopes: tuple[str, ...],
+) -> None:
     start_mcp_server(
         base_url=base_url,
         mcp_settings=FastMCPSettings(
@@ -30,7 +87,12 @@ if __name__ == "__main__":
             auth=AuthSettings(
                 issuer_url=AnyHttpUrl(issuer_url),
                 resource_server_url=AnyHttpUrl(f"http://{host}:{port}/mcp"),
-                required_scopes=required_scopes,
+                required_scopes=list(required_scopes),
             ),
         ),
     )
+
+
+if __name__ == "__main__":
+    apply_datetime_excepthook()
+    main()
