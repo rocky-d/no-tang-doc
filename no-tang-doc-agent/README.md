@@ -82,6 +82,8 @@ docker run -d \
   --host 0.0.0.0 \
   --port 8002 \
   --issuer-url https://auth.ntdoc.site/realms/ntdoc \
+  --required-scopes email \
+  --required-scopes profile \
   --required-scopes mcp-user
 ```
 
@@ -119,7 +121,7 @@ The MCP server accepts the following command-line options:
 | `--host` | `localhost` | Host address to bind the server |
 | `--port` | `8002` | Port number to bind the server |
 | `--issuer-url` | `http://auth.local:8080/realms/ntdoc` | OAuth2/OIDC issuer URL |
-| `--required-scopes` | `mcp-user` | Required OAuth2 scopes (can be specified multiple times) |
+| `--required-scopes` | `email`, `profile`, `mcp-user` | Required OAuth2 scopes (can be specified multiple times) |
 
 ### Environment Variables
 

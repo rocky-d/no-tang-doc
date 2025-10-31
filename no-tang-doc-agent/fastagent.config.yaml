@@ -50,11 +50,11 @@ mcp:
       url: "https://huggingface.co/mcp?login"
     no-tang-doc-agent-mcp-server:
       transport: http
-      url: http://localhost:8002/mcp
+      url: http://localhost:8004/mcp
       auth:
         oauth: true
         redirect_port: 3030
         redirect_path: /callback
-        # scope: ["mcp-user"]
+        # scope: ["email", "profile", "mcp-user"]
       # headers:
       #   Authorization: "Bearer <token>"

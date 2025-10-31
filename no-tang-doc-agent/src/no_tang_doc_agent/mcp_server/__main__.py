@@ -61,7 +61,7 @@ from no_tang_doc_agent.mcp_server import (
 @click.option(
     "--required-scopes",
     multiple=True,
-    default=["mcp-user"],
+    default=["email", "profile", "mcp-user"],
     help="Required OAuth2 scopes (can be specified multiple times)",
     show_default=True,
 )

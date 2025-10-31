@@ -26,7 +26,7 @@ services:
       
       # Keycloak OAuth2/OIDC configuration
       ISSUER_URL: ${ISSUER_URL:-https://auth.ntdoc.site/realms/ntdoc}
-      REQUIRED_SCOPES: ${REQUIRED_SCOPES:-mcp-user}
+      REQUIRED_SCOPES: ${REQUIRED_SCOPES:-email profile mcp-user}
     command:
       - "--base-url"
       - "${BASE_URL:-https://api.ntdoc.site}"
@@ -41,7 +41,7 @@ services:
       - "--issuer-url"
       - "${ISSUER_URL:-https://auth.ntdoc.site/realms/ntdoc}"
       - "--required-scopes"
-      - "${REQUIRED_SCOPES:-mcp-user}"
+      - "${REQUIRED_SCOPES:-email profile mcp-user}"
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', 8002)); s.close()"]
       interval: 30s

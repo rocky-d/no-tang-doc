@@ -70,7 +70,7 @@ config:
   HOST: "0.0.0.0"
   PORT: "8002"
   ISSUER_URL: "https://auth.ntdoc.site/realms/ntdoc"
-  REQUIRED_SCOPES: "mcp-user"
+  REQUIRED_SCOPES: "email profile mcp-user"
 
 # Sensitive configuration (Secret)
 # These will be injected via --set-string in the CD workflow

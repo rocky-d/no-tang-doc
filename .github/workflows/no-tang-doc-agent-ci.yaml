@@ -8,15 +8,15 @@ on:
       - mod/agent
       - feat/agent/**
     paths:
-      - 'no-tang-doc-agent/**'
-      - '.github/workflows/no-tang-doc-agent-ci.yaml'
+      - "no-tang-doc-agent/**"
+      - ".github/workflows/no-tang-doc-agent-ci.yaml"
   pull_request:
     branches:
       - main
       - dev
       - mod/agent
     paths:
-      - 'no-tang-doc-agent/**'
+      - "no-tang-doc-agent/**"
 
 defaults:
   run:
@@ -32,7 +32,6 @@ jobs:
         (github.head_ref == 'dev' && github.base_ref == 'mod/agent')
       )
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -63,7 +62,6 @@ jobs:
         (github.head_ref == 'dev' && github.base_ref == 'mod/agent')
       )
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -121,7 +119,7 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            
+
             // Read coverage percentage from coverage.xml
             let coveragePercent = 'N/A';
             try {
@@ -133,17 +131,17 @@ jobs:
             } catch (error) {
               console.log('Could not read coverage file:', error.message);
             }
-            
+
             const comment = `## 🧪 Agent Test Results
-            
+
             ✅ Tests completed successfully!
-            
+
             **Coverage**: ${coveragePercent}
             **Target**: 90%
-            
+
             📊 [View detailed coverage report in artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
             `;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -154,10 +152,17 @@ jobs:
 
   deploy:
     name: Deploy to DOKS
+    # Only Dev ci passed then do the push and deploy
+    if: >-
+      ${{
+        needs.ci.result == 'success' &&
+        contains(fromJson('["main","dev","mod/agent","feat/agent/NTDOC-77-MCP-Server"]'), github.ref_name) &&
+        github.event_name == 'push'
+      }}
     # Only deploy on push to dev or main branches after CI passes
-    if: |
-      github.event_name == 'push' &&
-      (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
+    # if: |
+    #   github.event_name == 'push' &&
+    #   (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
     needs: [lint, test]
     uses: ./.github/workflows/deploy-agent-to-doks.yaml
     with:
@@ -165,4 +170,4 @@ jobs:
       branch: ${{ github.ref_name }}
     secrets:
       DO_ACCESS_TOKEN: ${{ secrets.DO_ACCESS_TOKEN }}
-      KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }} # TODO
