@@ -59,6 +59,12 @@ from no_tang_doc_agent.mcp_server import (
     show_default=True,
 )
 @click.option(
+    "--resource-server-url",
+    default="https://agent.ntdoc.site/mcp",
+    help="Resource server URL",
+    show_default=True,
+)
+@click.option(
     "--required-scopes",
     multiple=True,
     default=["email", "profile", "mcp-user"],
@@ -73,6 +79,7 @@ def main(
     host: str,
     port: int,
     issuer_url: str,
+    resource_server_url: str,
     required_scopes: tuple[str, ...],
 ) -> None:
     start_mcp_server(
@@ -86,7 +93,7 @@ def main(
             token_verifier=JWTTokenVerifier(),
             auth=AuthSettings(
                 issuer_url=AnyHttpUrl(issuer_url),
-                resource_server_url=AnyHttpUrl(f"http://{host}:{port}/mcp"),
+                resource_server_url=AnyHttpUrl(resource_server_url),
                 required_scopes=list(required_scopes),
             ),
         ),
