@@ -64,13 +64,13 @@
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        Internet                              │
-└────────────────────────┬────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│                     Internet                     │
+└────────────────────────┬─────────────────────────┘
                          │
                 ┌────────▼────────┐
-                │  Load Balancer  │
-                │ 139.59.221.243  │
+                │      Load       │
+                │     Balancer    │
                 └────────┬────────┘
                          │
          ┌───────────────┼───────────────┐
@@ -80,14 +80,14 @@
     │ Service │    │ Service │    │ Service │
     └────┬────┘    └────┬────┘    └────┬────┘
          │              │              │
-         │         ┌────▼────┐    ┌────▼────┐
-         │         │   MCP   │    │  MySQL  │
-         │         │  Tools  │    │Database │
-         │         └─────────┘    └─────────┘
+         │         ┌────▼────┐    ┌────▼─────┐
+         │         │   MCP   │    │  MySQL   │
+         │         │  Tools  │    │ Database │
+         │         └─────────┘    └──────────┘
          │
     ┌────▼────────────────────────────────────┐
-    │         Keycloak Identity               │
-    │    OAuth 2.0 / OpenID Connect          │
+    │            Keycloak Identity            │
+    │       OAuth 2.0 / OpenID Connect        │
     └─────────────────────────────────────────┘
 ```
 
@@ -106,7 +106,7 @@
 
 ## Services
 
-### no-tang-doc-agent
+### no-tang-doc-agent (MCP Server)
 
 **MCP Server for LLM Integration**
 
@@ -122,7 +122,7 @@ The Agent service implements the Model Context Protocol (MCP), enabling Large La
   - `pyjwt` ≥ 2.10.1
   - `pyyaml` ≥ 6.0.3
 
-#### MCP Tools (20 Available)
+#### MCP Tools
 
 The agent exposes 20 tools for LLM interactions:
 
