@@ -36,7 +36,7 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
   const [localDocs, setLocalDocs] = useState<AppDocument[]>(documents || []);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   // Added: share dialog states
-  const [selectedDocument, setSelectedDocument] = useState<AppDocument | null>(null);
+  const [_selectedDocument, setSelectedDocument] = useState<AppDocument | null>(null);
   const [copied, setCopied] = useState(false);
   // New: share url + loading state
   const [shareUrl, setShareUrl] = useState<string>('');

@@ -75,7 +75,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [refreshToken, setRefreshToken] = useState<string | null>(null);
     const [accessExpiresAt, setAccessExpiresAt] = useState<number | null>(null);
-    const [refreshExpiresAt, setRefreshExpiresAt] = useState<number | null>(null);
+    const [_refreshExpiresAt, setRefreshExpiresAt] = useState<number | null>(null);
     const [idToken, setIdToken] = useState<string | undefined>(undefined);
     const [error, setError] = useState<string | null>(null);
     const refreshTimer = useRef<number | null>(null);

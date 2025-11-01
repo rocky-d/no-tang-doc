@@ -2,7 +2,7 @@ name: ntdoc-web-ci-and-push
 
 on:
   push:
-    branches: ["dev", "main", "mod/web", "feat/web/NTDOC-79-FE-Test"]
+    branches: ["dev", "main", "mod/web"]
     paths:
       - "no-tang-doc-web/**"
       - ".github/workflows/*.yml"
@@ -47,6 +47,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     needs: quality   # 👈 关键：必须等 quality 成功
+    if: ${{ needs.quality.result == 'success' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev') }}
     steps:
       - uses: actions/checkout@v4
 
