@@ -38,8 +38,15 @@ public class DocumentTagServiceImpl implements DocumentTagService {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("Document not found"));
 
-        tagRepository.findByTag(tagName).ifPresent(document::removeTag);
-        return documentRepository.save(document);
+        boolean removed =tagRepository.findByTag(tagName)
+                .map(tag -> document.getTags().remove(tag))
+                .orElse(false);
+
+        if (removed) {
+            return documentRepository.save(document);
+        }
+
+        return document;
     }
 
     @Override
