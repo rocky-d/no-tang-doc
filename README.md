@@ -521,58 +521,23 @@ Deployments are automatically triggered by:
 
 ## Contributing
 
-### Code Guidelines
+We welcome contributions! Please see [`CONTRIBUTING.md`](CONTRIBUTING.md) for detailed guidelines on:
 
-**General Principles**
-- Follow industry best practices
-- High cohesion, low coupling
-- Write clean, self-documenting code
-- Include comprehensive tests (95% coverage for Agent)
+- Code guidelines and best practices
+- Branch strategy and workflow
+- Commit message conventions
+- Pull request process
+- Testing requirements
+- Development environment setup
 
-**Agent Service Specific**
-- Python 3.13.7+
-- Use `uv` for all package management (no `pip` or `python` directly)
-- Follow Ruff linting rules
-- All code and comments in English
-- Use type hints for all functions
+**Quick Start for Contributors:**
+1. Fork the repository
+2. Create a feature branch (`feat/{module}/your-feature`)
+3. Make your changes with tests
+4. Follow commit message conventions
+5. Submit a pull request
 
-**Commit Messages**
-```
-<type>(<scope>): <subject>
-
-[optional body]
-
-[optional footer]
-```
-
-Types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `ci`
-
-Example:
-```
-feat(agent): Add workflow_dispatch support to CI workflow
-
-- Add manual trigger capability
-- Support ref parameter for custom checkout
-- Enable workflow reusability
-```
-
-### Pull Request Process
-
-1. Create feature branch from appropriate base
-2. Implement changes with tests
-3. Ensure CI passes (lint, test, coverage)
-4. Create PR with descriptive title and body
-5. Request review from team members
-6. Address review comments
-7. Merge after approval
-
-### Testing Requirements
-
-For detailed testing procedures and coverage requirements, please refer to service-specific README files.
-
-**Agent Service**
-- Unit test coverage: ≥95%
-- See [`no-tang-doc-agent/README.md`](no-tang-doc-agent/README.md) for testing guide
+For detailed instructions, please read [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ---
 
