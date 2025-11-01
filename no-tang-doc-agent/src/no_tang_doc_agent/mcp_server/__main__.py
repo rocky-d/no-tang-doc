@@ -1,3 +1,5 @@
+import logging
+
 import click
 from mcp.server.auth.settings import AuthSettings
 from pydantic import AnyHttpUrl
@@ -8,6 +10,8 @@ from no_tang_doc_agent.mcp_server import (
     JWTTokenVerifier,
     start_mcp_server,
 )
+
+logger = logging.getLogger(__name__)
 
 
 def _parse_required_scopes(ctx, param, value):
@@ -100,6 +104,15 @@ def main(
     resource_server_url: str,
     required_scopes: tuple[str, ...],
 ) -> None:
+    logger.info(f"{base_url=}")
+    logger.info(f"{name=}")
+    logger.info(f"{debug=}")
+    logger.info(f"{log_level=}")
+    logger.info(f"{host=}")
+    logger.info(f"{port=}")
+    logger.info(f"{issuer_url=}")
+    logger.info(f"{resource_server_url=}")
+    logger.info(f"{required_scopes=}")
     start_mcp_server(
         base_url=base_url,
         mcp_settings=FastMCPSettings(
