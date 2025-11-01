@@ -147,9 +147,13 @@ jobs:
 
   deploy:
     name: Deploy to DOKS
-    # Only deploy on push to main, dev, or mod/agent branches after CI passes
+    # Only deploy when:
+    # 1. Both lint and test jobs succeed (CI passes)
+    # 2. Push to protected branches: main, dev, or mod/agent
+    # 3. Push event (triggered after PR merge to protected branches)
     if: >-
       ${{
+        needs.lint.result == 'success' &&
         needs.test.result == 'success' &&
         contains(fromJson('["main","dev","mod/agent"]'), github.ref_name) &&
         github.event_name == 'push'
