@@ -147,17 +147,13 @@ jobs:
 
   deploy:
     name: Deploy to DOKS
-    # Only Dev ci passed then do the push and deploy
+    # Only deploy on push to main, dev, or mod/agent branches after CI passes
     if: >-
       ${{
         needs.test.result == 'success' &&
-        contains(fromJson('["main","dev","mod/agent","feat/agent/NTDOC-77-MCP-Server"]'), github.ref_name) &&
+        contains(fromJson('["main","dev","mod/agent"]'), github.ref_name) &&
         github.event_name == 'push'
       }}
-    # Only deploy on push to dev or main branches after CI passes
-    # if: |
-    #   github.event_name == 'push' &&
-    #   (github.ref == 'refs/heads/dev' || github.ref == 'refs/heads/main')
     needs: [lint, test]
     uses: ./.github/workflows/deploy-agent-to-doks.yaml
     with:
