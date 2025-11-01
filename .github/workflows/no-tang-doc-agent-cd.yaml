@@ -14,9 +14,25 @@ on:
     secrets:
       DO_ACCESS_TOKEN:
         required: true
+      DOKS_CLUSTER_NAME:
+        required: true
       KEYCLOAK_CLIENT_SECRET:
         required: false
-
+  workflow_dispatch:
+    inputs:
+      sha:
+        description: Commit SHA to build (leave empty for latest commit on selected branch)
+        required: false
+        type: string
+      branch:
+        description: Branch to deploy from
+        required: true
+        type: choice
+        options:
+          - main
+          - dev
+          - mod/agent
+        default: dev
 
 env:
   REGISTRY: registry.digitalocean.com
@@ -38,13 +54,30 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.TAG }}
+      sha: ${{ steps.resolve-sha.outputs.SHA }}
     steps:
-      - name: Checkout at input commit
+      - name: Resolve SHA and Branch
+        id: resolve-sha
+        run: |
+          # For workflow_dispatch, use input SHA or fetch latest from branch
+          # For workflow_call, use provided SHA
+          if [ -n "${{ inputs.sha }}" ]; then
+            echo "SHA=${{ inputs.sha }}" >> "$GITHUB_OUTPUT"
+            echo "BRANCH=${{ inputs.branch }}" >> "$GITHUB_OUTPUT"
+          else
+            # Fetch latest commit SHA from the selected branch
+            LATEST_SHA=$(git ls-remote https://github.com/${{ github.repository }} refs/heads/${{ inputs.branch }} | cut -f1)
+            echo "SHA=${LATEST_SHA}" >> "$GITHUB_OUTPUT"
+            echo "BRANCH=${{ inputs.branch }}" >> "$GITHUB_OUTPUT"
+            echo "Using latest commit from branch ${{ inputs.branch }}: ${LATEST_SHA}"
+          fi
+
+      - name: Checkout at resolved commit
         uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.sha }}
+          ref: ${{ steps.resolve-sha.outputs.SHA }}
 
-      - name: Setup doctl
+      - name: Set up doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DO_ACCESS_TOKEN }}
@@ -52,13 +85,13 @@ jobs:
       - name: Docker login to DOCR via doctl
         run: doctl registry login
 
-      - name: Setup Buildx
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Compute tag
         id: meta
         run: |
-          short="${{ inputs.sha }}" ; short="${short::7}"
+          short="${{ steps.resolve-sha.outputs.SHA }}" ; short="${short::7}"
           if [ "${{ inputs.branch }}" = "main" ]; then
             echo "TAG=sha-${short}" >> "$GITHUB_OUTPUT"
             echo "EXTRA=latest" >> "$GITHUB_OUTPUT"
@@ -79,14 +112,25 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Summary
+        run: |
+          echo "### 🚀 Build Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ inputs.branch }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ steps.resolve-sha.outputs.SHA }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image Tags**:" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.TAG }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "  - \`${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.EXTRA }}\`" >> $GITHUB_STEP_SUMMARY
+
   deploy:
     name: Deploy
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Setup doctl
+      - name: Set up doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DO_ACCESS_TOKEN }}
@@ -103,7 +147,7 @@ jobs:
             --type=kubernetes.io/dockerconfigjson \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Setup Helm
+      - name: Set up Helm
         uses: azure/setup-helm@v4
 
       - name: Helm upgrade/install
@@ -120,3 +164,14 @@ jobs:
       - name: Show resources
         run: |
           kubectl -n "${{ env.NAMESPACE }}" get deploy,svc,ingress
+
+      - name: Deployment Summary
+        run: |
+          echo "### ✅ Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Namespace**: ${{ env.NAMESPACE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Release**: ${{ env.RELEASE }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Image**: \`${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.tag }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Ingress Host**: https://${{ env.INGRESS_HOST }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🌐 **Service URL**: https://${{ env.INGRESS_HOST }}/mcp" >> $GITHUB_STEP_SUMMARY
