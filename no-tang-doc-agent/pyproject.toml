@@ -6,10 +6,13 @@ readme = "README.md"
 authors = [{ name = "Rocky Haotian Du", email = "2712479005@qq.com" }]
 requires-python = ">=3.13.5,<3.14"
 dependencies = [
-    "fast-agent-mcp>=0.3.17",
+    "fast-agent-mcp>=0.3.18",
     "mcp[cli]>=1.19.0",
     "pyjwt>=2.10.1",
 ]
+
+[project.scripts]
+no-tang-doc-agent-mcp-server = "no_tang_doc_agent.mcp_server.__main__:main"
 
 [tool.uv]
 package = true

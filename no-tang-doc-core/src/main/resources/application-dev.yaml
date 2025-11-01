@@ -1,0 +1,104 @@
+server:
+  port: 8070
+
+spring:
+  application:
+    name: no-tang-doc-core
+  datasource:
+    url: ${SPRING_DATASOURCE_URL}
+    username: ${SPRING_DATASOURCE_USERNAME}
+    password: ${SPRING_DATASOURCE_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none      # none, validate, update, create, create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+  liquibase:
+    enabled: true
+    change-log: classpath:/db/changelog/db.changelog-master.yaml
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/certs
+      client:
+        registration:
+          keycloak:
+            client-id: no-tang-doc-core
+            authorization-grant-type: authorization_code
+            redirect-uri: https://ntdoc.site/auth/callback
+            scope: openid,profile,email
+            client-secret: ${KEYCLOAK_CLIENT_SECRET:no-tang-doc-core-secret}
+        provider:
+          keycloak:
+            authorization-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/auth
+            token-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/token
+            user-info-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/userinfo
+            jwk-set-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/certs
+            issuer-uri: https://auth.ntdoc.site/realms/ntdoc
+
+keycloak:
+  realm: ntdoc
+  auth-server-url: https://auth.ntdoc.site
+  admin:
+    realm: master
+    username: ${KEYCLOAK_ADMIN_USERNAME}
+    password: ${KEYCLOAK_ADMIN_PASSWORD}
+  client:
+    id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
+    secret: ${KEYCLOAK_CLIENT_SECRET:no-tang-doc-core-secret}
+
+app:
+  file:
+    max-size: 52428800 # 50MB
+    allowed-types: pdf,doc,docx,txt,png,jpg,jpeg,gif,zip,rar
+    storage-path-pattern: documents/{userId}/{year}/{month}/
+    presigned-url-expiration: 900 # 15分钟
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,env,beans,loggers,prometheus
+  endpoint:
+    health:
+      show-details: when_authorized
+    prometheus:
+      access: unrestricted
+
+logging:
+  level:
+    root: INFO
+    org.springframework.security: INFO
+    # org.hibernate.SQL: DEBUG
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    enabled: true
+ntdoc:
+  auth:
+    allowed-redirect-uris:
+      - https://ntdoc.site/auth/callback
+  cors:
+    allowed-origins:
+      - https://ntdoc.site
+digitalocean:
+  spaces:
+    endpoint: https://sgp1.digitaloceanspaces.com
+    region: sgp1
+    bucket: ntdoc-docs
+    access-key: ${DO_SPACES_ACCESS_KEY}
+    secret-key: ${DO_SPACES_SECRET_KEY}
+    public-url: https://ntdoc-docs.sgp1.digitaloceanspaces.com
+

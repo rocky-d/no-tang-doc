@@ -13,7 +13,7 @@ def _datetime_excepthook(
     exc_value: BaseException,
     exc_traceback: TracebackType | None,
 ) -> None:
-    print(dt.datetime.now(), file=sys.stderr)
+    print(f"[{dt.datetime.now()}]", end=" ", file=sys.stderr)
     tb.print_exception(exc_type, exc_value, exc_traceback)
 
 

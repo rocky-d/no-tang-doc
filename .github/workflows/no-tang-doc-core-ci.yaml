@@ -18,7 +18,7 @@ on:
       - feat/core/NTDOC-11-Setup-CI-CD-pipeline
     paths:
       - 'no-tang-doc-core/**'
-
+  workflow_dispatch: {}
 defaults:
   run:
     working-directory: no-tang-doc-core
@@ -96,3 +96,19 @@ jobs:
             no-tang-doc-core/target/checkstyle-result.xml
             no-tang-doc-core/target/site/checkstyle.html
           compression-level: 9
+  push-to-docr:
+    name: Push image to DOCR
+    needs: ci
+    # Only Dev ci passed then do the push and deploy
+#    if: >-
+#      ${{
+#        needs.ci.result == 'success' &&
+#        contains(fromJson('["main","dev","mod/core","feat/core/NTDOC-11-Setup-CI-CD-pipeline","feat/core/doks-deploy-test"]'), github.ref_name) &&
+#        github.event_name == 'push'
+#      }}
+    if: ${{ needs.ci.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/dev' }}
+    uses: ./.github/workflows/deploy-to-doks.yaml
+    with:
+      sha: ${{ github.sha }}
+      branch: ${{ github.ref_name }}
+    secrets: inherit

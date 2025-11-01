@@ -8,15 +8,16 @@ on:
       - mod/agent
       - feat/agent/**
     paths:
-      - 'no-tang-doc-agent/**'
-      - '.github/workflows/no-tang-doc-agent-ci.yaml'
+      - "no-tang-doc-agent/**"
+      - ".github/workflows/no-tang-doc-agent-ci.yaml"
+      - ".github/workflows/no-tang-doc-agent-cd.yaml"
   pull_request:
     branches:
       - main
       - dev
       - mod/agent
     paths:
-      - 'no-tang-doc-agent/**'
+      - "no-tang-doc-agent/**"
 
 defaults:
   run:
@@ -32,7 +33,6 @@ jobs:
         (github.head_ref == 'dev' && github.base_ref == 'mod/agent')
       )
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -63,7 +63,6 @@ jobs:
         (github.head_ref == 'dev' && github.base_ref == 'mod/agent')
       )
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -81,18 +80,13 @@ jobs:
 
       - name: Run tests with coverage
         run: |
-          uv run pytest tests/test_mcp_server.py \
+          uv run pytest tests/ \
             --cov=src/no_tang_doc_agent/mcp_server \
             --cov-report=xml \
             --cov-report=term-missing \
-            --cov-report=html
-
-      - name: Check coverage threshold
-        run: |
-          uv run pytest tests/test_mcp_server.py \
-            --cov=src/no_tang_doc_agent/mcp_server \
-            --cov-fail-under=90 \
-            --cov-report=term
+            --cov-report=html \
+            --cov-fail-under=95 \
+            --cov-branch
 
       - name: Upload coverage to Codecov (optional)
         if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
@@ -121,7 +115,7 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            
+
             // Read coverage percentage from coverage.xml
             let coveragePercent = 'N/A';
             try {
@@ -133,17 +127,17 @@ jobs:
             } catch (error) {
               console.log('Could not read coverage file:', error.message);
             }
-            
+
             const comment = `## 🧪 Agent Test Results
-            
+
             ✅ Tests completed successfully!
-            
+
             **Coverage**: ${coveragePercent}
-            **Target**: 90%
-            
+            **Target**: 95% (excludes \`__main__.py\` entry points)
+
             📊 [View detailed coverage report in artifacts](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
             `;
-            
+
             github.rest.issues.createComment({
               issue_number: context.issue.number,
               owner: context.repo.owner,
@@ -151,3 +145,23 @@ jobs:
               body: comment
             });
         continue-on-error: true
+
+  deploy:
+    name: Deploy to DOKS
+    # Only deploy when:
+    # 1. Both lint and test jobs succeed (CI passes)
+    # 2. Push to protected branches: main, dev, or mod/agent
+    # 3. Push event (triggered after PR merge to protected branches)
+    if: >-
+      ${{
+        needs.lint.result == 'success' &&
+        needs.test.result == 'success' &&
+        contains(fromJson('["main","dev","mod/agent"]'), github.ref_name) &&
+        github.event_name == 'push'
+      }}
+    needs: [lint, test]
+    uses: ./.github/workflows/no-tang-doc-agent-cd.yaml
+    with:
+      sha: ${{ github.sha }}
+      branch: ${{ github.ref_name }}
+    secrets: inherit

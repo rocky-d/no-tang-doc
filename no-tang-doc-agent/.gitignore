@@ -11,5 +11,5 @@ node_modules/
 .coverage
 coverage.xml
 
-/fastagent.jsonl
-/fastagent.secrets.yaml
+fastagent.jsonl
+fastagent.secrets.yaml

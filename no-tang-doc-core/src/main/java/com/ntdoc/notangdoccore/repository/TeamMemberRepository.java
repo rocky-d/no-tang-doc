@@ -49,5 +49,17 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
      * 根据团队和角色查找成员
      */
     List<TeamMember> findByTeamAndRole(Team team, TeamMember.TeamRole role);
-}
 
+    /**
+     * 检查用户是否是团队成员且具有指定角色之一
+     */
+    @Query("SELECT CASE WHEN COUNT(tm) > 0 THEN true ELSE false END " +
+           "FROM TeamMember tm " +
+           "WHERE tm.team = :team AND tm.user = :user AND tm.role IN :roles AND tm.status = :status")
+    boolean existsByTeamAndUserAndRoleInAndStatus(
+            @Param("team") Team team,
+            @Param("user") User user,
+            @Param("roles") List<TeamMember.TeamRole> roles,
+            @Param("status") TeamMember.MemberStatus status
+    );
+}

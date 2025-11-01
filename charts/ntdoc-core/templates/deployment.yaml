@@ -1,0 +1,86 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ntdoc-core.fullname" . }}
+  labels:
+    {{- include "ntdoc-core.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      {{- include "ntdoc-core.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 25%
+  template:
+    metadata:
+      labels:
+        {{- include "ntdoc-core.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
+      {{- end }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+
+          # 把 Secret + ConfigMap 全量注入为环境变量
+          envFrom:
+            - secretRef:
+                name: {{ include "ntdoc-core.fullname" . }}-secrets
+            - configMapRef:
+                name: {{ include "ntdoc-core.fullname" . }}-config
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          {{- if and .Values.probes .Values.probes.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ default "/actuator/health" .Values.probes.readinessPath }}
+              port: http
+            initialDelaySeconds: {{ default 10 .Values.probes.initialDelaySeconds }}
+            periodSeconds: {{ default 10 .Values.probes.periodSeconds }}
+            timeoutSeconds: {{ default 2 .Values.probes.timeoutSeconds }}
+            failureThreshold: 3
+
+          livenessProbe:
+            httpGet:
+              path: {{ default "/actuator/health" .Values.probes.livenessPath }}
+              port: http
+            initialDelaySeconds: {{ default 30 .Values.probes.livenessInitialDelaySeconds }}
+            periodSeconds: {{ default 20 .Values.probes.livenessPeriodSeconds }}
+            timeoutSeconds: {{ default 2 .Values.probes.timeoutSeconds }}
+            failureThreshold: 3
+          {{- end }}
+
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
+
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}

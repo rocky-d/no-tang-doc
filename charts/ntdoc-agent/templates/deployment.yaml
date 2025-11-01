@@ -1,0 +1,95 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "ntdoc-agent.fullname" . }}
+  labels:
+    {{- include "ntdoc-agent.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      {{- include "ntdoc-agent.selectorLabels" . | nindent 6 }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 25%
+  template:
+    metadata:
+      labels:
+        {{- include "ntdoc-agent.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- if .Values.serviceAccount.name }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.imagePullSecrets }}
+        - name: {{ .name }}
+      {{- end }}
+      {{- end }}
+
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: {{ .Values.containerPort }}
+              protocol: TCP
+
+          # Inject Secret + ConfigMap as environment variables
+          envFrom:
+            {{- if .Values.secrets }}
+            - secretRef:
+                name: {{ include "ntdoc-agent.fullname" . }}
+            {{- end }}
+            - configMapRef:
+                name: {{ include "ntdoc-agent.fullname" . }}
+
+          # MCP server command arguments
+          args:
+            - "--base-url"
+            - "$(BASE_URL)"
+            - "--name"
+            - "$(SERVER_NAME)"
+            - "--log-level"
+            - "$(LOG_LEVEL)"
+            - "--host"
+            - "$(HOST)"
+            - "--port"
+            - "$(PORT)"
+            - "--issuer-url"
+            - "$(ISSUER_URL)"
+            - "--resource-server-url"
+            - "$(RESOURCE_SERVER_URL)"
+            - "--required-scopes"
+            - "$(REQUIRED_SCOPES)"
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+          {{- if and .Values.probes .Values.probes.enabled }}
+          readinessProbe:
+            {{- toYaml .Values.probes.readinessProbe | nindent 12 }}
+
+          livenessProbe:
+            {{- toYaml .Values.probes.livenessProbe | nindent 12 }}
+          {{- end }}
+
+      {{- if .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      {{- end }}
+
+      {{- if .Values.tolerations }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+      {{- end }}
+
+      {{- if .Values.affinity }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      {{- end }}

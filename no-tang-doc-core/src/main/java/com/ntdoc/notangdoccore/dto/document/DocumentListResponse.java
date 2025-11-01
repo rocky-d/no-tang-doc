@@ -63,4 +63,12 @@ public class DocumentListResponse {
                 .data(Data.builder().documents(items).build())
                 .build();
     }
+
+    public static DocumentListResponse error(String message) {
+        return DocumentListResponse.builder()
+                .code(500)
+                .message(message)
+                .data(Data.builder().build())
+                .build();
+    }
 }

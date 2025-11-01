@@ -74,6 +74,7 @@ public class DigitalOceanSpacesService implements FileStorageService {
             GetObjectRequest getRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(s3Key)
+                    .responseContentDisposition("attachment")
                     .build();
 
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()

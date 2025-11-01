@@ -1,0 +1,53 @@
+# Simplified Docker Compose for testing agent service only
+# This configuration runs agent independently for quick testing
+
+services:
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: 3.13
+    image: no-tang-doc-agent:latest
+    container_name: no-tang-doc-agent-test
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      # Base URL pointing to external or mock API
+      BASE_URL: ${BASE_URL:-https://api.ntdoc.site}
+      
+      # MCP Server configuration
+      SERVER_NAME: ${SERVER_NAME:-no-tang-doc-agent-mcp-server}
+      DEBUG: ${DEBUG:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      HOST: ${HOST:-0.0.0.0}
+      PORT: ${PORT:-8002}
+      
+      # Keycloak OAuth2/OIDC configuration
+      ISSUER_URL: ${ISSUER_URL:-https://auth.ntdoc.site/realms/ntdoc}
+      RESOURCE_SERVER_URL: ${RESOURCE_SERVER_URL:-https://agent.ntdoc.site/mcp}
+      REQUIRED_SCOPES: ${REQUIRED_SCOPES:-email profile mcp-user}
+    command:
+      - "--base-url"
+      - "${BASE_URL:-https://api.ntdoc.site}"
+      - "--name"
+      - "${SERVER_NAME:-no-tang-doc-agent-mcp-server}"
+      - "--log-level"
+      - "${LOG_LEVEL:-INFO}"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8002"
+      - "--issuer-url"
+      - "${ISSUER_URL:-https://auth.ntdoc.site/realms/ntdoc}"
+      - "--resource-server-url"
+      - "${RESOURCE_SERVER_URL:-https://agent.ntdoc.site/mcp}"
+      - "--required-scopes"
+      - "${REQUIRED_SCOPES:-email profile mcp-user}"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', 8002)); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
