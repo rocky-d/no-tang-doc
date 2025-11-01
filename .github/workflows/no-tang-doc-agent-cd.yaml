@@ -76,7 +76,7 @@ jobs:
         with:
           ref: ${{ steps.resolve-sha.outputs.SHA }}
 
-      - name: Setup doctl
+      - name: Set up doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DO_ACCESS_TOKEN }}
@@ -84,7 +84,7 @@ jobs:
       - name: Docker login to DOCR via doctl
         run: doctl registry login
 
-      - name: Setup Buildx
+      - name: Set up Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Compute tag
@@ -126,9 +126,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-      - name: Setup doctl
+      - name: Set up doctl
         uses: digitalocean/action-doctl@v2
         with:
           token: ${{ secrets.DO_ACCESS_TOKEN }}
@@ -145,7 +146,7 @@ jobs:
             --type=kubernetes.io/dockerconfigjson \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      - name: Setup Helm
+      - name: Set up Helm
         uses: azure/setup-helm@v4
 
       - name: Helm upgrade/install

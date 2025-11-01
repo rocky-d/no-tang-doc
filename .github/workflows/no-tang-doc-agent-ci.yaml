@@ -27,13 +27,13 @@ defaults:
 jobs:
   lint:
     name: Lint
+    runs-on: ubuntu-latest
     # Skip CI when syncing between mod/agent and dev
     if: |
       !(
         (github.head_ref == 'mod/agent' && github.base_ref == 'dev') ||
         (github.head_ref == 'dev' && github.base_ref == 'mod/agent')
       )
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -57,13 +57,13 @@ jobs:
 
   test:
     name: Test
+    runs-on: ubuntu-latest
     # Skip CI when syncing between mod/agent and dev
     if: |
       !(
         (github.head_ref == 'mod/agent' && github.base_ref == 'dev') ||
         (github.head_ref == 'dev' && github.base_ref == 'mod/agent')
       )
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -149,18 +149,16 @@ jobs:
 
   deploy:
     name: Deploy to DOKS
+    needs: [lint, test]
     # Only deploy when:
     # 1. Both lint and test jobs succeed (CI passes)
     # 2. Push to protected branches: main, dev, or mod/agent
     # 3. Push event (triggered after PR merge to protected branches)
-    if: >-
-      ${{
-        needs.lint.result == 'success' &&
-        needs.test.result == 'success' &&
-        contains(fromJson('["main","dev","mod/agent"]'), github.ref_name) &&
-        github.event_name == 'push'
-      }}
-    needs: [lint, test]
+    if: |
+      needs.lint.result == 'success' &&
+      needs.test.result == 'success' &&
+      contains(fromJson('["main","dev","mod/agent"]'), github.ref_name) &&
+      github.event_name == 'push'
     uses: ./.github/workflows/no-tang-doc-agent-cd.yaml
     with:
       sha: ${{ github.sha }}
