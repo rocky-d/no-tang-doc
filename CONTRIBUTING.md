@@ -58,6 +58,7 @@ Thank you for your interest in contributing to no-tang-doc! This document provid
 
 - `main`: Production releases
 - `dev`: Development integration
+- `docs`: Documentation updates (merges to `dev`)
 - `mod/*`: Module-specific main branches
   - `mod/agent`: Agent service
   - `mod/core`: Core service
@@ -66,9 +67,9 @@ Thank you for your interest in contributing to no-tang-doc! This document provid
 ### Feature Branches
 
 - `feat/{module}/*`: Feature development for specific modules
-  - Example: `feat/agent/add-new-mcp-tool`
+  - Example: `feat/agent/<feature-name>`
 - `feat/*`: Project-wide features
-  - Example: `feat/docs` or `feat/project-documentation`
+  - Example: `feat/<feature-name>`
 
 ### Workflow
 
@@ -76,12 +77,16 @@ Thank you for your interest in contributing to no-tang-doc! This document provid
 feat/{module}/* → mod/{module} → dev → main
       ↓ PR           ↓ PR        ↓ PR
   Feature Dev    Module Merge  Dev Test
+
+feat/* (docs, etc.) → dev → main
+      ↓ PR            ↓ PR
+  Project Features  Dev Test
 ```
 
 ### Rules
 
-- Protected branches require Pull Requests
-- No direct pushes to `main`, `dev`, or `mod/*`
+- Protected branches (`main`, `dev`, `docs`, `mod/*`) require Pull Requests
+- No direct pushes to protected branches
 - CI must pass before merging
 - At least one approval required
 - Squash commits when appropriate
@@ -170,10 +175,10 @@ asdfasdf
 
 ```bash
 # For module-specific feature
-git checkout -b feat/agent/your-feature-name
+git checkout -b feat/agent/<feature-name>
 
 # For project-wide feature
-git checkout -b feat/your-feature-name
+git checkout -b feat/<feature-name>
 ```
 
 ### 2. Implement Changes
@@ -194,7 +199,7 @@ git commit -m "feat(agent): Add your feature description"
 ### 4. Push to Remote
 
 ```bash
-git push -u origin feat/agent/your-feature-name
+git push -u origin feat/agent/<feature-name>
 ```
 
 ### 5. Create Pull Request
