@@ -1,4 +1,4 @@
-name: deploy-agent-to-doks
+name: no-tang-doc-agent CD
 
 on:
   workflow_call:
@@ -29,11 +29,12 @@ env:
   INGRESS_HOST: agent.ntdoc.site
 
 concurrency:
-  group: deploy-agent-to-doks-${{ inputs.branch }}
+  group: no-tang-doc-agent-cd-${{ inputs.branch }}
   cancel-in-progress: true
 
 jobs:
-  build-and-push:
+  build:
+    name: Build
     runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.meta.outputs.TAG }}
@@ -79,8 +80,9 @@ jobs:
           cache-to: type=gha,mode=max
 
   deploy:
+    name: Deploy
     runs-on: ubuntu-latest
-    needs: build-and-push
+    needs: build
     steps:
       - uses: actions/checkout@v4
 
@@ -110,7 +112,7 @@ jobs:
             --reset-values \
             -f "${{ env.CHART_DIR }}/values.yaml" \
             --set image.repository=${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }} \
-            --set image.tag=${{ needs.build-and-push.outputs.tag }} \
+            --set image.tag=${{ needs.build.outputs.tag }} \
             --set imagePullSecrets[0].name=regcred \
             --set ingress.hosts[0].host=${{ env.INGRESS_HOST }} \
             ${{ secrets.KEYCLOAK_CLIENT_SECRET != '' && format('--set-string secrets.KEYCLOAK_CLIENT_SECRET=''{0}''', secrets.KEYCLOAK_CLIENT_SECRET) || '' }}

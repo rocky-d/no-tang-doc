@@ -10,6 +10,7 @@ on:
     paths:
       - "no-tang-doc-agent/**"
       - ".github/workflows/no-tang-doc-agent-ci.yaml"
+      - ".github/workflows/no-tang-doc-agent-cd.yaml"
   pull_request:
     branches:
       - main
@@ -159,7 +160,7 @@ jobs:
         github.event_name == 'push'
       }}
     needs: [lint, test]
-    uses: ./.github/workflows/deploy-agent-to-doks.yaml
+    uses: ./.github/workflows/no-tang-doc-agent-cd.yaml
     with:
       sha: ${{ github.sha }}
       branch: ${{ github.ref_name }}
