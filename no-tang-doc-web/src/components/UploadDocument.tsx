@@ -1,4 +1,3 @@
-import React from 'react';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { Button } from './ui/button';
 import { DocumentUpload } from './DocumentUpload';

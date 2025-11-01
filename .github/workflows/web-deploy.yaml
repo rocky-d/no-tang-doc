@@ -1,16 +1,15 @@
 name: ntdoc-web-dev-push
 
 on:
-  push:
-    branches: ["dev"]
-    paths:
-      - "no-tang-doc-web/**"
-      - ".github/workflows/web-deploy.yaml"  # 工作流改动也触发
+  workflow_run:
+    workflows: ["ntdoc-web-quality"]
+    types:
+      - completed
 
 env:
   REGISTRY: registry.digitalocean.com
-  REGISTRY_NAME: ntdoc          # 你的 DOCR 注册表名
-  IMAGE_NAME: ntdoc-web         # 镜像名
+  REGISTRY_NAME: ntdoc
+  IMAGE_NAME: ntdoc-web
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
@@ -18,6 +17,8 @@ concurrency:
 
 jobs:
   build-and-push:
+    # 只在 quality 成功时才跑
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -40,8 +41,8 @@ jobs:
       - name: Build & Push (only web subdir)
         uses: docker/build-push-action@v6
         with:
-          context: ./no-tang-doc-web                # ✅ 只发送前端目录作为上下文
-          file: ./no-tang-doc-web/Dockerfile        # ✅ 明确 Dockerfile 路径（可选但更清晰）
+          context: ./no-tang-doc-web
+          file: ./no-tang-doc-web/Dockerfile
           push: true
           tags: |
             ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.TAG }}

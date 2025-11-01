@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { Button } from './ui/button';
 import { LoginForm } from './LoginForm';

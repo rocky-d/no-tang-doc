@@ -47,7 +47,7 @@ export async function exchangeAuthorizationCode(params: {
         id_token: data.id_token
       }
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     return { success: false, error: e.message || 'network_error' };
   }
 }
@@ -79,13 +79,13 @@ export async function refreshTokens(refreshToken: string): Promise<ExchangeRespo
         id_token: data.id_token
       }
     };
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[auth][refresh] network / code error', e);
     return { success: false, error: e.message || 'network_error' };
   }
 }
 
-export function decodeJwt<T = any>(token?: string): T | null {
+export function decodeJwt<T = unknown>(token?: string): T | null {
   if (!token) return null;
   const parts = token.split('.');
   if (parts.length !== 3) return null;

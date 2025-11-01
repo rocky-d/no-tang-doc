@@ -23,7 +23,7 @@ interface LogEntry {
     time: string;
 }
 
-const LOGS_LIST_ALL = (import.meta.env as any).VITE_LOGS_LIST_ALL || '/api/v1/logs';
+const LOGS_LIST_ALL = (import.meta.env as unknown).VITE_LOGS_LIST_ALL || '/api/v1/logs';
 
 export function LogsPage() {
     const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -38,13 +38,13 @@ export function LogsPage() {
         try {
             setLoading(true);
             setError('');
-            const resp: any = await http.get(`${LOGS_LIST_ALL}`);
+            const resp: unknown = await http.get(`${LOGS_LIST_ALL}`);
             const data = resp?.data ?? resp;
             if (!Array.isArray(data)) {
                 throw new Error('Unexpected logs response');
             }
             setLogs(data as LogEntry[]);
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error('Fetch logs failed', e);
             setError(e?.message || '获取日志失败');
             toast.error(e?.message || '获取日志失败');
@@ -55,7 +55,7 @@ export function LogsPage() {
 
     useEffect(() => {
         fetchLogs();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+         
     }, []);
 
     // Calculate pagination

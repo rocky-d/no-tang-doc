@@ -11,7 +11,6 @@ import {
   Moon,
   Sun,
   ChevronRight,
-  Tag,
   X,
   Sparkles,
   Users,

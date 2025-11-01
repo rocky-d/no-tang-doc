@@ -27,7 +27,7 @@ interface DashboardOverviewProps {
 }
 
 // Reuse LogsPage endpoint logic
-const LOGS_LIST_ALL = (import.meta.env as any).VITE_LOGS_LIST_ALL || '/api/v1/logs';
+const LOGS_LIST_ALL = (import.meta.env as unknown).VITE_LOGS_LIST_ALL || '/api/v1/logs';
 
 export function DashboardOverview({ documents }: DashboardOverviewProps) {
   // Fetch real documents and prefer them over props
@@ -64,7 +64,7 @@ export function DashboardOverview({ documents }: DashboardOverviewProps) {
     (async () => {
       setSuccessLoading(true);
       try {
-        const resp: any = await http.get(LOGS_LIST_ALL);
+        const resp: unknown = await http.get(LOGS_LIST_ALL);
         const data = resp?.data ?? resp;
         if (!Array.isArray(data)) {
           console.warn('DashboardOverview: logs API returned non-array payload');

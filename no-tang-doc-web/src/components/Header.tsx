@@ -11,7 +11,7 @@ interface HeaderProps {
 }
 
 ;
-export function Header({ onNavigateToAuth, onNavigateToDashboard, onNavigateHome }: HeaderProps) {
+export function Header({onNavigateToDashboard, onNavigateHome }: HeaderProps) {
   const { user, login, register, logout, isLoading } = useAuth();
 
   const handleSignIn = () => {
@@ -72,7 +72,7 @@ export function Header({ onNavigateToAuth, onNavigateToDashboard, onNavigateHome
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="relative h-9 w-9 rounded-full">
                     <Avatar className="h-9 w-9">
-                      <AvatarImage src={(user as any)?.avatar} alt={user.name} />
+                      <AvatarImage src={(user as unknown)?.avatar} alt={user.name} />
                       <AvatarFallback>
                         {getUserInitials(user.name)}
                       </AvatarFallback>

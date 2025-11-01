@@ -16,8 +16,8 @@ interface UploadedFile {
 }
 
 // Backend upload path can be overridden via VITE_UPLOAD_PATH
-const UPLOAD_PATH = (import.meta.env as any).VITE_UPLOAD_PATH || '/api/v1/documents/upload';
-const API_BASE = (import.meta.env as any).VITE_API_BASE_URL || '';
+const UPLOAD_PATH = (import.meta.env as unknown).VITE_UPLOAD_PATH || '/api/v1/documents/upload';
+const API_BASE = (import.meta.env as unknown).VITE_API_BASE_URL || '';
 function buildApiUrl(path: string) {
   const base = (API_BASE as string).replace(/\/$/, '');
   if (!path.startsWith('/')) return base ? `${base}/${path}` : `/${path}`;

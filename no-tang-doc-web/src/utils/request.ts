@@ -63,7 +63,7 @@ export async function request<TResponse = unknown, TBody = unknown>(
   const res = await fetch(buildUrl(path), {
     method,
     headers: finalHeaders,
-    body: hasBody ? (isFormData ? (body as any) : JSON.stringify(body)) : undefined,
+    body: hasBody ? (isFormData ? (body as unknown) : JSON.stringify(body)) : undefined,
     signal: controller.signal,
   }).finally(() => {
     if (timer) window.clearTimeout(timer);

@@ -1,6 +1,5 @@
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
-import { Mail, Users, Target, Lightbulb } from "lucide-react";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 
 const teamMembers = [
@@ -36,23 +35,6 @@ const teamMembers = [
     }
 ];
 
-const values = [
-    {
-        icon: Target,
-        title: "Mission-Driven",
-        description: "We're committed to simplifying document management for teams worldwide."
-    },
-    {
-        icon: Lightbulb,
-        title: "Innovation First",
-        description: "Constantly exploring new technologies to deliver cutting-edge solutions."
-    },
-    {
-        icon: Users,
-        title: "Customer-Centric",
-        description: "Every decision we make is guided by our users' needs and feedback."
-    }
-];
 
 export function AboutSection() {
     return (
@@ -99,7 +81,7 @@ export function AboutSection() {
 
                 {/* Team Members */}
                 <div>
-                    <h3 className="text-center mb-12"></h3>
+                    <h3 className="text-center mb-12 sr-only">Team Members</h3>
                     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                         {teamMembers.map((member, index) => (
                             <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow">

@@ -1,4 +1,4 @@
-import { FileText, Github, Twitter, Linkedin } from "lucide-react";
+import { FileText, Github } from "lucide-react";
 
 export function Footer() {
   return (

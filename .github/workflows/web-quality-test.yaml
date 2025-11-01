@@ -1,0 +1,33 @@
+name: ntdoc-web-quality
+
+on:
+  push:
+    branches: ["dev", "main", "mod/web", "feat/web/NTDOC-79-FE-Test"]
+    paths:
+      - "no-tang-doc-web/**"
+      - ".github/workflows/web-quality.yml"
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./no-tang-doc-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Use Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: ./no-tang-doc-web/package-lock.json
+
+      - name: Install deps
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint:ci
+
+      - name: Test
+        run: npm run test:ci

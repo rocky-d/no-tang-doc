@@ -1,5 +1,5 @@
-import React, {useEffect, useState} from 'react';
-import {SearchMode} from '../components/SearchDialog';
+import {useEffect, useState} from 'react';
+import type {SearchMode} from '../components/SearchDialog';
 import {DocumentsList} from '../components/DocumentsList';
 import {UserLayout} from "../components/UserLayout.tsx";
 import { advancedSearch, getAllDocuments } from '../utils/documentApi';

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Camera, User, Mail, Calendar, Save } from 'lucide-react';
+import { Camera, User, Calendar, Save } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/
 import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
 import { Separator } from './ui/separator';
 import { useAuth } from './AuthContext';
-import { toast } from 'sonner@2.0.3';
+import { toast } from 'sonner';
 
 export function Profile() {
   const { user, updateUser } = useAuth();
@@ -63,7 +63,7 @@ export function Profile() {
       setAvatarFile(null);
       setAvatarPreview('');
       toast.success('Profile updated successfully');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Failed to update profile');
     }
   };

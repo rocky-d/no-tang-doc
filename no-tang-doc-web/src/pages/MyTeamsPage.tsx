@@ -28,12 +28,12 @@ interface Team {
     ownerEmail?: string;
 }
 
-const TEAMS_API_PREFIX = (import.meta.env as any).VITE_TEAMS_API_PREFIX || 'https://api.ntdoc.site/api/v1/teams';
+const TEAMS_API_PREFIX = (import.meta.env as unknown).VITE_TEAMS_API_PREFIX || 'https://api.ntdoc.site/api/v1/teams';
 
 export function MyTeamsPage() {
     const navigate = useNavigate();
     const { user } = useAuth();
-    const currentOwnerName = user?.username ?? user?.name ?? (user as any)?.id;
+    const currentOwnerName = user?.username ?? user?.name ?? (user as unknown)?.id;
     const currentOwnerEmail = user?.email;
 
     const [searchQuery, setSearchQuery] = useState('');
@@ -57,10 +57,10 @@ export function MyTeamsPage() {
         try {
             setTeamsLoading(true);
             setTeamsError('');
-            const resp: any = await http.get(`${TEAMS_API_PREFIX}?activeOnly=true`);
+            const resp: unknown = await http.get(`${TEAMS_API_PREFIX}?activeOnly=true`);
             const body = resp?.data ?? resp ?? {};
             const list = body?.data?.teams ?? body?.teams ?? [];
-            const mapped: Team[] = (Array.isArray(list) ? list : []).map((t: any) => ({
+            const mapped: Team[] = (Array.isArray(list) ? list : []).map((t: unknown) => ({
                 id: String(t?.teamId ?? t?.id ?? Math.random().toString(36).slice(2)),
                 name: t?.name ?? 'Unnamed Team',
                 description: t?.description ?? '',
@@ -71,7 +71,7 @@ export function MyTeamsPage() {
                 ownerEmail: currentOwnerEmail,
             }));
             setTeams(mapped);
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error('Fetch teams failed', e);
             setTeamsError(e?.message || '获取团队列表失败');
             toast.error(e?.message || '获取团队列表失败');
@@ -108,7 +108,7 @@ export function MyTeamsPage() {
         try {
             setCreating(true);
             const payload = { name, description };
-            const resp: any = await http.post(`${TEAMS_API_PREFIX}`, payload);
+            const resp: unknown = await http.post(`${TEAMS_API_PREFIX}`, payload);
             const body = resp?.data ?? resp ?? {};
             const statusOk = typeof resp?.status === 'number' ? (resp.status >= 200 && resp.status < 300) : false;
             const successOk = resp?.success === true;
@@ -136,7 +136,7 @@ export function MyTeamsPage() {
             setTeamName('');
             setTeamDescription('');
             setCreateDialogOpen(false);
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error('Create team failed', e);
             toast.error(e?.message || 'Create Team failed');
         } finally {
@@ -165,7 +165,7 @@ export function MyTeamsPage() {
         try {
             setEditSaving(true);
             const payload = { name: newName, description: newDesc };
-            const resp: any = await http.put(`${TEAMS_API_PREFIX}/${selectedTeam.id}`, payload);
+            const resp: unknown = await http.put(`${TEAMS_API_PREFIX}/${selectedTeam.id}`, payload);
             const body = resp?.data ?? resp ?? {};
             const statusOk = typeof resp?.status === 'number' ? (resp.status >= 200 && resp.status < 300) : false;
             const successOk = resp?.success === true;
@@ -185,7 +185,7 @@ export function MyTeamsPage() {
 
             toast.success(body?.message || 'Team updated successfully');
             setViewDialogOpen(false);
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error('Update team failed', e);
             toast.error(e?.message || 'Update team failed');
         } finally {
@@ -198,7 +198,7 @@ export function MyTeamsPage() {
         if (!ok) return;
         try {
             setDeletingId(teamId);
-            const resp: any = await http.delete(`${TEAMS_API_PREFIX}/${teamId}`);
+            const resp: unknown = await http.delete(`${TEAMS_API_PREFIX}/${teamId}`);
             const body = resp?.data ?? resp ?? {};
             const statusOk = typeof resp?.status === 'number' ? (resp.status >= 200 && resp.status < 300) : false;
             const successOk = resp?.success === true;
@@ -213,7 +213,7 @@ export function MyTeamsPage() {
                 setViewDialogOpen(false);
             }
             toast.success(body?.message || 'Team deleted successfully');
-        } catch (e: any) {
+        } catch (e: unknown) {
             console.error('Delete team failed', e);
             toast.error(e?.message || 'Delete team failed');
         } finally {

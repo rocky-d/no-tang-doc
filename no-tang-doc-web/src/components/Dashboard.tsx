@@ -17,7 +17,7 @@ interface DashboardProps {
   onNavigateToUpload?: () => void;
 }
 
-export function Dashboard({}: Readonly<DashboardProps>) {
+export function Dashboard(_: Readonly<DashboardProps>) {
   const [documents, setDocuments] = useState<Document[]>([]);
 
   useEffect(() => {

@@ -135,14 +135,14 @@ export const advancedSearch = async (query: string): Promise<Document[]> => {
 export const getAllDocuments = async (): Promise<Document[]> => {
   // Call the real backend. http helper attaches JWT automatically from localStorage.
   const resp = await http.get<BackendListResp>(DOCS_ENDPOINT);
-  const data = (resp as any)?.data ?? resp; // unwrap ApiResponse.data if wrapped
-  const docs = (data?.documents || (resp as any)?.documents || []) as BackendDocument[];
+  const data = (resp as unknown)?.data ?? resp; // unwrap ApiResponse.data if wrapped
+  const docs = (data?.documents || (resp as unknown)?.documents || []) as BackendDocument[];
 
   // Treat code 0 or 200 (or undefined) as success; throw on explicit non-success codes
-  const rawCode = (resp as any)?.code;
+  const rawCode = (resp as unknown)?.code;
   const numericCode = typeof rawCode === 'string' ? parseInt(rawCode, 10) : rawCode;
   if (numericCode !== undefined && numericCode !== 0 && numericCode !== 200) {
-    throw new Error((resp as any)?.message || 'Failed to fetch documents');
+    throw new Error((resp as unknown)?.message || 'Failed to fetch documents');
   }
 
   return (docs || []).map(mapBackendToDocument);

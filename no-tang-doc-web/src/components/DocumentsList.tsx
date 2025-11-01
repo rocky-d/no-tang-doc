@@ -27,7 +27,7 @@ interface DocumentsListProps {
   isSearching?: boolean;
 }
 
-const DOCS_API_PREFIX = (import.meta.env as any).VITE_DOCS_API_PREFIX;
+const DOCS_API_PREFIX = (import.meta.env as unknown).VITE_DOCS_API_PREFIX;
 
 export function DocumentsList({ documents, searchTerm, searchMode = 'simple', isSearching = false }: DocumentsListProps) {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
@@ -66,7 +66,7 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
     try {
       setDownloadingId(doc.id);
       // Call backend to get pre-signed download URL
-      const resp: any = await http.get(`${DOCS_API_PREFIX}/download/${doc.id}`);
+      const resp: unknown = await http.get(`${DOCS_API_PREFIX}/download/${doc.id}`);
       const data = resp?.data ?? resp; // support ApiResponse wrapper or plain
       const d = data?.data ?? data;    // unwrap ApiResponse.data
       const url: string | undefined = d?.url || d?.downloadUrl || data?.url || data?.downloadUrl;
@@ -117,7 +117,7 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
         }
         toast.success(`Start Downloading：${fileName || doc.name}`);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       // Close pre-opened tab on failure
       if (preOpenedTab && !preOpenedTab.closed) {
         preOpenedTab.close();
@@ -136,7 +136,7 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
       if (!ok) return;
       setDeletingId(documentId);
       // Call backend DELETE API: `${DOCS_API_PREFIX}/{documentId}`
-      const resp: any = await http.delete(`${DOCS_API_PREFIX}/${documentId}`);
+      const resp: unknown = await http.delete(`${DOCS_API_PREFIX}/${documentId}`);
       // success when 200/204; some backends return body with success flag
       const success = (resp?.status && resp.status >= 200 && resp.status < 300) || resp?.data?.success !== false;
       if (!success) throw new Error(resp?.data?.message || 'Delete failed');
@@ -144,7 +144,7 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
       // Update UI
       setLocalDocs(prev => prev.filter(d => d.id !== documentId));
       toast.success('Deleted successfully');
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Delete failed', e);
       toast.error(`Delete failed：${e?.message || 'Unexpected error'}`);
     } finally {
@@ -159,12 +159,12 @@ export function DocumentsList({ documents, searchTerm, searchMode = 'simple', is
     setShareUrl('');
     setShareLoading(true);
     try {
-      const resp: any = await http.get(`${DOCS_API_PREFIX}/share?documentId=${encodeURIComponent(doc.id)}`);
+      const resp: unknown = await http.get(`${DOCS_API_PREFIX}/share?documentId=${encodeURIComponent(doc.id)}`);
       const url: string | undefined = resp?.data?.url ?? resp?.url;
       if (!url) throw new Error('share url not found');
       setShareUrl(url);
       toast.success('Shared URL generated');
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error('Get share url failed', e.getMessage());
       toast.error(`Get share url failed：Please try again later`);
       // Close dialog if failed

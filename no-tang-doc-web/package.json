@@ -53,12 +53,45 @@
     "vaul": "^1.1.2"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@playwright/test": "^1.56.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^20.10.0",
-    "@vitejs/plugin-react-swc": "^3.10.2",
-    "vite": "6.3.5"
+    "@typescript-eslint/eslint-plugin": "^8.46.2",
+    "@typescript-eslint/parser": "^8.46.2",
+    "@vitejs/plugin-react-swc": "^3.11.0",
+    "@vitest/coverage-istanbul": "^4.0.6",
+    "@vitest/coverage-v8": "^4.0.6",
+    "@vitest/ui": "^4.0.6",
+    "eslint": "^9.39.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-jsx-a11y": "^6.10.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "happy-dom": "^20.0.10",
+    "jsdom": "^27.1.0",
+    "msw": "^2.11.6",
+    "prettier": "^3.6.2",
+    "typescript-eslint": "^8.46.2",
+    "vite": "6.3.5",
+    "vitest": "^4.0.6"
   },
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "fix:imports": "node scripts/remove-import-version-suffixes.cjs",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:ui": "vitest --ui",
+    "test:coverage": "vitest run --coverage",
+    "test:ci": "vitest run",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "lint:ci": "eslint . --max-warnings=10",
+    "typecheck": "tsc -p tsconfig.app.json --noEmit",
+    "test:static": "npm run lint:ci && npm run typecheck"
   }
 }
