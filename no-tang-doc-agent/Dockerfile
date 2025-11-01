@@ -11,7 +11,7 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Copy project files
-COPY pyproject.toml uv.lock README.md ./
+COPY pyproject.toml uv.lock README.md logging.yaml ./
 COPY src ./src
 
 # Create non-root user before installing dependencies
