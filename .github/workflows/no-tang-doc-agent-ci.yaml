@@ -168,6 +168,4 @@ jobs:
     with:
       sha: ${{ github.sha }}
       branch: ${{ github.ref_name }}
-    secrets:
-      DO_ACCESS_TOKEN: ${{ secrets.DO_ACCESS_TOKEN }}
-      KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }} # TODO
+    secrets: inherit
