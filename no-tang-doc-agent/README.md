@@ -89,24 +89,174 @@ docker run -d \
 
 ### Using Docker Compose
 
-For local development with all services:
+For local development (assumes core backend is already running):
 
 ```bash
-# Start all services (agent + core + mysql + keycloak)
+# Step 1: Start backend services (if not already running)
+cd ../no-tang-doc-core
 docker-compose up -d
+cd ../no-tang-doc-agent
+
+# Step 2: Copy and configure environment variables (optional)
+cp .env.example .env
+# Edit .env if needed (default values should work for local development)
+
+# Step 3: Start agent service
+docker-compose up --build -d
 
 # View logs
 docker-compose logs -f agent
 
-# Stop all services
+# Stop service
 docker-compose down
 ```
 
-For testing agent service only:
+**Prerequisites:** 
+- no-tang-doc-core and keycloak must be running on host machine (ports 8070 and 8080)
+- The agent uses `host.docker.internal` to access services running on the host
+- For Linux users, ensure Docker version supports `host.docker.internal` or manually configure host IP
+
+## Using fast-agent as MCP Client
+
+[fast-agent](https://fast-agent.ai/) is a powerful MCP client that enables you to interact with MCP servers through simple declarative syntax. It supports both stdio and HTTP transports with OAuth authentication.
+
+### Installation
 
 ```bash
-docker-compose -f docker-compose.test.yml up -d
+# Install fast-agent using uv
+uv pip install fast-agent-mcp
 ```
+
+### Quick Start
+
+Start an interactive session with the MCP server:
+
+```bash
+# Using local server (requires server to be running on localhost:8002)
+fast-agent go --url http://localhost:8002/mcp
+
+# Using production server (requires OAuth authentication)
+fast-agent go --url https://agent.ntdoc.site/mcp
+```
+
+### Configuration
+
+The project includes a `fastagent.config.yaml` file that defines MCP server connections. For the no-tang-doc agent:
+
+```yaml
+mcp:
+  servers:
+    no-tang-doc-agent-mcp-server:
+      transport: http
+      url: https://agent.ntdoc.site/mcp  # or http://localhost:8002/mcp for local
+      auth:
+        oauth: true
+        redirect_port: 3030
+        redirect_path: /callback
+```
+
+### Creating Agents with fast-agent
+
+You can create custom agents that use the no-tang-doc MCP server:
+
+```python
+import asyncio
+from fast_agent import FastAgent
+
+# Initialize FastAgent (reads fastagent.config.yaml)
+fast = FastAgent("Knowledge Base Assistant")
+
+@fast.agent(
+    name="kb_agent",
+    instruction="You are a helpful assistant that can manage documents in the no-tang-doc knowledge base.",
+    servers=["no-tang-doc-agent-mcp-server"],  # Reference the server from config
+)
+
+async def main():
+    async with fast.run() as agent:
+        # Interactive chat session
+        await agent.kb_agent()
+        
+        # Or send a direct message
+        result = await agent.kb_agent("List all spaces")
+        print(result)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Save as `kb_agent.py` and run with:
+
+```bash
+uv run kb_agent.py
+```
+
+### OAuth Authentication
+
+fast-agent automatically handles OAuth authentication for HTTP MCP servers:
+
+1. **First Connection**: Opens browser for authentication
+2. **Token Storage**: Securely stores tokens in OS keychain via `keyring`
+3. **Auto-Refresh**: Automatically refreshes expired tokens
+
+To force re-authentication:
+
+```bash
+# Clear stored tokens
+fast-agent auth clear no-tang-doc-agent-mcp-server
+```
+
+### Advanced Usage
+
+#### Using Multiple Models
+
+```bash
+# Specify a model for the agent
+uv run kb_agent.py --model sonnet       # Claude Sonnet
+uv run kb_agent.py --model gpt-4.1      # GPT-4 Turbo
+uv run kb_agent.py --model o3-mini.low  # O3-mini with low reasoning
+```
+
+#### Agent Workflows
+
+Create complex workflows combining multiple agents:
+
+```python
+@fast.agent(
+    "searcher",
+    "Search for documents in the knowledge base",
+    servers=["no-tang-doc-agent-mcp-server"]
+)
+
+@fast.agent(
+    "summarizer",
+    "Create a concise summary of the provided content"
+)
+
+@fast.chain(
+    name="search_and_summarize",
+    sequence=["searcher", "summarizer"]
+)
+
+async def main():
+    async with fast.run() as agent:
+        result = await agent.search_and_summarize("Find documents about API design")
+```
+
+#### Command Line Usage
+
+```bash
+# Direct message to agent
+uv run kb_agent.py --agent kb_agent --message "Create a new space called 'Projects'"
+
+# Quiet mode (only shows final result)
+uv run kb_agent.py --agent kb_agent --message "List documents" --quiet
+```
+
+For more information, see:
+- [fast-agent Documentation](https://fast-agent.ai/)
+- [fast-agent GitHub](https://github.com/evalstate/fast-agent-mcp)
+- [MCP Specification](https://modelcontextprotocol.io/)
 
 ## Configuration
 
@@ -151,8 +301,9 @@ no-tang-doc-agent/
 ├── pyproject.toml               # Project configuration
 ├── uv.lock                      # Dependency lock file
 ├── Dockerfile                   # Docker image definition
-├── docker-compose.yml           # Docker Compose for full stack
-├── docker-compose.test.yml      # Docker Compose for testing
+├── docker-compose.yml           # Docker Compose configuration
+├── logging.yaml                 # Logging configuration
+├── .env.example                 # Environment variables template
 └── README.md                    # This file
 ```
 
@@ -162,7 +313,7 @@ The project uses GitHub Actions for CI/CD:
 
 - **Linting**: `ruff check` and `ruff format --check`
 - **Testing**: `pytest` with coverage reports
-- **Coverage Threshold**: 90% minimum
+- **Coverage Threshold**: 95% minimum
 
 See `.github/workflows/no-tang-doc-agent-ci.yaml` for details.
 

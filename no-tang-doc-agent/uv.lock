@@ -1041,6 +1041,7 @@ dependencies = [
     { name = "fast-agent-mcp" },
     { name = "mcp", extra = ["cli"] },
     { name = "pyjwt" },
+    { name = "pyyaml" },
 ]
 
 [package.dev-dependencies]
@@ -1059,6 +1060,7 @@ requires-dist = [
     { name = "fast-agent-mcp", specifier = ">=0.3.18" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.19.0" },
     { name = "pyjwt", specifier = ">=2.10.1" },
+    { name = "pyyaml", specifier = ">=6.0.3" },
 ]
 
 [package.metadata.requires-dev]

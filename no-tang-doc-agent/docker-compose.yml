@@ -1,5 +1,5 @@
 # Docker Compose configuration for no-tang-doc-agent
-# For local development and testing
+# Simplified for local development - assumes core backend is already running
 
 services:
   agent:
@@ -15,27 +15,25 @@ services:
       - "8002:8002"
     environment:
       # Base URL for no-tang-doc-core API
-      # For local development, use the core service
-      # For production, this should be https://api.ntdoc.site
-      BASE_URL: ${BASE_URL:-http://core:8070}
+      # Default assumes core is running on host or in Docker network
+      BASE_URL: ${BASE_URL:-http://host.docker.internal:8070}
       
       # MCP Server configuration
       SERVER_NAME: ${SERVER_NAME:-no-tang-doc-agent-mcp-server}
-      DEBUG: ${DEBUG:-true}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       HOST: ${HOST:-0.0.0.0}
       PORT: ${PORT:-8002}
       
       # Keycloak OAuth2/OIDC configuration
-      ISSUER_URL: ${ISSUER_URL:-http://auth.local:8080/realms/ntdoc}
+      # Default assumes keycloak is running on host
+      ISSUER_URL: ${ISSUER_URL:-http://host.docker.internal:8080/realms/ntdoc}
       RESOURCE_SERVER_URL: ${RESOURCE_SERVER_URL:-http://localhost:8002/mcp}
       REQUIRED_SCOPES: ${REQUIRED_SCOPES:-email profile mcp-user}
     command:
       - "--base-url"
-      - "${BASE_URL:-http://core:8070}"
+      - "${BASE_URL:-http://host.docker.internal:8070}"
       - "--name"
       - "${SERVER_NAME:-no-tang-doc-agent-mcp-server}"
-      - "--debug"
       - "--log-level"
       - "${LOG_LEVEL:-INFO}"
       - "--host"
@@ -43,107 +41,16 @@ services:
       - "--port"
       - "8002"
       - "--issuer-url"
-      - "${ISSUER_URL:-http://auth.local:8080/realms/ntdoc}"
+      - "${ISSUER_URL:-http://host.docker.internal:8080/realms/ntdoc}"
       - "--resource-server-url"
       - "${RESOURCE_SERVER_URL:-http://localhost:8002/mcp}"
       - "--required-scopes"
       - "${REQUIRED_SCOPES:-email profile mcp-user}"
-    networks:
-      - ntdoc-network
-    depends_on:
-      core:
-        condition: service_healthy
-      keycloak:
-        condition: service_started
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', 8002)); s.close()"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
-
-  # Reference to no-tang-doc-core service
-  # This assumes docker-compose is run from the root directory
-  # or core service is accessible via network
-  core:
-    image: ntdoc-core:latest
-    container_name: no-tang-doc-core
-    restart: unless-stopped
-    ports:
-      - "8070:8070"
-    environment:
-      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
-      SPRING_DATASOURCE_URL: ${SPRING_DATASOURCE_URL:-jdbc:mysql://mysql:3306/notangdoc?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true}
-      SPRING_DATASOURCE_USERNAME: ${SPRING_DATASOURCE_USERNAME:-root}
-      SPRING_DATASOURCE_PASSWORD: ${SPRING_DATASOURCE_PASSWORD:-root}
-      KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI:-http://auth.local:8080/realms/ntdoc}
-      KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI:-http://keycloak:8080/realms/ntdoc/protocol/openid-connect/certs}
-    networks:
-      - ntdoc-network
-    depends_on:
-      mysql:
-        condition: service_healthy
-      keycloak:
-        condition: service_started
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8070/actuator/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
-
-  mysql:
-    image: mysql:8.0
-    container_name: mysql-ntdoc
-    command: ["mysqld", "--default-authentication-plugin=mysql_native_password", "--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-notangdoc}
-      MYSQL_ROOT_HOST: "%"
-    ports:
-      - "3305:3306"
-    volumes:
-      - mysql_data:/var/lib/mysql
-    networks:
-      - ntdoc-network
-    healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-p${MYSQL_ROOT_PASSWORD:-root}"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-      start_period: 15s
-
-  keycloak:
-    image: quay.io/keycloak/keycloak:26.3.4
-    container_name: keycloak-ntdoc
-    command:
-      - start-dev
-      - --import-realm
-      - --hostname-strict=false
-    environment:
-      KC_DB: mysql
-      KC_DB_URL: jdbc:mysql://mysql:3306/keycloak
-      KC_DB_USERNAME: ${KC_DB_USERNAME:-keycloak}
-      KC_DB_PASSWORD: ${KC_DB_PASSWORD:-keycloak_pass}
-      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN_USERNAME:-admin}
-      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
-      KC_HOSTNAME_URL: http://auth.local:8080
-      KC_HOSTNAME_ADMIN_URL: http://auth.local:8080
-    ports:
-      - "8080:8080"
-    volumes:
-      - ../no-tang-doc-core/no-tang-doc-core.json:/opt/keycloak/data/import/no-tang-doc-core.json:ro
-    networks:
-      ntdoc-network:
-        aliases:
-          - auth.local
-    depends_on:
-      mysql:
-        condition: service_healthy
-
-networks:
-  ntdoc-network:
-    driver: bridge
-
-volumes:
-  mysql_data:

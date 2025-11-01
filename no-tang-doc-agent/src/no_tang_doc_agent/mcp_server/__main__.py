@@ -1,6 +1,11 @@
+import datetime as dt
 import logging
+import logging.config
+import os
+import pathlib
 
 import click
+import yaml
 from mcp.server.auth.settings import AuthSettings
 from pydantic import AnyHttpUrl
 
@@ -11,8 +16,22 @@ from no_tang_doc_agent.mcp_server import (
     start_mcp_server,
 )
 
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+def init_logging() -> None:
+    name = dt.datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    log_dir = os.path.join(".", "logs", name)
+    pathlib.Path(log_dir).mkdir(parents=True, exist_ok=True)
+
+    with open(r"./logging.yaml", mode="rb") as f:
+        logging_config = yaml.safe_load(f)
+        for handler in logging_config["handlers"].values():
+            if "filename" not in handler:
+                continue
+            handler["filename"] = os.path.join(log_dir, handler["filename"])
+        logging.config.dictConfig(logging_config)
 
 
 class ScopesParamType(click.ParamType):
@@ -108,15 +127,17 @@ def main(
     resource_server_url: str,
     required_scopes: list[str],
 ) -> None:
-    logger.info(f"{base_url=}")
-    logger.info(f"{name=}")
-    logger.info(f"{debug=}")
-    logger.info(f"{log_level=}")
-    logger.info(f"{host=}")
-    logger.info(f"{port=}")
-    logger.info(f"{issuer_url=}")
-    logger.info(f"{resource_server_url=}")
-    logger.info(f"{required_scopes=}")
+    apply_datetime_excepthook()
+    init_logging()
+    logger.critical(f"{base_url=}")
+    logger.critical(f"{name=}")
+    logger.critical(f"{debug=}")
+    logger.critical(f"{log_level=}")
+    logger.critical(f"{host=}")
+    logger.critical(f"{port=}")
+    logger.critical(f"{issuer_url=}")
+    logger.critical(f"{resource_server_url=}")
+    logger.critical(f"{required_scopes=}")
     start_mcp_server(
         base_url=base_url,
         mcp_settings=FastMCPSettings(
@@ -136,5 +157,4 @@ def main(
 
 
 if __name__ == "__main__":
-    apply_datetime_excepthook()
     main()

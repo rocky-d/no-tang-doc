@@ -11,7 +11,7 @@ WORKDIR /app
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 # Copy project files
-COPY pyproject.toml uv.lock README.md ./
+COPY pyproject.toml uv.lock README.md logging.yaml ./
 COPY src ./src
 
 # Create non-root user before installing dependencies
@@ -30,15 +30,12 @@ USER appuser
 # Expose default MCP server port
 EXPOSE 8002
 
-# Set PATH to include virtual environment binaries
-ENV PATH="/app/.venv/bin:$PATH"
-
 # Configure Python to run in unbuffered mode for better logging
 ENV PYTHONUNBUFFERED=1
 
 # Health check using socket connection
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD python -c "import socket; s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', 8002)); s.close()" || exit 1
+    CMD uv run python -c "import socket; s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', 8002)); s.close()" || exit 1
 
 # Use uv to run the application via the defined script
 # Environment variables from Helm values.yaml will be used

@@ -13,3 +13,5 @@ coverage.xml
 
 fastagent.jsonl
 fastagent.secrets.yaml
+
+!logging.yaml

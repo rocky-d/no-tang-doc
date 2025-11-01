@@ -1,0 +1,41 @@
+version: 1
+
+disable_existing_loggers: true
+
+incremental: false
+
+formatters:
+  simplified:
+    format: "{asctime} | {name} | {levelname} | {message}"
+    style: "{"
+    validate: true
+  detailed:
+    format: "# {levelname}[{levelno}] | {asctime} | {processName}[{process}]:{threadName}[{thread}]:{taskName} | File \"{pathname}\", line {lineno}, in {funcName} | {name}\n{message}\n"
+    style: "{"
+    validate: true
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    level: INFO
+    formatter: simplified
+    stream: ext://sys.stdout
+  rotating_file:
+    class: logging.handlers.RotatingFileHandler
+    level: DEBUG
+    formatter: detailed
+    filename: logging.log
+    maxBytes: 8_388_608
+    backupCount: 4
+    encoding: utf-8
+
+loggers:
+  no_tang_doc_agent:
+    level: INFO
+    propagate: true
+
+root:
+  level: DEBUG
+  handlers:
+    - console
+    # - rotating_file
