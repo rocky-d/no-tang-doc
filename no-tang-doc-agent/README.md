@@ -116,6 +116,148 @@ docker-compose down
 - The agent uses `host.docker.internal` to access services running on the host
 - For Linux users, ensure Docker version supports `host.docker.internal` or manually configure host IP
 
+## Using fast-agent as MCP Client
+
+[fast-agent](https://fast-agent.ai/) is a powerful MCP client that enables you to interact with MCP servers through simple declarative syntax. It supports both stdio and HTTP transports with OAuth authentication.
+
+### Installation
+
+```bash
+# Install fast-agent using uv
+uv pip install fast-agent-mcp
+```
+
+### Quick Start
+
+Start an interactive session with the MCP server:
+
+```bash
+# Using local server (requires server to be running on localhost:8002)
+fast-agent go --url http://localhost:8002/mcp
+
+# Using production server (requires OAuth authentication)
+fast-agent go --url https://agent.ntdoc.site/mcp
+```
+
+### Configuration
+
+The project includes a `fastagent.config.yaml` file that defines MCP server connections. For the no-tang-doc agent:
+
+```yaml
+mcp:
+  servers:
+    no-tang-doc-agent-mcp-server:
+      transport: http
+      url: https://agent.ntdoc.site/mcp  # or http://localhost:8002/mcp for local
+      auth:
+        oauth: true
+        redirect_port: 3030
+        redirect_path: /callback
+```
+
+### Creating Agents with fast-agent
+
+You can create custom agents that use the no-tang-doc MCP server:
+
+```python
+import asyncio
+from fast_agent import FastAgent
+
+# Initialize FastAgent (reads fastagent.config.yaml)
+fast = FastAgent("Knowledge Base Assistant")
+
+@fast.agent(
+    name="kb_agent",
+    instruction="You are a helpful assistant that can manage documents in the no-tang-doc knowledge base.",
+    servers=["no-tang-doc-agent-mcp-server"],  # Reference the server from config
+)
+
+async def main():
+    async with fast.run() as agent:
+        # Interactive chat session
+        await agent.kb_agent()
+        
+        # Or send a direct message
+        result = await agent.kb_agent("List all spaces")
+        print(result)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+Save as `kb_agent.py` and run with:
+
+```bash
+uv run kb_agent.py
+```
+
+### OAuth Authentication
+
+fast-agent automatically handles OAuth authentication for HTTP MCP servers:
+
+1. **First Connection**: Opens browser for authentication
+2. **Token Storage**: Securely stores tokens in OS keychain via `keyring`
+3. **Auto-Refresh**: Automatically refreshes expired tokens
+
+To force re-authentication:
+
+```bash
+# Clear stored tokens
+fast-agent auth clear no-tang-doc-agent-mcp-server
+```
+
+### Advanced Usage
+
+#### Using Multiple Models
+
+```bash
+# Specify a model for the agent
+uv run kb_agent.py --model sonnet       # Claude Sonnet
+uv run kb_agent.py --model gpt-4.1      # GPT-4 Turbo
+uv run kb_agent.py --model o3-mini.low  # O3-mini with low reasoning
+```
+
+#### Agent Workflows
+
+Create complex workflows combining multiple agents:
+
+```python
+@fast.agent(
+    "searcher",
+    "Search for documents in the knowledge base",
+    servers=["no-tang-doc-agent-mcp-server"]
+)
+
+@fast.agent(
+    "summarizer",
+    "Create a concise summary of the provided content"
+)
+
+@fast.chain(
+    name="search_and_summarize",
+    sequence=["searcher", "summarizer"]
+)
+
+async def main():
+    async with fast.run() as agent:
+        result = await agent.search_and_summarize("Find documents about API design")
+```
+
+#### Command Line Usage
+
+```bash
+# Direct message to agent
+uv run kb_agent.py --agent kb_agent --message "Create a new space called 'Projects'"
+
+# Quiet mode (only shows final result)
+uv run kb_agent.py --agent kb_agent --message "List documents" --quiet
+```
+
+For more information, see:
+- [fast-agent Documentation](https://fast-agent.ai/)
+- [fast-agent GitHub](https://github.com/evalstate/fast-agent-mcp)
+- [MCP Specification](https://modelcontextprotocol.io/)
+
 ## Configuration
 
 The MCP server accepts the following command-line options:
