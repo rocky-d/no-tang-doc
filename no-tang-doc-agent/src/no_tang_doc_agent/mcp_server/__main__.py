@@ -17,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 class ScopesParamType(click.ParamType):
     """Custom parameter type for parsing scopes from environment variable or CLI."""
+
     name = "scopes"
 
     def convert(self, value, param, ctx):

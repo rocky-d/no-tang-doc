@@ -1,0 +1,16 @@
+[run]
+source = src/no_tang_doc_agent/mcp_server
+omit = 
+    */no_tang_doc_agent/mcp_server/__main__.py
+    */tests/*
+    */__pycache__/*
+    */site-packages/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.:
+    raise AssertionError
+    raise NotImplementedError
+    @abstractmethod
