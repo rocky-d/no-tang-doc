@@ -155,7 +155,7 @@ jobs:
     # Only Dev ci passed then do the push and deploy
     if: >-
       ${{
-        needs.ci.result == 'success' &&
+        needs.test.result == 'success' &&
         contains(fromJson('["main","dev","mod/agent","feat/agent/NTDOC-77-MCP-Server"]'), github.ref_name) &&
         github.event_name == 'push'
       }}
