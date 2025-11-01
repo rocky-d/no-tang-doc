@@ -179,22 +179,25 @@ public class DocumentTagServiceImplTest {
     @Order(40)
     @DisplayName("测试40：getDocumentsByTag - 成功获取文档列表")
     void getDocumentsByTag_Success() {
-        mockTag1.setDocuments(Set.of(mockDocument));
-        when(tagRepository.findByTag("AI")).thenReturn(Optional.of(mockTag1));
+        when(tagRepository.findDocumentsByTagName("AI", "user-123"))
+                .thenReturn(List.of(mockDocument));
 
-        List<Document> result = documentTagService.getDocumentsByTag("AI");
+        List<Document> result = documentTagService.getDocumentsByTag("AI", "user-123");
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0).getId()).isEqualTo(100L);
-        verify(tagRepository).findByTag("AI");
+        verify(tagRepository).findDocumentsByTagName("AI", "user-123");
     }
 
     @Test
     @Order(41)
     @DisplayName("测试41：getDocumentsByTag - 标签不存在返回空列表")
     void getDocumentsByTag_TagNotFound() {
-        when(tagRepository.findByTag("Unknown")).thenReturn(Optional.empty());
-        List<Document> result = documentTagService.getDocumentsByTag("Unknown");
+        when(tagRepository.findDocumentsByTagName("Unknown", "user-123"))
+                .thenReturn(Collections.emptyList());
+
+        List<Document> result = documentTagService.getDocumentsByTag("Unknown", "user-123");
+
         assertThat(result).isEmpty();
     }
 

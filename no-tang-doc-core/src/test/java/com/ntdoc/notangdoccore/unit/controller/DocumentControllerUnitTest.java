@@ -866,7 +866,7 @@ public class DocumentControllerUnitTest {
                 .thenReturn(List.of(tag1, tag2));
 
         mockMvc.perform(
-                        get("/api/v1/documents/100/tags")
+                        get("/api/v1/documents/100/taglist")
                                 .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
                 )
                 .andDo(print())
@@ -887,7 +887,7 @@ public class DocumentControllerUnitTest {
         when(tagService.getTags(200L)).thenReturn(List.of());
 
         mockMvc.perform(
-                        get("/api/v1/documents/200/tags")
+                        get("/api/v1/documents/200/taglist")
                                 .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
                 )
                 .andDo(print())
@@ -950,7 +950,7 @@ public class DocumentControllerUnitTest {
         Document doc1 = createMockDocument(1L, "AI1.pdf", testUser);
         Document doc2 = createMockDocument(2L, "AI2.pdf", testUser);
 
-        when(tagService.getDocumentsByTag("AI"))
+        when(tagService.getDocumentsByTag("AI","user-123"))
                 .thenReturn(List.of(doc1, doc2));
 
         mockMvc.perform(
@@ -962,7 +962,7 @@ public class DocumentControllerUnitTest {
                 .andExpect(jsonPath("$.data.documents[0].fileName").value("AI1.pdf"))
                 .andExpect(jsonPath("$.data.documents[1].fileName").value("AI2.pdf"));
 
-        verify(tagService).getDocumentsByTag("AI");
+        verify(tagService).getDocumentsByTag("AI","user-123");
     }
 
     @Test
@@ -971,7 +971,7 @@ public class DocumentControllerUnitTest {
     void getDocumentsByTag_Failure() throws Exception {
         log.info("Test: Get Documents by Tag - Failure");
 
-        when(tagService.getDocumentsByTag("AI"))
+        when(tagService.getDocumentsByTag("AI","user-123"))
                 .thenThrow(new RuntimeException("数据库查询失败"));
 
         mockMvc.perform(
@@ -983,196 +983,11 @@ public class DocumentControllerUnitTest {
                 .andExpect(jsonPath("$.code").value(500))
                 .andExpect(jsonPath("$.message").value("Get documents by tag fail: 数据库查询失败"));
 
-        verify(tagService).getDocumentsByTag("AI");
+        verify(tagService).getDocumentsByTag("AI","user-123");
     }
 
     @Test
     @Order(90)
-    @DisplayName("测试90：更新文档Tag - 成功")
-    void uploadDocumentWithTags_Success() throws Exception {
-        log.info("Test: Upload Document With Tags - Success");
-
-        DocumentUploadResponse mockResponse = DocumentUploadResponse.builder()
-                .documentId(100L)
-                .fileName("tagged_upload.pdf")
-                .fileSize(2048L)
-                .mimeType("application/pdf")
-                .s3Key("user-123/docs/tagged_upload.pdf")
-                .userId("user-123")
-                .description("desc")
-                .build();
-
-        when(documentService.uploadDocument(
-                any(),
-                eq("tagged_upload.pdf"),
-                eq("desc"),
-                eq("user-123"))
-        ).thenReturn(mockResponse);
-
-        Document mockDocument = Document.builder()
-                .id(100L)
-                .originalFilename("tagged_upload.pdf")
-                .description("desc")
-                .status(Document.DocumentStatus.ACTIVE)
-                .build();
-
-        when(tagService.addTags(eq(100L), anyList(), eq("user-123")))
-                .thenReturn(mockDocument);
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "tagged_upload.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "content".getBytes()
-        );
-
-        mockMvc.perform(
-                        multipart("/api/v1/documents/upload-with-tags")
-                                .file(file)
-                                .param("fileName", "tagged_upload.pdf")
-                                .param("description", "desc")
-                                .param("tags", "AI")
-                                .param("tags", "ML")
-                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
-                )
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("文件上传并添加标签成功"))
-                .andExpect(jsonPath("$.data.documentId").value(100L))
-                .andExpect(jsonPath("$.data.fileName").value("tagged_upload.pdf"));
-
-        verify(documentService).uploadDocument(any(), eq("tagged_upload.pdf"), eq("desc"), eq("user-123"));
-        verify(tagService).addTags(eq(100L), anyList(), eq("user-123"));
-    }
-
-    @Test
-    @Order(91)
-    @DisplayName("测试91：更新文档Tag - 失败")
-    void uploadDocumentWithTags_TagFailure() throws Exception {
-        log.info("Test: Upload Document With Tags - Tag Failure");
-
-        DocumentUploadResponse mockResponse = DocumentUploadResponse.builder()
-                .documentId(200L)
-                .fileName("error_upload.pdf")
-                .fileSize(512L)
-                .mimeType("application/pdf")
-                .s3Key("user-123/docs/error_upload.pdf")
-                .userId("user-123")
-                .build();
-
-        when(documentService.uploadDocument(any(), eq("error_upload.pdf"), eq("desc"), eq("user-123")))
-                .thenReturn(mockResponse);
-
-        doThrow(new RuntimeException("标签写入失败"))
-                .when(tagService)
-                .addTags(eq(200L), anyList(), eq("user-123"));
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "error_upload.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "content".getBytes()
-        );
-
-        mockMvc.perform(
-                        multipart("/api/v1/documents/upload-with-tags")
-                                .file(file)
-                                .param("fileName", "error_upload.pdf")
-                                .param("description", "desc")
-                                .param("tags", "AI")
-                                .param("tags", "ML")
-                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
-                )
-                .andDo(print())
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("文件上传或标签添加失败")));
-
-        verify(documentService).uploadDocument(any(), eq("error_upload.pdf"), eq("desc"), eq("user-123"));
-        verify(tagService).addTags(eq(200L), anyList(), eq("user-123"));
-    }
-
-    @Test
-    @Order(92)
-    @DisplayName("测试92：更新文档Tag - 无Tag")
-    void uploadDocumentWithTags_NoTags() throws Exception {
-        log.info("Test: Upload Document With Tags - No Tags");
-
-        DocumentUploadResponse mockResponse = DocumentUploadResponse.builder()
-                .documentId(300L)
-                .fileName("notag_upload.pdf")
-                .fileSize(1234L)
-                .mimeType("application/pdf")
-                .s3Key("user-123/docs/notag_upload.pdf")
-                .userId("user-123")
-                .description("no tag file")
-                .build();
-
-        when(documentService.uploadDocument(any(), eq("notag_upload.pdf"), eq("no tag file"), eq("user-123")))
-                .thenReturn(mockResponse);
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "notag_upload.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "content".getBytes()
-        );
-
-        mockMvc.perform(
-                        multipart("/api/v1/documents/upload-with-tags")
-                                .file(file)
-                                .param("fileName", "notag_upload.pdf")
-                                .param("description", "no tag file")
-                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
-                )
-                .andDo(print())
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("文件上传并添加标签成功"))
-                .andExpect(jsonPath("$.data.fileName").value("notag_upload.pdf"));
-
-        verify(documentService).uploadDocument(any(), eq("notag_upload.pdf"), eq("no tag file"), eq("user-123"));
-        verify(tagService, never()).addTags(anyLong(), anyList(), anyString());
-    }
-
-    @Test
-    @Order(93)
-    @DisplayName("测试93：更新文档Tag - 异常")
-    void uploadDocumentWithTags_DocumentServiceThrowsException() throws Exception {
-        log.info("Test: Upload Document With Tags - DocumentService Exception");
-
-        when(documentService.uploadDocument(any(), any(), any(), any()))
-                .thenThrow(new RuntimeException("存储服务不可用"));
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "broken_upload.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "broken".getBytes()
-        );
-
-        mockMvc.perform(
-                        multipart("/api/v1/documents/upload-with-tags")
-                                .file(file)
-                                .param("fileName", "broken_upload.pdf")
-                                .param("description", "desc")
-                                .param("tags", "AI")
-                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
-                )
-                .andDo(print())
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.code").value(500))
-                .andExpect(jsonPath("$.message").value("文件上传或标签添加失败: 存储服务不可用"));
-
-        verify(documentService).uploadDocument(any(), any(), any(), any());
-        verify(tagService, never()).addTags(anyLong(), anyList(), anyString());
-    }
-
-    @Test
-    @Order(100)
     @DisplayName("测试100：通过文件名称查询文档 - 成功")
     void searchByFilename_Success() throws Exception {
         log.info("Test: Search By Filename - Success");

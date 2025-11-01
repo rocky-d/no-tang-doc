@@ -1,5 +1,6 @@
 package com.ntdoc.notangdoccore.service.impl;
 
+import com.ntdoc.notangdoccore.dto.team.TeamMemberResponse;
 import com.ntdoc.notangdoccore.entity.Team;
 import com.ntdoc.notangdoccore.entity.TeamMember;
 import com.ntdoc.notangdoccore.entity.User;
@@ -12,8 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -26,9 +29,9 @@ public class TeamMemberServiceImpl implements TeamMemberService {
     private final UserRepository userRepository;
 
     @Override
-    public TeamMember addMember(Long teamId, String userKcId, String role, String operatorKcId) {
-        log.info("Adding member to team: teamId={}, userKcId={}, role={}, operator={}",
-                teamId, userKcId, role, operatorKcId);
+    public TeamMember addMember(Long teamId, String userEmail, String role, String operatorKcId) {
+        log.info("Adding member to team: teamId={}, role={}, operator={}",
+                teamId, userEmail, role, operatorKcId);
 
         // 1. 验证操作者权限（必须是 OWNER 或 ADMIN）
         if (!hasManagePermission(teamId, operatorKcId)) {
@@ -45,8 +48,8 @@ public class TeamMemberServiceImpl implements TeamMemberService {
         }
 
         // 4. 获取要添加的用户
-        User user = userRepository.findByKcUserId(userKcId)
-                .orElseThrow(() -> new RuntimeException("用户不存在: " + userKcId));
+        User user = userRepository.findByEmail(userEmail)
+                .orElseThrow(() -> new RuntimeException("用户不存在: " + userEmail));
 
         // 5. 检查用户是否已经是团队成员
         Optional<TeamMember> existingMember = teamMemberRepository.findByTeamAndUser(team, user);
@@ -119,7 +122,7 @@ public class TeamMemberServiceImpl implements TeamMemberService {
     }
 
     @Override
-    public TeamMember updateMemberRole(Long teamId, Long memberId, String newRole, String operatorKcId) {
+    public TeamMemberResponse updateMemberRole(Long teamId, Long memberId, String newRole, String operatorKcId) {
         log.info("Updating member role: teamId={}, memberId={}, newRole={}, operator={}",
                 teamId, memberId, newRole, operatorKcId);
 
@@ -158,15 +161,17 @@ public class TeamMemberServiceImpl implements TeamMemberService {
         member.setRole(newRoleEnum);
         member = teamMemberRepository.save(member);
 
+        TeamMemberResponse response = TeamMemberResponse.fromEntity(member);
+
         log.info("Member role updated successfully: teamId={}, memberId={}, newRole={}",
                 teamId, memberId, newRole);
 
-        return member;
+        return response;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<TeamMember> getTeamMembers(Long teamId, String operatorKcId) {
+    public List<TeamMemberResponse> getTeamMembers(Long teamId, String operatorKcId) {
         log.debug("Getting team members: teamId={}, operator={}", teamId, operatorKcId);
 
         // 验证操作者是团队成员
@@ -176,13 +181,19 @@ public class TeamMemberServiceImpl implements TeamMemberService {
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("团队不存在: " + teamId));
+        List<TeamMember> teamMembers =  teamMemberRepository.findByTeamOrderByJoinedAtAsc(team);
 
-        return teamMemberRepository.findByTeamOrderByJoinedAtAsc(team);
+        List<TeamMemberResponse> teamMemberResponses = teamMembers
+                .stream()
+                .map(TeamMemberResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        return teamMemberResponses;
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<TeamMember> getActiveTeamMembers(Long teamId, String operatorKcId) {
+    public List<TeamMemberResponse> getActiveTeamMembers(Long teamId, String operatorKcId) {
         log.debug("Getting active team members: teamId={}, operator={}", teamId, operatorKcId);
 
         // 验证操作者是团队成员
@@ -193,7 +204,14 @@ public class TeamMemberServiceImpl implements TeamMemberService {
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("团队不存在: " + teamId));
 
-        return teamMemberRepository.findByTeamAndStatus(team, TeamMember.MemberStatus.ACTIVE);
+        List<TeamMember> teamMembers =  teamMemberRepository.findByTeamAndStatus(team, TeamMember.MemberStatus.ACTIVE);
+
+        List<TeamMemberResponse> teamMemberResponses = teamMembers
+                .stream()
+                .map(TeamMemberResponse::fromEntity)
+                .collect(Collectors.toList());
+
+        return teamMemberResponses;
     }
 
     @Override

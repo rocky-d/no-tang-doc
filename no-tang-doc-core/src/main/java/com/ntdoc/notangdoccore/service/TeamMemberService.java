@@ -1,5 +1,6 @@
 package com.ntdoc.notangdoccore.service;
 
+import com.ntdoc.notangdoccore.dto.team.TeamMemberResponse;
 import com.ntdoc.notangdoccore.entity.TeamMember;
 
 import java.util.List;
@@ -38,7 +39,7 @@ public interface TeamMemberService {
      * @param operatorKcId 操作者Keycloak ID（用于权限验证）
      * @return 更新后的成员
      */
-    TeamMember updateMemberRole(Long teamId, Long memberId, String newRole, String operatorKcId);
+    TeamMemberResponse updateMemberRole(Long teamId, Long memberId, String newRole, String operatorKcId);
 
     /**
      * 获取团队所有成员
@@ -47,7 +48,7 @@ public interface TeamMemberService {
      * @param operatorKcId 操作者Keycloak ID（用于权限验证）
      * @return 成员列表
      */
-    List<TeamMember> getTeamMembers(Long teamId, String operatorKcId);
+    List<TeamMemberResponse> getTeamMembers(Long teamId, String operatorKcId);
 
     /**
      * 获取团队活跃成员
@@ -56,7 +57,7 @@ public interface TeamMemberService {
      * @param operatorKcId 操作者Keycloak ID（用于权限验证）
      * @return 活跃成员列表
      */
-    List<TeamMember> getActiveTeamMembers(Long teamId, String operatorKcId);
+    List<TeamMemberResponse> getActiveTeamMembers(Long teamId, String operatorKcId);
 
     /**
      * 成员退出团队（自己退出）

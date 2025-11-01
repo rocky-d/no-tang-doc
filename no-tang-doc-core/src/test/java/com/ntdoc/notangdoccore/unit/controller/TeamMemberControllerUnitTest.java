@@ -30,6 +30,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.Mockito.*;
@@ -135,7 +136,7 @@ public class TeamMemberControllerUnitTest {
         log.info("Test: Add Member - Success");
 
         TeamMemberAddRequest request = TeamMemberAddRequest.builder()
-                .userKcId("new-user-789")
+                .userEmail("new-user-789")
                 .role("MEMBER")
                 .build();
 
@@ -158,7 +159,7 @@ public class TeamMemberControllerUnitTest {
                 .thenReturn(newMember);
 
         MvcResult result = mockMvc.perform(
-                        post("/api/v1/teams/100/members")
+                        post("/api/v1/teamMembers/100/addMembers")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 .with(jwt().jwt(builder -> builder
@@ -191,7 +192,7 @@ public class TeamMemberControllerUnitTest {
         log.info("Test: Add Member - Forbidden");
 
         TeamMemberAddRequest request = TeamMemberAddRequest.builder()
-                .userKcId("new-user-789")
+                .userEmail("new-user-789")
                 .role("MEMBER")
                 .build();
 
@@ -199,7 +200,7 @@ public class TeamMemberControllerUnitTest {
                 .thenThrow(new SecurityException("只有团队拥有者或管理员可以添加成员"));
 
         mockMvc.perform(
-                        post("/api/v1/teams/100/members")
+                        post("/api/v1/teamMembers/100/addMembers")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 .with(jwt().jwt(builder -> builder
@@ -220,7 +221,7 @@ public class TeamMemberControllerUnitTest {
         log.info("Test: Add Member - Already Exists");
 
         TeamMemberAddRequest request = TeamMemberAddRequest.builder()
-                .userKcId("member-456")
+                .userEmail("member-456")
                 .role("MEMBER")
                 .build();
 
@@ -228,7 +229,7 @@ public class TeamMemberControllerUnitTest {
                 .thenThrow(new IllegalArgumentException("用户已经是团队成员"));
 
         mockMvc.perform(
-                        post("/api/v1/teams/100/members")
+                        post("/api/v1/teamMembers/100/addMembers")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 .with(jwt().jwt(builder -> builder
@@ -248,7 +249,7 @@ public class TeamMemberControllerUnitTest {
         log.info("Test: Add Member - Internal Server Error");
 
         TeamMemberAddRequest request = TeamMemberAddRequest.builder()
-                .userKcId("new-user-999")
+                .userEmail("new-user-999")
                 .role("MEMBER")
                 .build();
 
@@ -256,7 +257,7 @@ public class TeamMemberControllerUnitTest {
                 .thenThrow(new RuntimeException("数据库写入失败"));
 
         mockMvc.perform(
-                        post("/api/v1/teams/100/members")
+                        post("/api/v1/teamMembers/100/addMembers")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 .with(jwt().jwt(builder -> builder.claim("sub", "owner-123")))
@@ -278,14 +279,18 @@ public class TeamMemberControllerUnitTest {
 
         List<TeamMember> activeMembers = Arrays.asList(ownerTeamMember, normalTeamMember);
 
+        List<TeamMemberResponse> activeMemberResponses = activeMembers.stream()
+                        .map(TeamMemberResponse::fromEntity)
+                        .collect(Collectors.toList());
+
         when(teamMemberService.getActiveTeamMembers(eq(100L), eq("owner-123")))
-                .thenReturn(activeMembers);
+                .thenReturn(activeMemberResponses);
 
         when(teamService.getTeamById(100L))
                 .thenReturn(testTeam);
 
         mockMvc.perform(
-                        get("/api/v1/teams/100/members")
+                        get("/api/v1/teamMembers/100/memberList")
                                 .param("activeOnly", "true")
                                 .with(jwt().jwt(builder -> builder
                                         .claim("sub", "owner-123")
@@ -311,15 +316,19 @@ public class TeamMemberControllerUnitTest {
         log.info("Test: Get Team Members - All Members Success");
 
         List<TeamMember> allMembers = Arrays.asList(ownerTeamMember, normalTeamMember);
-
+        List<TeamMemberResponse> allMemberResponses = allMembers.stream()
+                .map(TeamMemberResponse::fromEntity)
+                .collect(Collectors.toList());
         when(teamMemberService.getTeamMembers(eq(100L), eq("owner-123")))
-                .thenReturn(allMembers);
+                .thenReturn(allMemberResponses);
+
+
 
         when(teamService.getTeamById(100L))
                 .thenReturn(testTeam);
 
         mockMvc.perform(
-                        get("/api/v1/teams/100/members")
+                        get("/api/v1/teamMembers/100/memberList")
                                 .param("activeOnly", "false")
                                 .with(jwt().jwt(builder -> builder
                                         .claim("sub", "owner-123")
@@ -344,7 +353,7 @@ public class TeamMemberControllerUnitTest {
                 .thenThrow(new SecurityException("只有团队成员可以查看成员列表"));
 
         mockMvc.perform(
-                        get("/api/v1/teams/100/members")
+                        get("/api/v1/teamMembers/100/memberList")
                                 .with(jwt().jwt(builder -> builder
                                         .claim("sub", "outsider-999")
                                 ))
@@ -374,11 +383,13 @@ public class TeamMemberControllerUnitTest {
                 .joinedAt(Instant.now())
                 .build();
 
+        TeamMemberResponse response = TeamMemberResponse.fromEntity(updatedMember);
+
         when(teamMemberService.updateMemberRole(eq(100L), eq(2L), eq("ADMIN"), eq("owner-123")))
-                .thenReturn(updatedMember);
+                .thenReturn(response);
 
         mockMvc.perform(
-                        put("/api/v1/teams/100/members/2")
+                        put("/api/v1/teamMembers/100/member/2")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 .with(jwt().jwt(builder -> builder
@@ -409,7 +420,7 @@ public class TeamMemberControllerUnitTest {
                 .thenThrow(new SecurityException("只有团队拥有者可以修改成员角色"));
 
         mockMvc.perform(
-                        put("/api/v1/teams/100/members/2")
+                        put("/api/v1/teamMembers/100/member/2")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 .with(jwt().jwt(builder -> builder
@@ -436,7 +447,7 @@ public class TeamMemberControllerUnitTest {
                 .thenThrow(new IllegalArgumentException("不能将成员设置为拥有者"));
 
         mockMvc.perform(
-                        put("/api/v1/teams/100/members/2")
+                        put("/api/v1/teamMembers/100/member/2")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                                 .with(jwt().jwt(builder -> builder
@@ -458,7 +469,7 @@ public class TeamMemberControllerUnitTest {
         doNothing().when(teamMemberService).removeMember(eq(100L), eq(2L), eq("owner-123"));
 
         mockMvc.perform(
-                        delete("/api/v1/teams/100/members/2")
+                        delete("/api/v1/teamMembers/100/removeMember/2")
                                 .with(jwt().jwt(builder -> builder
                                         .claim("sub", "owner-123")
                                 ))
@@ -481,7 +492,7 @@ public class TeamMemberControllerUnitTest {
                 .when(teamMemberService).removeMember(eq(100L), eq(2L), eq("member-456"));
 
         mockMvc.perform(
-                        delete("/api/v1/teams/100/members/2")
+                        delete("/api/v1/teamMembers/100/removeMember/2")
                                 .with(jwt().jwt(builder -> builder
                                         .claim("sub", "member-456")
                                 ))
@@ -502,7 +513,7 @@ public class TeamMemberControllerUnitTest {
                 .when(teamMemberService).removeMember(eq(100L), eq(1L), eq("owner-123"));
 
         mockMvc.perform(
-                        delete("/api/v1/teams/100/members/1")
+                        delete("/api/v1/teamMembers/100/removeMember/1")
                                 .with(jwt().jwt(builder -> builder
                                         .claim("sub", "owner-123")
                                 ))
@@ -523,7 +534,7 @@ public class TeamMemberControllerUnitTest {
                 .when(teamMemberService).removeMember(eq(100L), eq(999L), eq("owner-123"));
 
         mockMvc.perform(
-                        delete("/api/v1/teams/100/members/999")
+                        delete("/api/v1/teamMembers/100/removeMember/999")
                                 .with(jwt().jwt(builder -> builder
                                         .claim("sub", "owner-123")
                                 ))
@@ -540,12 +551,12 @@ public class TeamMemberControllerUnitTest {
         log.info("Test: Unauthenticated - Forbidden");
 
         TeamMemberAddRequest request = TeamMemberAddRequest.builder()
-                .userKcId("new-user-789")
+                .userEmail("new-user-789")
                 .role("MEMBER")
                 .build();
 
         mockMvc.perform(
-                        post("/api/v1/teams/100/members")
+                        post("/api/v1/teamMembers/100/members")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(request))
                         // 不添加 JWT
@@ -564,7 +575,7 @@ public class TeamMemberControllerUnitTest {
         doNothing().when(teamMemberService).leaveTeam(eq(100L), eq("member-456"));
 
         mockMvc.perform(
-                        post("/api/v1/teams/100/members/leave")
+                        post("/api/v1/teamMembers/100/leave")
                                 .with(jwt().jwt(builder -> builder.claim("sub", "member-456")))
                 )
                 .andDo(print())
@@ -584,7 +595,7 @@ public class TeamMemberControllerUnitTest {
                 .when(teamMemberService).leaveTeam(eq(100L), eq("owner-123"));
 
         mockMvc.perform(
-                        post("/api/v1/teams/100/members/leave")
+                        post("/api/v1/teamMembers/100/leave")
                                 .with(jwt().jwt(builder -> builder.claim("sub", "owner-123")))
                 )
                 .andDo(print())
@@ -605,7 +616,7 @@ public class TeamMemberControllerUnitTest {
                 .when(teamMemberService).leaveTeam(eq(100L), eq("member-456"));
 
         mockMvc.perform(
-                        post("/api/v1/teams/100/members/leave")
+                        post("/api/v1/teamMembers/100/leave")
                                 .with(jwt().jwt(builder -> builder.claim("sub", "member-456")))
                 )
                 .andDo(print())
