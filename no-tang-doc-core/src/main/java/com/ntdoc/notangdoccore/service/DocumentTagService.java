@@ -29,6 +29,6 @@ public interface DocumentTagService {
     /**
      * get all document which have the tag
      */
-    List<Document> getDocumentsByTag(String tagName);
+    List<Document> getDocumentsByTag(String tagName,String kcUserId);
 
 }

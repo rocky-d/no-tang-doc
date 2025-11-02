@@ -7,14 +7,11 @@ import com.ntdoc.notangdoccore.entity.logenum.OperationStatus;
 import com.ntdoc.notangdoccore.entity.logenum.OperationType;
 import com.ntdoc.notangdoccore.repository.LogRepository;
 import com.ntdoc.notangdoccore.service.log.LogGroupStrategy;
-import com.ntdoc.notangdoccore.service.log.LogService;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.boot.test.context.SpringBootTest;
 
 
 import java.time.Instant;
@@ -24,7 +21,9 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class LogServiceTest {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@DisplayName("LogServiceImpl服务测试")
+class LogServiceImplTest {
     @Mock
     private LogRepository logRepository;
 
@@ -35,7 +34,7 @@ class LogServiceTest {
     private LogGroupStrategy monthlyStrategy;
 
     @InjectMocks
-    private LogService logService;
+    private LogServiceImpl logService;
 
     private List<Log> mockLogs;
     private Map<String,Long> mockGroupLogs;
@@ -58,15 +57,15 @@ class LogServiceTest {
 
     @BeforeEach
     void setUp(){
-        logService = new LogService(logRepository);
+        logService = new LogServiceImpl(logRepository);
 
         // Set Strategy
         try{
-            var weeklyField = LogService.class.getDeclaredField("weeklyStrategy");
+            var weeklyField = LogServiceImpl.class.getDeclaredField("weeklyStrategy");
             weeklyField.setAccessible(true);
             weeklyField.set(logService,weeklyStrategy);
 
-            var monthlyField = LogService.class.getDeclaredField("monthlyStrategy");
+            var monthlyField = LogServiceImpl.class.getDeclaredField("monthlyStrategy");
             monthlyField.setAccessible(true);
             monthlyField.set(logService,monthlyStrategy);
 
@@ -93,6 +92,8 @@ class LogServiceTest {
 
     //测试用户能正确设置周策略
     @Test
+    @Order(1)
+    @DisplayName("测试1：获取日志分组策略 - 周策略")
     void testGetLogGroupStrategy_WithWeek_ReturnWeeklyStrategy(){
         LogGroupStrategy result = logService.getLogGroupStrategy("week");
 
@@ -102,6 +103,8 @@ class LogServiceTest {
 
     //测试用户能正确设置月策略
     @Test
+    @Order(2)
+    @DisplayName("测试2：获取日志分组策略 - 月策略")
     void testGetLogGroupStrategy_WithMonth_ReturnMonthlyStrategy(){
         LogGroupStrategy result = logService.getLogGroupStrategy("month");
 
@@ -111,6 +114,8 @@ class LogServiceTest {
 
     //测试用户不能设置非法策略
     @Test
+    @Order(3)
+    @DisplayName("测试3：获取日志分组策略 - 非法策略 - 异常")
     void testGetLogGroupStrategy_WithInvalidPeriod_ShouldThrowException(){
         IllegalArgumentException exception =  assertThrows(
                 IllegalArgumentException.class,()->logService.getLogGroupStrategy("invalid")
@@ -121,6 +126,8 @@ class LogServiceTest {
 
     //测试用户正确通过UserId获取所有日志
     @Test
+    @Order(10)
+    @DisplayName("测试10：通过UserId获取所有日志 - 成功")
     void testGetAllLogsByUserId_ShouldReturnAllLogs(){
         // 设置Repostitory的返回
         Long userId = 1L;
@@ -137,6 +144,8 @@ class LogServiceTest {
 
     //测试用户无日志时候的返回
     @Test
+    @Order(11)
+    @DisplayName("测试11：通过UserId获取所有日志 - 无日志")
     void testGetAllLogsByUserId_WithNoLogs_ShouldReturnEmptyList(){
         Long userId = 100L;
         when(logRepository.findByUserId(userId)).thenReturn(Arrays.asList());
@@ -150,6 +159,8 @@ class LogServiceTest {
 
     //测试用户按周返回日志条数
     @Test
+    @Order(20)
+    @DisplayName("测试20：获取用户日志数 - 周返回")
     void testGetLogsCountByUser_WithWeekPeriod_ShouldReturnWeeklyGroupedLogs(){
         Long userId = 1L;
         String period = "week";
@@ -165,6 +176,8 @@ class LogServiceTest {
 
     //测试用户按月返回日志条数
     @Test
+    @Order(21)
+    @DisplayName("测试21：获取用户日志数 - 月返回")
     void testGetLogsCountByUser_WithMonthPeriod_ShouldReturnMonthlyGroupedLogs(){
         Long userId = 1L;
         String period = "month";
@@ -180,6 +193,8 @@ class LogServiceTest {
 
     //测试用户不能以无效字段返回日志条数
     @Test
+    @Order(22)
+    @DisplayName("测试22：获取用户日志数 - 非法返回 - 异常")
     void testGetLogsCountByUser_WithInvalidPeriod_ShouldThrowException(){
         Long userId = 1L;
         String period = "invalid";
@@ -187,4 +202,69 @@ class LogServiceTest {
         assertThrows(IllegalArgumentException.class,()->logService.getLogsCountByUser(userId,period));
     }
 
+    //测试getAllLogsByUsername能正确返回日志
+    @Test
+    @Order(30)
+    @DisplayName("测试30：通过用户名返回所有日志 - 成功")
+    void testGetAllLogsByUsername_ShouldReturnLogs(){
+        String username = "test1";
+        List<Log> expactedLogs = mockLogs.subList(0,2);
+
+        when(logRepository.findByActorName(username)).thenReturn(expactedLogs);
+
+        List<Log> result = logService.getAllLogsByUsername(username);
+
+        assertNotNull(result);
+        assertEquals(2,result.size());
+        assertEquals(expactedLogs,result);
+        verify(logRepository,times(1)).findByActorName(username);
+    }
+
+    //测试 getAllLogsByUsername() 无结果时返回空列表
+    @Test
+    @Order(31)
+    @DisplayName("测试31：通过用户名返回所有日志 - 无日志")
+    void testGetAllLogsByUsername_WithNoLogs_ShouldReturnEmptyList() {
+        String username = "Charlie";
+        when(logRepository.findByActorName(username)).thenReturn(Collections.emptyList());
+
+        List<Log> result = logService.getAllLogsByUsername(username);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(logRepository, times(1)).findByActorName(username);
+    }
+
+    //测试 getAllLogsByTargetId() 能正确返回日志
+    @Test
+    @Order(40)
+    @DisplayName("测试40：返回文档日志 - 成功")
+    void testGetAllLogsByTargetId_ShouldReturnLogs() {
+        Long targetId = 10L;
+        List<Log> expectedLogs = List.of(mockLogs.get(0));
+
+        when(logRepository.findByTargetId(targetId)).thenReturn(expectedLogs);
+
+        List<Log> result = logService.getAllLogsByTargetId(targetId);
+
+        assertNotNull(result);
+        assertEquals(1, result.size());
+        assertEquals(expectedLogs, result);
+        verify(logRepository, times(1)).findByTargetId(targetId);
+    }
+
+    //测试 getAllLogsByTargetId() 无结果时返回空列表
+    @Test
+    @Order(41)
+    @DisplayName("测试41：返回文档日志 - 无日志")
+    void testGetAllLogsByTargetId_WithNoLogs_ShouldReturnEmptyList() {
+        Long targetId = 999L;
+        when(logRepository.findByTargetId(targetId)).thenReturn(Collections.emptyList());
+
+        List<Log> result = logService.getAllLogsByTargetId(targetId);
+
+        assertNotNull(result);
+        assertTrue(result.isEmpty());
+        verify(logRepository, times(1)).findByTargetId(targetId);
+    }
 }

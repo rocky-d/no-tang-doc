@@ -12,7 +12,7 @@ import com.ntdoc.notangdoccore.entity.User;
 import com.ntdoc.notangdoccore.service.DocumentService;
 import com.ntdoc.notangdoccore.service.DocumentTagService;
 import com.ntdoc.notangdoccore.service.FileStorageService;
-import com.ntdoc.notangdoccore.service.UserSyncService;
+import com.ntdoc.notangdoccore.service.impl.UserSyncServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@DisplayName("DocumentController单元测试")
 public class DocumentControllerUnitTest {
     @Autowired
     private MockMvc mockMvc;
@@ -59,7 +60,7 @@ public class DocumentControllerUnitTest {
     private DocumentService documentService;
 
     @MockitoBean
-    private UserSyncService userSyncService;
+    private UserSyncServiceImpl userSyncService;
 
     @MockitoBean
     private FileStorageService fileStorageService;
@@ -119,7 +120,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(1)
-    @DisplayName("上传文档 - 成功")
+    @DisplayName("测试1：上传文档 - 成功")
     void uploadDocument_Success() throws Exception {
         log.info("Test: Upload Document - Success");
 
@@ -189,7 +190,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(2)
-    @DisplayName("上传文档 - 没有自定义文件名")
+    @DisplayName("测试2：上传文档 - 没有自定义文件名")
     void uploadDocument_WithoutCustomFileName() throws Exception {
         log.info("Test: Upload Document - Without Custom File Name");
 
@@ -237,7 +238,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(3)
-    @DisplayName("上传文档 - 参数错误(IllegalArgumentException)")
+    @DisplayName("测试3：上传文档 - 参数错误(IllegalArgumentException)")
     void uploadDocument_InvalidArgument() throws Exception {
         log.info("Test: Upload Document - Invalid Argument");
 
@@ -272,7 +273,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(4)
-    @DisplayName("上传文档 - 服务器错误(RuntimeException)")
+    @DisplayName("测试4：上传文档 - 服务器错误(RuntimeException)")
     void uploadDocument_ServerError() throws Exception {
         log.info("Test: Upload Document - Server Error");
 
@@ -307,7 +308,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(5)
-    @DisplayName("上传文档 - 未认证(无JWT)")
+    @DisplayName("测试5：上传文档 - 未认证(无JWT)")
     void uploadDocument_Unauthorized() throws Exception {
         log.info("Test: Upload Document - Unauthorized");
 
@@ -333,7 +334,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(10)
-    @DisplayName("获取下载链接 - 成功")
+    @DisplayName("测试10：获取下载链接 - 成功")
     void getDownloadUrl_Success() throws Exception {
         log.info("Test: Get Download URL - Success");
 
@@ -380,7 +381,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(11)
-    @DisplayName("获取下载链接 - 无权限(SecurityException)")
+    @DisplayName("测试11：获取下载链接 - 无权限(SecurityException)")
     void getDownloadUrl_Forbidden() throws Exception {
         log.info("Test: Get Download URL - Forbidden");
 
@@ -401,7 +402,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(12)
-    @DisplayName("获取下载链接 - 文档不存在")
+    @DisplayName("测试12：获取下载链接 - 文档不存在")
     void getDownloadUrl_NotFound() throws Exception {
         log.info("Test: Get Download URL - Not Found");
 
@@ -423,7 +424,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(20)
-    @DisplayName("获取用户文档列表 - 所有文档")
+    @DisplayName("测试20：获取用户文档列表 - 所有文档")
     void getUserDocuments_AllDocuments() throws Exception {
         log.info("Test: Get User Documents - All");
 
@@ -452,7 +453,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(21)
-    @DisplayName("获取用户文档列表 - 按状态过滤")
+    @DisplayName("测试21：获取用户文档列表 - 按状态过滤")
     void getUserDocuments_FilterByStatus() throws Exception {
         log.info("Test: Get User Documents - Filter By Status");
 
@@ -477,7 +478,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(22)
-    @DisplayName("获取用户文档列表 - 空列表")
+    @DisplayName("测试22：获取用户文档列表 - 空列表")
     void getUserDocuments_EmptyList() throws Exception {
         log.info("Test: Get User Documents - Empty List");
 
@@ -499,7 +500,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(30)
-    @DisplayName("删除文档 - 成功")
+    @DisplayName("测试30：删除文档 - 成功")
     void deleteDocument_Success() throws Exception {
         log.info("Test: Delete Document - Success");
 
@@ -540,7 +541,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(31)
-    @DisplayName("删除文档 - 文档不存在")
+    @DisplayName("测试31：删除文档 - 文档不存在")
     void deleteDocument_NotFound() throws Exception {
         log.info("Test: Delete Document - Not Found");
 
@@ -563,7 +564,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(40)
-    @DisplayName("生成分享链接 - 成功")
+    @DisplayName("测试40：生成分享链接 - 成功")
     void generateShareLink_Success() throws Exception {
         log.info("Test: Generate Share Link - Success");
 
@@ -605,7 +606,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(41)
-    @DisplayName("生成分享链接 - 使用默认过期时间")
+    @DisplayName("测试41：生成分享链接 - 使用默认过期时间")
     void generateShareLink_DefaultExpiration() throws Exception {
         log.info("Test: Generate Share Link - Default Expiration");
 
@@ -634,7 +635,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(42)
-    @DisplayName("生成分享链接 - 过期时间无效")
+    @DisplayName("测试42：生成分享链接 - 过期时间无效")
     void generateShareLink_InvalidExpiration() throws Exception {
         log.info("Test: Generate Share Link - Invalid Expiration");
 
@@ -653,7 +654,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(43)
-    @DisplayName("生成分享链接 - 文档不存在")
+    @DisplayName("测试43：生成分享链接 - 文档不存在")
     void generateShareLink_DocumentNotFound() throws Exception {
         log.info("Test: Generate Share Link - Document Not Found");
 
@@ -674,7 +675,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(44)
-    @DisplayName("生成分享链接 - S3文件不存在")
+    @DisplayName("测试44：生成分享链接 - S3文件不存在")
     void generateShareLink_S3FileNotFound() throws Exception {
         log.info("Test: Generate Share Link - S3 File Not Found");
 
@@ -702,7 +703,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(45)
-    @DisplayName("生成分享链接 - S3Key为空")
+    @DisplayName("测试45：生成分享链接 - S3Key为空")
     void generateShareLink_EmptyS3Key() throws Exception {
         log.info("Test: Generate Share Link - Empty S3 Key");
 
@@ -729,7 +730,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(46)
-    @DisplayName("生成分享链接 - 服务异常")
+    @DisplayName("测试46：生成分享链接 - 服务异常")
     void generateShareLink_ServiceException() throws Exception {
         log.info("Test: Generate Share Link - Service Exception");
 
@@ -755,11 +756,57 @@ public class DocumentControllerUnitTest {
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.message").value("generate share link failed"));
     }
+    @Test
+    @Order(47)
+    @DisplayName("测试47：生成分享链接 - 其他异常")
+    void generateShareLink_UnexpectedException() throws Exception {
+        log.info("Test: Generate Share Link - Unexpected Exception");
+
+        Document mockDocument = createMockDocument(123L, "broken.pdf", testUser);
+        when(documentService.getDocumentById(123L, "user-123")).thenReturn(mockDocument);
+        when(fileStorageService.fileExists(mockDocument.getS3Key())).thenReturn(true);
+        when(fileStorageService.generateShareUrl(anyString(), any()))
+                .thenThrow(new RuntimeException("unexpected error"));
+
+        mockMvc.perform(
+                        get("/api/v1/documents/share")
+                                .param("documentId", "123")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("generate share link failed"));
+    }
+
+    @Test
+    @Order(48)
+    @DisplayName("测试48：生成分享链接 - 无文档")
+    void generateShareLink_DocumentIsNull() throws Exception {
+        log.info("Test: Generate Share Link - Document Is Null");
+
+        when(documentService.getDocumentById(300L, "user-123"))
+                .thenReturn(null);
+
+        mockMvc.perform(
+                        get("/api/v1/documents/share")
+                                .param("documentId", "300")
+                                .param("expirationMinutes", "10")
+                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
+                )
+                .andDo(print())
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.success").value(false))
+                .andExpect(jsonPath("$.message").value("Document not fount in storage"));
+
+        verify(documentService).getDocumentById(300L, "user-123");
+        verify(fileStorageService, never()).fileExists(any());
+    }
 
     // Tag Function Test
     @Test
     @Order(50)
-    @DisplayName("AddTagToDocument - Success")
+    @DisplayName("测试50：向文档添加Tag - 成功")
     void addTagToDocument_Success() throws Exception{
         log.info("Test: Add Tags to Document - Success");
 
@@ -784,7 +831,7 @@ public class DocumentControllerUnitTest {
 
     @Test
     @Order(51)
-    @DisplayName("addTagsToDocument - Failure")
+    @DisplayName("测试51：向文档添加Tag - 失败")
     void addTagsToDocument_Failure() throws Exception {
         log.info("Test: Add Tags to Document - Failure");
 
@@ -807,8 +854,8 @@ public class DocumentControllerUnitTest {
     }
 
     @Test
-    @Order(52)
-    @DisplayName("GetTagsByDocument - Success")
+    @Order(60)
+    @DisplayName("测试60：获得文档的Tag - 成功")
     void getTagsByDocument_Success() throws Exception {
         log.info("Test: Get Tags by Document - Success");
 
@@ -819,7 +866,7 @@ public class DocumentControllerUnitTest {
                 .thenReturn(List.of(tag1, tag2));
 
         mockMvc.perform(
-                        get("/api/v1/documents/100/tags")
+                        get("/api/v1/documents/100/taglist")
                                 .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
                 )
                 .andDo(print())
@@ -831,19 +878,16 @@ public class DocumentControllerUnitTest {
         verify(tagService).getTags(100L);
     }
 
-    /**
-     * 获取文档标签 - 空结果
-     */
     @Test
-    @Order(53)
-    @DisplayName("getTagsByDocument - Empty")
+    @Order(61)
+    @DisplayName("测试61：获得文档的Tag - 无Tag")
     void getTagsByDocument_Empty() throws Exception {
         log.info("Test: Get Tags by Document - Empty");
 
         when(tagService.getTags(200L)).thenReturn(List.of());
 
         mockMvc.perform(
-                        get("/api/v1/documents/200/tags")
+                        get("/api/v1/documents/200/taglist")
                                 .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
                 )
                 .andDo(print())
@@ -856,8 +900,8 @@ public class DocumentControllerUnitTest {
     }
 
     @Test
-    @Order(54)
-    @DisplayName("removeTagFromDocument - Success")
+    @Order(70)
+    @DisplayName("测试70：删除文档的Tag - 成功")
     void removeTagFromDocument_Success() throws Exception {
         log.info("Test: Remove Tag from Document - Success");
 
@@ -878,8 +922,8 @@ public class DocumentControllerUnitTest {
         verify(tagService).removeTag(100L, "AI", "user-123");
     }
     @Test
-    @Order(55)
-    @DisplayName("removeTagFromDocument - Failure")
+    @Order(71)
+    @DisplayName("测试71：删除文档的Tag - 失败")
     void removeTagFromDocument_Failure() throws Exception {
         log.info("Test: Remove Tag from Document - Failure");
 
@@ -898,15 +942,15 @@ public class DocumentControllerUnitTest {
         verify(tagService).removeTag(eq(100L), eq("AI"), eq("user-123"));
     }
     @Test
-    @Order(56)
-    @DisplayName("getDocumentsByTag - Success")
+    @Order(80)
+    @DisplayName("测试80：通过Tag分类文档 - 成功")
     void getDocumentsByTag_Success() throws Exception {
         log.info("Test: Get Documents by Tag - Success");
 
         Document doc1 = createMockDocument(1L, "AI1.pdf", testUser);
         Document doc2 = createMockDocument(2L, "AI2.pdf", testUser);
 
-        when(tagService.getDocumentsByTag("AI"))
+        when(tagService.getDocumentsByTag("AI","user-123"))
                 .thenReturn(List.of(doc1, doc2));
 
         mockMvc.perform(
@@ -918,16 +962,16 @@ public class DocumentControllerUnitTest {
                 .andExpect(jsonPath("$.data.documents[0].fileName").value("AI1.pdf"))
                 .andExpect(jsonPath("$.data.documents[1].fileName").value("AI2.pdf"));
 
-        verify(tagService).getDocumentsByTag("AI");
+        verify(tagService).getDocumentsByTag("AI","user-123");
     }
 
     @Test
-    @Order(57)
-    @DisplayName("getDocumentsByTag - Failure")
+    @Order(81)
+    @DisplayName("测试81：通过Tag分类文档 - 失败")
     void getDocumentsByTag_Failure() throws Exception {
         log.info("Test: Get Documents by Tag - Failure");
 
-        when(tagService.getDocumentsByTag("AI"))
+        when(tagService.getDocumentsByTag("AI","user-123"))
                 .thenThrow(new RuntimeException("数据库查询失败"));
 
         mockMvc.perform(
@@ -939,116 +983,33 @@ public class DocumentControllerUnitTest {
                 .andExpect(jsonPath("$.code").value(500))
                 .andExpect(jsonPath("$.message").value("Get documents by tag fail: 数据库查询失败"));
 
-        verify(tagService).getDocumentsByTag("AI");
+        verify(tagService).getDocumentsByTag("AI","user-123");
     }
 
     @Test
-    @Order(58)
-    @DisplayName("uploadDocumentWithTags - Success")
-    void uploadDocumentWithTags_Success() throws Exception {
-        log.info("Test: Upload Document With Tags - Success");
+    @Order(90)
+    @DisplayName("测试100：通过文件名称查询文档 - 成功")
+    void searchByFilename_Success() throws Exception {
+        log.info("Test: Search By Filename - Success");
 
-        DocumentUploadResponse mockResponse = DocumentUploadResponse.builder()
-                .documentId(100L)
-                .fileName("tagged_upload.pdf")
-                .fileSize(2048L)
-                .mimeType("application/pdf")
-                .s3Key("user-123/docs/tagged_upload.pdf")
-                .userId("user-123")
-                .description("desc")
-                .build();
+        Document doc1 = createMockDocument(1L, "ai_report.pdf", testUser);
+        Document doc2 = createMockDocument(2L, "ai_paper.pdf", testUser);
 
-        when(documentService.uploadDocument(
-                any(),
-                eq("tagged_upload.pdf"),
-                eq("desc"),
-                eq("user-123"))
-        ).thenReturn(mockResponse);
-
-        Document mockDocument = Document.builder()
-                .id(100L)
-                .originalFilename("tagged_upload.pdf")
-                .description("desc")
-                .status(Document.DocumentStatus.ACTIVE)
-                .build();
-
-        when(tagService.addTags(eq(100L), anyList(), eq("user-123")))
-                .thenReturn(mockDocument);
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "tagged_upload.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "content".getBytes()
-        );
+        when(documentService.searchDocumentsByFilename("user-123", "ai"))
+                .thenReturn(List.of(doc1, doc2));
 
         mockMvc.perform(
-                        multipart("/api/v1/documents/upload-with-tags")
-                                .file(file)
-                                .param("fileName", "tagged_upload.pdf")
-                                .param("description", "desc")
-                                .param("tags", "AI")
-                                .param("tags", "ML")
+                        get("/api/v1/documents/search")
+                                .param("keyword", "ai")
                                 .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
                 )
                 .andDo(print())
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.message").value("文件上传并添加标签成功"))
-                .andExpect(jsonPath("$.data.documentId").value(100L))
-                .andExpect(jsonPath("$.data.fileName").value("tagged_upload.pdf"));
+                .andExpect(jsonPath("$.data.documents").isArray())
+                .andExpect(jsonPath("$.data.documents.length()").value(2))
+                .andExpect(jsonPath("$.data.documents[0].fileName").value("ai_report.pdf"))
+                .andExpect(jsonPath("$.data.documents[1].fileName").value("ai_paper.pdf"));
 
-        verify(documentService).uploadDocument(any(), eq("tagged_upload.pdf"), eq("desc"), eq("user-123"));
-        verify(tagService).addTags(eq(100L), anyList(), eq("user-123"));
+        verify(documentService).searchDocumentsByFilename("user-123", "ai");
     }
-
-    @Test
-    @Order(59)
-    @DisplayName("uploadDocumentWithTags - TagFailure")
-    void uploadDocumentWithTags_TagFailure() throws Exception {
-        log.info("Test: Upload Document With Tags - Tag Failure");
-
-        DocumentUploadResponse mockResponse = DocumentUploadResponse.builder()
-                .documentId(200L)
-                .fileName("error_upload.pdf")
-                .fileSize(512L)
-                .mimeType("application/pdf")
-                .s3Key("user-123/docs/error_upload.pdf")
-                .userId("user-123")
-                .build();
-
-        when(documentService.uploadDocument(any(), eq("error_upload.pdf"), eq("desc"), eq("user-123")))
-                .thenReturn(mockResponse);
-
-        doThrow(new RuntimeException("标签写入失败"))
-                .when(tagService)
-                .addTags(eq(200L), anyList(), eq("user-123"));
-
-        MockMultipartFile file = new MockMultipartFile(
-                "file",
-                "error_upload.pdf",
-                MediaType.APPLICATION_PDF_VALUE,
-                "content".getBytes()
-        );
-
-        mockMvc.perform(
-                        multipart("/api/v1/documents/upload-with-tags")
-                                .file(file)
-                                .param("fileName", "error_upload.pdf")
-                                .param("description", "desc")
-                                .param("tags", "AI")
-                                .param("tags", "ML")
-                                .with(jwt().jwt(builder -> builder.claim("sub", "user-123")))
-                )
-                .andDo(print())
-                .andExpect(status().isInternalServerError())
-                .andExpect(jsonPath("$.success").value(false))
-                .andExpect(jsonPath("$.message").value(org.hamcrest.Matchers.containsString("文件上传或标签添加失败")));
-
-        verify(documentService).uploadDocument(any(), eq("error_upload.pdf"), eq("desc"), eq("user-123"));
-        verify(tagService).addTags(eq(200L), anyList(), eq("user-123"));
-    }
-
-
 }
