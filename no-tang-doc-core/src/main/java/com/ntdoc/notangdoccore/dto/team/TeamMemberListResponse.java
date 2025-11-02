@@ -35,16 +35,13 @@ public class TeamMemberListResponse {
     /**
      * 从 TeamMember 实体列表转换为 DTO
      */
-    public static TeamMemberListResponse fromEntities(List<TeamMember> members, String teamName) {
-        List<TeamMemberResponse> memberResponses = members.stream()
-                .map(TeamMemberResponse::fromEntity)
-                .collect(Collectors.toList());
+    public static TeamMemberListResponse fromEntities(List<TeamMemberResponse> members, String teamName) {
 
         return TeamMemberListResponse.builder()
-                .teamId(members.isEmpty() ? null : members.get(0).getTeam().getId())
+                .teamId(members.isEmpty() ? null : members.get(0).getTeamId())
                 .teamName(teamName)
-                .totalMembers(memberResponses.size())
-                .members(memberResponses)
+                .totalMembers(members.size())
+                .members(members)
                 .build();
     }
 }

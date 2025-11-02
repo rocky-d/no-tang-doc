@@ -27,7 +27,7 @@ public class Tag {
     @Column(name="tag",nullable = false,length = 64)
     private String tag;
 
-    @ManyToMany
+    @ManyToMany(mappedBy = "tags")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     private Set<Document> documents =  new HashSet<>();
