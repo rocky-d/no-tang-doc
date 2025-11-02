@@ -17,7 +17,7 @@
 - [Overview](#overview)
 - [Architecture](#architecture)
 - [Services](#services)
-  - [no-tang-doc-agent](#no-tang-doc-agent)
+  - [no-tang-doc-agent](#no-tang-doc-agent-mcp-server)
   - [no-tang-doc-core](#no-tang-doc-core-backend-api)
   - [no-tang-doc-web](#no-tang-doc-web-frontend)
 - [Infrastructure](#infrastructure)
