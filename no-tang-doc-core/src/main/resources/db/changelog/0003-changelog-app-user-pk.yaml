@@ -1,0 +1,28 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0003-enforce-kc-unique-250929
+      author: ZhongYi
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - sqlCheck:
+                expectedResult: "0"
+                sql: "SELECT COUNT(1) FROM app_user WHERE kc_user_id IS NULL"
+      changes:
+        - addNotNullConstraint:
+            tableName: app_user
+            columnName: kc_user_id
+            columnDataType: VARCHAR(64)
+        - addUniqueConstraint:
+            tableName: app_user
+            columnNames: kc_user_id
+            constraintName: uq_app_user_kc_user_id
+
+      rollback:
+        - dropUniqueConstraint:
+            tableName: app_user
+            constraintName: uq_app_user_kc_user
+
+        - dropNotNullConstraint:
+            tableName: app_user
+            columnName: kc_user_id

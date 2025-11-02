@@ -1,0 +1,20 @@
+[run]
+source = src/no_tang_doc_agent/mcp_server
+# Exclude entry points (__main__.py) and test files from coverage calculation
+# Entry points are not testable as they are CLI invocation scripts
+omit = 
+    */no_tang_doc_agent/mcp_server/__main__.py
+    */no_tang_doc_agent/mcp_client/__main__.py
+    */tests/*
+    */__pycache__/*
+    */site-packages/*
+
+[report]
+# Exclude lines from coverage reporting
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    if __name__ == .__main__.:
+    raise AssertionError
+    raise NotImplementedError
+    @abstractmethod

@@ -1,0 +1,119 @@
+name: no-tang-doc-core CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - mod/core
+      - feat/core/NTDOC-11-Setup-CI-CD-pipeline
+    paths:
+      - 'no-tang-doc-core/**'
+      - '.github/workflows/no-tang-doc-core-ci.yaml'
+  pull_request:
+    branches:
+      - main
+      - dev
+      - mod/core
+      - feat/core/NTDOC-11-Setup-CI-CD-pipeline
+    paths:
+      - 'no-tang-doc-core/**'
+  workflow_dispatch: {}
+defaults:
+  run:
+    working-directory: no-tang-doc-core
+
+jobs:
+  # SAST 静态代码分析
+  ci:
+    name: Build & Test
+    # mod/core和dev同步时不跑CI脚本
+    if: |
+      !(
+        (github.head_ref == 'mod/core' && github.base_ref == 'dev') ||
+        (github.head_ref == 'dev' && github.base_ref == 'mod/core')
+      )
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 24
+        uses: actions/setup-java@v4
+        with:
+          java-version: '24'
+          distribution: "oracle"
+          cache: maven
+
+      - name: Cache Maven packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.m2/repository
+            ~/.m2/wrapper
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml', '**/maven-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build (compile only)
+        run: mvn -B -DskipTests clean compile
+
+      - name: Test + Converage
+        run: mvn -B clean verify -Dspring.profiles.active=test
+
+      - name: PMD
+        run: mvn -B pmd:pmd pmd:check
+        continue-on-error: true
+
+      - name: Checkstyle
+        run: mvn -B checkstyle:check
+        continue-on-error: true
+
+      - name: Surefire HTML report
+        if: always()
+        run: mvn -B surefire-report:report
+
+      - name: Upload JaCoCo HTML report
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-html-report
+          path: |
+            no-tang-doc-core/target/site/jacoco/
+            
+
+      - name: Upload PMD reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pmd-reports
+          path: |
+            no-tang-doc-core/target/pmd.xml
+            no-tang-doc-core/target/site/pmd.html
+          compression-level: 9
+
+      - name: Upload Checkstyle reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: checkstyle-reports
+          path: |
+            no-tang-doc-core/target/checkstyle-result.xml
+            no-tang-doc-core/target/site/checkstyle.html
+          compression-level: 9
+  push-to-docr:
+    name: Push image to DOCR
+    needs: ci
+    # Only Dev ci passed then do the push and deploy
+#    if: >-
+#      ${{
+#        needs.ci.result == 'success' &&
+#        contains(fromJson('["main","dev","mod/core","feat/core/NTDOC-11-Setup-CI-CD-pipeline","feat/core/doks-deploy-test"]'), github.ref_name) &&
+#        github.event_name == 'push'
+#      }}
+    if: ${{ needs.ci.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/dev' }}
+    uses: ./.github/workflows/deploy-to-doks.yaml
+    with:
+      sha: ${{ github.sha }}
+      branch: ${{ github.ref_name }}
+    secrets: inherit

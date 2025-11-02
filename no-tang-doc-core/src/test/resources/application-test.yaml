@@ -1,0 +1,78 @@
+spring:
+  application:
+    name: no-tang-doc-core-test
+
+
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+    open-in-view: false
+
+  # 2) 禁用 Liquibase
+  liquibase:
+    enabled: false
+
+  # 3) 测试时不需要真正连 Keycloak
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:9999/fake/jwks  # 占位即可
+      client:
+        registration:
+          keycloak:
+            client-id: no-tang-doc-core
+            authorization-grant-type: authorization_code
+            redirect-uri: http://localhost:8070/login/oauth2/code/*
+            scope: openid,profile,email
+            client-secret: fake-secret
+        provider:
+          keycloak:
+            issuer-uri: ""
+            authorization-uri: http://localhost:9999/fake/auth
+            token-uri: http://localhost:9999/fake/token
+            user-info-uri: http://localhost:9999/fake/userinfo
+            jwk-set-uri: http://localhost:9999/fake/jwks
+
+  servlet:
+    multipart:
+      max-file-size: 50MB
+      max-request-size: 50MB
+
+
+digitalocean:
+  spaces:
+    endpoint: https://sgp1.digitaloceanspaces.com
+    region: sgp1
+    bucket: test-object-storage
+    access-key: test-key
+    secret-key: test-secret
+    public-url: https://test-object-storage.sgp1.digitaloceanspaces.com
+    cdn-url: https://test-object-storage.sgq1.cdn.digitaloceanspaces.com
+
+
+logging:
+  level:
+    root: WARN
+    org.springframework.security: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

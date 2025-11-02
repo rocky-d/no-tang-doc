@@ -1,0 +1,46 @@
+package com.ntdoc.notangdoccore.repository;
+
+import com.ntdoc.notangdoccore.dto.log.LogsCountDTO;
+import com.ntdoc.notangdoccore.entity.Log;
+import com.ntdoc.notangdoccore.entity.logenum.OperationStatus;
+import com.ntdoc.notangdoccore.entity.logenum.OperationType;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.Map;
+
+@Repository
+public interface LogRepository extends JpaRepository<Log,Long> {
+
+    List<Log> findByActorName(String actorName);
+    List<Log> findByUserId(Long userId);
+    List<Log> findByOperationType(OperationType operationType);
+    List<Log> findByTimeBetween(Instant start, Instant end);
+    List<Log> findByOperationStatus(OperationStatus status);
+    List<Log> findByTargetId(Long targetId);
+
+    @Query(value = """
+    SELECT DATE_FORMAT(l.time, '%Y-%m-%d') AS label, COUNT(*) AS cnt
+    FROM log l
+    WHERE l.user_id = :userId AND l.time BETWEEN :start AND :end
+    GROUP BY DATE_FORMAT(l.time, '%Y-%m-%d')
+    ORDER BY DATE_FORMAT(l.time, '%Y-%m-%d')
+    """, nativeQuery = true)
+    List<Object[]> countByDay(@Param("userId") Long userId, @Param("start") Instant start, @Param("end") Instant end);
+
+    @Query(value = """
+    SELECT CONCAT('W', YEARWEEK(l.time, 3)) AS label,
+           COUNT(*)                         AS cnt
+    FROM log l
+    WHERE l.user_id = :userId
+      AND l.time >= :start AND l.time < :end
+    GROUP BY CONCAT('W', YEARWEEK(l.time, 3))
+    ORDER BY CONCAT('W', YEARWEEK(l.time, 3))
+    """, nativeQuery = true)
+    List<Object[]> countByWeek(@Param("userId") Long userId,@Param("start") Instant start,@Param("end") Instant end);
+
+}

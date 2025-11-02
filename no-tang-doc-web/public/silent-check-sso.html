@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Silent SSO</title>
+</head>
+<body>
+<script>
+  // Keycloak will postMessage back to opener
+  parent.postMessage({ type: 'keycloak-silent-check-sso' }, window.location.origin);
+</script>
+</body>
+</html>
+

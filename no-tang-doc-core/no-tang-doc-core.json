@@ -1,0 +1,50 @@
+{
+  "id": "ntdoc",
+  "realm": "ntdoc",
+  "enabled": true,
+  "registrationAllowed": true,
+  "roles": {
+    "realm": [
+      {
+        "name": "USER",
+        "description": "Doc USER"
+      },
+      {
+        "name": "ADMIN",
+        "description": "Doc ADMIN"
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "no-tang-doc-core",
+      "secret": "no-tang-doc-core-secret",
+      "directAccessGrantsEnabled": true,
+      "standardFlowEnabled": true,
+      "publicClient": false,
+      "protocol": "openid-connect",
+      "redirectUris": [
+        "http://localhost:3000/auth/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:3000"
+      ],
+      "protocolMappers": [
+        {
+          "name": "audience-mapper",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-audience-mapper",
+          "consentRequired": false,
+          "config": {
+            "included.client.audience": "no-tang-doc-core",
+            "id.token.claim": "false",
+            "access.token.claim": "true"
+          }
+        }
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ]
+}

@@ -1,0 +1,126 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0004-create-document-table-291124
+      author: System
+      changes:
+        - createTable:
+            tableName: document
+            remarks: 文档信息表
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: pk_document
+                    nullable: false
+              - column:
+                  name: original_filename
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: stored_filename
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_size
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content_type
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: file_hash
+                  type: VARCHAR(64)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: s3_bucket
+                  type: VARCHAR(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: s3_key
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: VARCHAR(500)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: download_count
+                  type: INT
+                  defaultValue: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+                  constraints:
+                    nullable: false
+
+        # 添加外键约束
+        - addForeignKeyConstraint:
+            baseTableName: document
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_document_user_id
+            onDelete: CASCADE
+            onUpdate: CASCADE
+
+        # 添加索引
+        - createIndex:
+            tableName: document
+            indexName: idx_document_user_id
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            tableName: document
+            indexName: idx_document_created_at
+            columns:
+              - column:
+                  name: created_at
+        - createIndex:
+            tableName: document
+            indexName: idx_document_status
+            columns:
+              - column:
+                  name: status
+
+        # 添加唯一约束
+        - addUniqueConstraint:
+            tableName: document
+            columnNames: stored_filename
+            constraintName: uq_document_stored_filename
+
+      rollback:
+        - dropTable:
+            tableName: document
+            cascadeConstraints: true

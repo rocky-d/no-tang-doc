@@ -1,0 +1,20 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0002-augment-app-user-250929
+      author: ZhongYi
+      changes:
+        # 1. Add Keycloak User Id
+        - addColumn:
+            tableName: app_user
+            columns:
+              - column:
+                  name: kc_user_id
+                  type: VARCHAR(64)
+                  remarks: "Keycloak user UUID,(JWT.sub))"
+                  constraints:
+                    nullable: true
+
+      rollback:
+        - dropColumn:
+            tableName: app_user
+            columnName: kc_user_id
