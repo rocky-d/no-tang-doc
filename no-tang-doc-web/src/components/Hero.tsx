@@ -1,6 +1,6 @@
 import { Button } from "./ui/button";
 import { ImageWithFallback } from "./figma/ImageWithFallback";
-import { Upload, FileText, Shield, Zap } from "lucide-react";
+import { Upload, Shield, Zap } from "lucide-react";
 import { useAuth } from "./AuthContext";
 
 interface HeroProps {
@@ -8,7 +8,7 @@ interface HeroProps {
 }
 
 export function Hero({ onStartUploading }: HeroProps) {
-  const { user } = useAuth();
+  useAuth();
   return (
     <section id="home" className="py-20 lg:py-32 bg-gradient-to-br from-background to-muted/50">
       <div className="container mx-auto px-4">
@@ -30,10 +30,7 @@ export function Hero({ onStartUploading }: HeroProps) {
                 <Upload className="mr-2 h-5 w-5" />
                 Start Uploading
               </Button>
-              <Button size="lg" variant="outline" className="text-base">
-                <FileText className="mr-2 h-5 w-5" />
-                View Demo
-              </Button>
+
             </div>
 
             <div className="flex items-center space-x-8 pt-8">

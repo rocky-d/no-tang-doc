@@ -9,7 +9,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Users, FileText, MessageSquare, Calendar, MoreVertical, ChevronDown, Settings } from 'lucide-react';
+import { Users, FileText, MessageSquare, Calendar, MoreVertical, Settings } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 
 interface Team {
@@ -176,20 +176,6 @@ export function TeamSpacePage() {
             .toUpperCase()
             .slice(0, 2);
     };
-
-    const getStatusColor = (status: TeamMember['status']) => {
-        switch (status) {
-            case 'online':
-                return 'bg-green-500';
-            case 'away':
-                return 'bg-yellow-500';
-            case 'offline':
-                return 'bg-gray-400';
-            default:
-                return 'bg-gray-400';
-        }
-    };
-
     return (
         <UserLayout
             onSearch={handleSearch}
