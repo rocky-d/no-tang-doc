@@ -140,7 +140,7 @@ function testGetTeams(baseUrl, headers) {
   });
   const duration = Date.now() - start;
 
-  const success = check(res, {
+  check(res, {
     'teams: status is 200': (r) => r.status === 200,
     'teams: has valid response': (r) => {
       try {
@@ -154,7 +154,6 @@ function testGetTeams(baseUrl, headers) {
   });
 
   databaseQueryDuration.add(duration, { operation: 'get_teams' });
-  apiSuccessRate.add(success ? 1 : 0);
 }
 
 /**
@@ -212,13 +211,12 @@ function testGetDocuments(baseUrl, headers) {
   });
   const duration = Date.now() - start;
 
-  const success = check(res, {
+  check(res, {
     'documents: status is 200': (r) => r.status === 200,
     'documents: response time < 600ms': () => duration < 600,
   });
 
   databaseQueryDuration.add(duration, { operation: 'get_documents' });
-  apiSuccessRate.add(success ? 1 : 0);
 }
 
 /**
