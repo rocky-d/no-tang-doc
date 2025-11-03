@@ -1,0 +1,106 @@
+name: Load Test (Manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      service:
+        description: 'Service to test'
+        required: true
+        type: choice
+        options:
+          - agent
+          - core
+          - web
+          - all
+        default: 'all'
+      environment:
+        description: 'Target environment'
+        required: true
+        type: choice
+        options:
+          - production
+          - development
+        default: 'production'
+      scenario:
+        description: 'Test scenario'
+        required: true
+        type: choice
+        options:
+          - smoke
+          - load
+          - stress
+          - spike
+          - soak
+          - ci
+        default: 'smoke'
+      test_team_id:
+        description: 'Test team ID (for API calls)'
+        required: false
+        type: string
+        default: '1'
+
+concurrency:
+  group: load-test-manual-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-agent:
+    name: Agent Service
+    if: inputs.service == 'agent' || inputs.service == 'all'
+    uses: ./.github/workflows/load-test-reusable.yaml
+    with:
+      service: 'agent'
+      script: 'agent-api.js'
+      environment: ${{ inputs.environment }}
+      scenario: ${{ inputs.scenario }}
+      test_team_id: ${{ inputs.test_team_id }}
+    secrets:
+      KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
+
+  test-core:
+    name: Core Service
+    if: inputs.service == 'core' || inputs.service == 'all'
+    uses: ./.github/workflows/load-test-reusable.yaml
+    with:
+      service: 'core'
+      script: 'core-api.js'
+      environment: ${{ inputs.environment }}
+      scenario: ${{ inputs.scenario }}
+      test_team_id: ${{ inputs.test_team_id }}
+    secrets:
+      KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
+
+  test-web:
+    name: Web Frontend
+    if: inputs.service == 'web' || inputs.service == 'all'
+    uses: ./.github/workflows/load-test-reusable.yaml
+    with:
+      service: 'web'
+      script: 'web-frontend.js'
+      environment: ${{ inputs.environment }}
+      scenario: ${{ inputs.scenario }}
+      test_team_id: 'N/A'
+    secrets:
+      KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
+
+  notify-completion:
+    name: Notify Completion
+    runs-on: ubuntu-latest
+    needs: [test-agent, test-core, test-web]
+    if: always()
+    steps:
+      - name: Summary
+        run: |
+          echo "## 🎯 Load Test Campaign Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Scenario:** ${{ inputs.scenario }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Services Tested:** ${{ inputs.service }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Agent: ${{ needs.test-agent.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Core: ${{ needs.test-core.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Web: ${{ needs.test-web.result }}" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,77 @@
+name: Load Test (Scheduled)
+
+on:
+  schedule:
+    # Run every Sunday at 2:00 AM UTC (10:00 AM CST)
+    - cron: '0 2 * * 0'
+  workflow_dispatch:  # Allow manual trigger
+
+concurrency:
+  group: load-test-scheduled
+  cancel-in-progress: false
+
+jobs:
+  # Weekly smoke test on all services
+  test-agent:
+    name: Agent - Weekly Smoke Test
+    uses: ./.github/workflows/load-test-reusable.yaml
+    with:
+      service: 'agent'
+      script: 'agent-api.js'
+      environment: 'production'
+      scenario: 'smoke'
+      test_team_id: '1'
+    secrets:
+      KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
+
+  test-core:
+    name: Core - Weekly Smoke Test
+    uses: ./.github/workflows/load-test-reusable.yaml
+    with:
+      service: 'core'
+      script: 'core-api.js'
+      environment: 'production'
+      scenario: 'smoke'
+      test_team_id: '1'
+    secrets:
+      KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
+
+  test-web:
+    name: Web - Weekly Smoke Test
+    uses: ./.github/workflows/load-test-reusable.yaml
+    with:
+      service: 'web'
+      script: 'web-frontend.js'
+      environment: 'production'
+      scenario: 'smoke'
+      test_team_id: 'N/A'
+    secrets:
+      KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
+      KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
+
+  summary:
+    name: Weekly Report
+    runs-on: ubuntu-latest
+    needs: [test-agent, test-core, test-web]
+    if: always()
+    steps:
+      - name: Generate weekly summary
+        run: |
+          echo "## 📅 Weekly Load Test Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Date:** $(date +'%Y-%m-%d %H:%M UTC')" >> $GITHUB_STEP_SUMMARY
+          echo "**Type:** Scheduled Smoke Test" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Service Health Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Agent:** ${{ needs.test-agent.result == 'success' && '✅ Healthy' || '❌ Issues Detected' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Core:** ${{ needs.test-core.result == 'success' && '✅ Healthy' || '❌ Issues Detected' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Web:** ${{ needs.test-web.result == 'success' && '✅ Healthy' || '❌ Issues Detected' }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ needs.test-agent.result }}" != "success" ] || [ "${{ needs.test-core.result }}" != "success" ] || [ "${{ needs.test-web.result }}" != "success" ]; then
+            echo "⚠️ **Action Required:** Some services failed performance thresholds. Please review the individual test results." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "✅ **All Systems Operational:** All services passed performance thresholds." >> $GITHUB_STEP_SUMMARY
+          fi

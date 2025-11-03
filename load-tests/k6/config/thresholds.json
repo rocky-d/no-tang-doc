@@ -1,0 +1,29 @@
+{
+  "common": {
+    "http_req_duration": ["p(95)<500", "p(99)<1000"],
+    "http_req_failed": ["rate<0.01"],
+    "http_reqs": ["rate>10"]
+  },
+  "agent": {
+    "http_req_duration": ["p(95)<500", "p(99)<800", "max<2000"],
+    "http_req_failed": ["rate<0.01"],
+    "http_reqs": ["rate>20"],
+    "checks": ["rate>0.95"],
+    "mcp_tool_calls": ["p(95)<600"]
+  },
+  "core": {
+    "http_req_duration": ["p(95)<600", "p(99)<1200", "max<3000"],
+    "http_req_failed": ["rate<0.02"],
+    "http_reqs": ["rate>15"],
+    "checks": ["rate>0.95"],
+    "document_upload_duration": ["p(95)<2000"],
+    "database_query_duration": ["p(95)<300"]
+  },
+  "web": {
+    "http_req_duration": ["p(95)<200", "p(99)<400", "max<1000"],
+    "http_req_failed": ["rate<0.005"],
+    "http_reqs": ["rate>50"],
+    "checks": ["rate>0.98"],
+    "static_resource_duration": ["p(95)<100"]
+  }
+}
