@@ -120,19 +120,19 @@ jobs:
               "HTTP Requests:",
               "  Total: \(.metrics.http_reqs.count // 0)",
               "  Rate: \(.metrics.http_reqs.rate // 0 | tonumber | . * 100 | round / 100) req/s",
-              "  Failed: \(.metrics.http_req_failed.rate // 0 | tonumber | . * 100 | round)%",
+              "  Failed: \(.metrics.http_req_failed.value // 0 | tonumber | . * 100 | round)%",
               "",
               "Response Times:",
               "  Avg: \(.metrics.http_req_duration.avg // 0 | tonumber | round)ms",
+              "  p90: \(.metrics.http_req_duration["p(90)"] // 0 | tonumber | round)ms",
               "  p95: \(.metrics.http_req_duration["p(95)"] // 0 | tonumber | round)ms",
-              "  p99: \(.metrics.http_req_duration["p(99)"] // 0 | tonumber | round)ms",
               "  Max: \(.metrics.http_req_duration.max // 0 | tonumber | round)ms",
               "",
               "Virtual Users:",
               "  Max: \(.metrics.vus_max.max // 0)",
               "",
               "Checks:",
-              "  Success Rate: \(.metrics.checks.rate // 0 | tonumber | . * 100 | round)%"
+              "  Success Rate: \(.metrics.checks.value // 0 | tonumber | . * 100 | round)%"
             ' load-tests/results/summary-${{ inputs.service }}-${{ github.run_id }}.json >> $GITHUB_STEP_SUMMARY
             echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
