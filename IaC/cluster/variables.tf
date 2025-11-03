@@ -28,14 +28,9 @@ variable "node_size" {
   default = "s-2vcpu-4gb"
 }
 
-variable "node_count" {
-  type    = number
-  default = 2
-}
-
 variable "max_nodes" {
   type    = number
-  default = 2
+  default = 4
 }
 
 variable "min_nodes" {
