@@ -86,7 +86,7 @@ jobs:
             echo "✅ Test completed - Checking thresholds..."
             
             # Parse summary to check if all thresholds passed
-            FAILED_THRESHOLDS=$(jq -r '.metrics | to_entries[] | select(.value.thresholds != null) | select(.value.thresholds | to_entries[] | select(.value.ok == false)) | .key' load-tests/results/summary-${{ inputs.service }}-${{ github.run_id }}.json | wc -l)
+            FAILED_THRESHOLDS=$(jq -r '.metrics | to_entries[] | select(.value.thresholds != null) | select(.value.thresholds | type == "object") | select(.value.thresholds | to_entries[] | select((.value | type == "object") and (.value.ok == false))) | .key' load-tests/results/summary-${{ inputs.service }}-${{ github.run_id }}.json | wc -l)
             
             if [ "$FAILED_THRESHOLDS" -gt 0 ]; then
               echo "❌ $FAILED_THRESHOLDS threshold(s) failed"
@@ -145,7 +145,7 @@ jobs:
               echo "" >> $GITHUB_STEP_SUMMARY
               echo "Failed thresholds:" >> $GITHUB_STEP_SUMMARY
               echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-              jq -r '.metrics | to_entries[] | select(.value.thresholds != null) | select(.value.thresholds | to_entries[] | select(.value.ok == false)) | "\(.key): \(.value.thresholds | to_entries[] | select(.value.ok == false) | .key)"' load-tests/results/summary-${{ inputs.service }}-${{ github.run_id }}.json >> $GITHUB_STEP_SUMMARY
+              jq -r '.metrics | to_entries[] | select(.value.thresholds != null) | select(.value.thresholds | type == "object") | select(.value.thresholds | to_entries[] | select((.value | type == "object") and (.value.ok == false))) | "\(.key): \(.value.thresholds | to_entries[] | select((.value | type == "object") and (.value.ok == false)) | .key)"' load-tests/results/summary-${{ inputs.service }}-${{ github.run_id }}.json >> $GITHUB_STEP_SUMMARY
               echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
             fi
           else
