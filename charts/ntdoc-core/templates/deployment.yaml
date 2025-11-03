@@ -70,6 +70,16 @@ spec:
             failureThreshold: 3
           {{- end }}
 
+      {{- if .Values.topologySpread.enabled }}
+      topologySpreadConstraints:
+        - maxSkew: {{ default 1 .Values.topologySpread.hostname.maxSkew }}
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: {{ default "ScheduleAnyway" .Values.topologySpread.hostname.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "ntdoc-core.selectorLabels" . | nindent 14 }}
+      {{- end }}
+
       {{- if .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml .Values.nodeSelector | nindent 8 }}
