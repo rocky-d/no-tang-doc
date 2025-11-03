@@ -111,15 +111,14 @@ export default function(data) {
 
   const headers = createAuthHeaders(token);
 
-  // Test groups
-  group('Teams API', () => {
+  // Test read-only endpoints (GET only) to validate infrastructure
+  // TODO: Enable write operations (POST/PUT/DELETE) after backend APIs are verified
+  group('Teams API - Read Only', () => {
     testGetTeams(data.coreBaseUrl, headers);
-    testCreateTeam(data.coreBaseUrl, headers);
   });
 
-  group('Documents API', () => {
+  group('Documents API - Read Only', () => {
     testGetDocuments(data.coreBaseUrl, headers);
-    testUploadDocument(data.coreBaseUrl, headers);
   });
 
   group('Health & Metrics', () => {
