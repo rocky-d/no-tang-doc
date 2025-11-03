@@ -28,7 +28,6 @@ const SCENARIO = __ENV.SCENARIO || 'load';
 // Custom metrics
 const staticResourceDuration = new Trend('static_resource_duration');
 const pageLoadDuration = new Trend('page_load_duration');
-const resourceSuccessRate = new Rate('resource_success_rate');
 
 // Test configuration
 export const options = {

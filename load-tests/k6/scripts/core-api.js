@@ -35,7 +35,6 @@ const SCENARIO = __ENV.SCENARIO || 'load';
 // Custom metrics
 const documentUploadDuration = new Trend('document_upload_duration');
 const databaseQueryDuration = new Trend('database_query_duration');
-const apiSuccessRate = new Rate('api_success_rate');
 const documentUploadErrors = new Counter('document_upload_errors');
 
 // Test configuration
@@ -104,7 +103,7 @@ export default function(data) {
   );
 
   if (!token) {
-    apiSuccessRate.add(0);
+    console.error('Failed to obtain OAuth token');
     sleep(1);
     return;
   }
