@@ -2,8 +2,7 @@
   "smoke": {
     "executor": "constant-vus",
     "vus": 1,
-    "duration": "1m",
-    "description": "Smoke test - Minimal load to verify basic functionality"
+    "duration": "1m"
   },
   "load": {
     "executor": "ramping-vus",
@@ -13,8 +12,7 @@
       { "duration": "5m", "target": 10 },
       { "duration": "2m", "target": 0 }
     ],
-    "gracefulRampDown": "30s",
-    "description": "Load test - Normal expected load"
+    "gracefulRampDown": "30s"
   },
   "stress": {
     "executor": "ramping-vus",
@@ -26,8 +24,7 @@
       { "duration": "5m", "target": 40 },
       { "duration": "2m", "target": 0 }
     ],
-    "gracefulRampDown": "30s",
-    "description": "Stress test - Above-normal load to find breaking point"
+    "gracefulRampDown": "30s"
   },
   "spike": {
     "executor": "ramping-vus",
@@ -39,19 +36,16 @@
       { "duration": "10s", "target": 5 },
       { "duration": "3m", "target": 5 }
     ],
-    "gracefulRampDown": "30s",
-    "description": "Spike test - Sudden surge in traffic"
+    "gracefulRampDown": "30s"
   },
   "soak": {
     "executor": "constant-vus",
     "vus": 15,
-    "duration": "30m",
-    "description": "Soak test - Sustained load over extended period"
+    "duration": "30m"
   },
   "ci": {
     "executor": "constant-vus",
     "vus": 5,
-    "duration": "3m",
-    "description": "CI test - Quick validation for pull requests"
+    "duration": "3m"
   }
 }
