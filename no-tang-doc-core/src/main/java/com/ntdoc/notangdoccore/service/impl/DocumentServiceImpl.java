@@ -288,6 +288,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     private User getUserByKcUserId(String kcUserId) {
         return userRepository.findByKcUserId(kcUserId)
                 .orElseGet(() -> {
