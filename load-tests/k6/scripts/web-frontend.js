@@ -110,13 +110,13 @@ function testHomepage(baseUrl) {
 
 /**
  * Test static resources (JS, CSS)
+ * Note: Vite builds with content hashes, so we test generic patterns
  */
 function testStaticResources(baseUrl) {
-  // Common static resource patterns for Vite-built apps
+  // Test public static assets that don't have content hashes
   const resources = [
-    '/assets/index.js',
-    '/assets/index.css',
-    '/assets/vendor.js',
+    '/vite.svg',         // Vite default favicon
+    '/favicon.ico',      // Common favicon
   ];
 
   resources.forEach((resource) => {
