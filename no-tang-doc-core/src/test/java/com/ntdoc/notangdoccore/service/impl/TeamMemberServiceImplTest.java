@@ -6,9 +6,7 @@ import com.ntdoc.notangdoccore.entity.User;
 import com.ntdoc.notangdoccore.repository.TeamMemberRepository;
 import com.ntdoc.notangdoccore.repository.TeamRepository;
 import com.ntdoc.notangdoccore.repository.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
@@ -28,8 +26,9 @@ import static org.mockito.Mockito.*;
  * TeamMemberServiceImpl 核心单元测试
  * 测试团队成员管理的关键业务逻辑
  */
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 @ExtendWith(MockitoExtension.class)
-@DisplayName("团队成员服务核心测试")
+@DisplayName("TeamMemberServiceImpl服务测试")
 class TeamMemberServiceImplTest {
 
     @Mock
@@ -93,6 +92,7 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
+    @Order(1)
     @DisplayName("测试1: 添加成员成功 - OWNER添加新成员")
     void testAddMember_Success_OwnerAddsNewMember() {
         // Given: OWNER 添加新成员
@@ -146,6 +146,7 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
+    @Order(2)
     @DisplayName("测试2: 添加成员失败 - 无权限用户尝试添加")
     void testAddMember_Fail_NoPermission() {
         // Given: 普通用户尝试添加成员
@@ -170,6 +171,7 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
+    @Order(3)
     @DisplayName("测试3: 添加成员失败 - 用户已存在")
     void testAddMember_Fail_UserAlreadyExists() {
         // Given: 用户已经是活跃成员
@@ -208,7 +210,62 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("测试4: 移除成员成功")
+    @Order(4)
+    @DisplayName("测试4: 添加成员失败 - 团队未激活")
+    void testAddMember_Fail_TeamNotActive() {
+        mockTeam.setStatus(Team.TeamStatus.DELETED);
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.of(mockOwner));
+
+        // Mock 管理员权限
+        TeamMember ownerMember = TeamMember.builder()
+                .team(mockTeam)
+                .user(mockOwner)
+                .role(TeamMember.TeamRole.OWNER)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+        when(teamMemberRepository.findByTeamAndUser(mockTeam, mockOwner))
+                .thenReturn(Optional.of(ownerMember));
+
+        assertThatThrownBy(() -> teamMemberService.addMember(1L, newUserKcId, "MEMBER", ownerKcId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("只能向活跃的团队添加成员");
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("测试5: 添加成员 - 重新激活已移除成员")
+    void testAddMember_ReactivateRemovedMember() {
+        TeamMember removedMember = TeamMember.builder()
+                .team(mockTeam)
+                .user(mockNewUser)
+                .role(TeamMember.TeamRole.MEMBER)
+                .status(TeamMember.MemberStatus.REMOVED)
+                .build();
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.of(mockOwner));
+        when(userRepository.findByKcUserId(newUserKcId)).thenReturn(Optional.of(mockNewUser));
+        when(teamMemberRepository.findByTeamAndUser(mockTeam, mockOwner))
+                .thenReturn(Optional.of(TeamMember.builder()
+                        .team(mockTeam).user(mockOwner)
+                        .role(TeamMember.TeamRole.OWNER)
+                        .status(TeamMember.MemberStatus.ACTIVE).build()));
+        when(teamMemberRepository.findByTeamAndUser(mockTeam, mockNewUser))
+                .thenReturn(Optional.of(removedMember));
+        when(teamMemberRepository.save(any(TeamMember.class))).thenReturn(removedMember);
+
+        TeamMember result = teamMemberService.addMember(1L, newUserKcId, "ADMIN", ownerKcId);
+
+        assertThat(result.getStatus()).isEqualTo(TeamMember.MemberStatus.ACTIVE);
+        assertThat(result.getRole()).isEqualTo(TeamMember.TeamRole.ADMIN);
+    }
+
+
+    @Test
+    @Order(10)
+    @DisplayName("测试10: 移除成员成功")
     void testRemoveMember_Success() {
         // Given: OWNER 移除普通成员
         Long memberId = 5L;
@@ -253,7 +310,8 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("测试5: 移除成员失败 - 不能移除OWNER")
+    @Order(11)
+    @DisplayName("测试11: 移除成员失败 - 不能移除OWNER")
     void testRemoveMember_Fail_CannotRemoveOwner() {
         // Given: 尝试移除 OWNER
         Long ownerMemberId = 1L;
@@ -286,7 +344,57 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("测试6: 更新成员角色成功")
+    @Order(12)
+    @DisplayName("测试12: 移除成员失败 - 成员不属于该团队")
+    void testRemoveMember_Fail_MemberNotBelongToTeam() {
+        Team anotherTeam = Team.builder().id(999L).name("其他团队").build();
+        TeamMember member = TeamMember.builder()
+                .id(9L)
+                .team(anotherTeam)
+                .user(mockNewUser)
+                .role(TeamMember.TeamRole.MEMBER)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.of(mockOwner));
+        when(teamMemberRepository.findByTeamAndUser(mockTeam, mockOwner))
+                .thenReturn(Optional.of(TeamMember.builder()
+                        .team(mockTeam).user(mockOwner)
+                        .role(TeamMember.TeamRole.OWNER)
+                        .status(TeamMember.MemberStatus.ACTIVE).build()));
+        when(teamMemberRepository.findById(9L)).thenReturn(Optional.of(member));
+
+        assertThatThrownBy(() -> teamMemberService.removeMember(1L, 9L, ownerKcId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("成员不属于该团队");
+    }
+    @Test
+    @Order(13)
+    @DisplayName("测试13: 移除成员失败 - 成员不存在")
+    void testRemoveMember_Fail_MemberNotFound() {
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.of(mockOwner));
+
+        TeamMember ownerMember = TeamMember.builder()
+                .team(mockTeam)
+                .user(mockOwner)
+                .role(TeamMember.TeamRole.OWNER)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+        when(teamMemberRepository.findByTeamAndUser(mockTeam, mockOwner))
+                .thenReturn(Optional.of(ownerMember));
+
+        when(teamMemberRepository.findById(999L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> teamMemberService.removeMember(1L, 999L, ownerKcId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("成员记录不存在");
+    }
+
+    @Test
+    @Order(20)
+    @DisplayName("测试20: 更新成员角色成功")
     void testUpdateMemberRole_Success() {
         // Given: OWNER 将 MEMBER 升级为 ADMIN
         Long memberId = 5L;
@@ -315,7 +423,8 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("测试7: 更新成员角色失败 - 非OWNER无权限")
+    @Order(21)
+    @DisplayName("测试21: 更新成员角色失败 - 非OWNER无权限")
     void testUpdateMemberRole_Fail_NotOwner() {
         // Given: ADMIN 尝试修改角色（只有 OWNER 可以）
         Long memberId = 5L;
@@ -339,7 +448,8 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("测试8: 更新成员角色失败 - 不能设置为OWNER")
+    @Order(22)
+    @DisplayName("测试22: 更新成员角色失败 - 不能设置为OWNER")
     void testUpdateMemberRole_Fail_CannotSetOwner() {
         // Given: 尝试将成员设置为 OWNER
         Long memberId = 5L;
@@ -362,7 +472,53 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("测试9: 获取团队成员列表成功")
+    @Order(23)
+    @DisplayName("测试23: 更新成员角色失败 - 成员不属于该团队")
+    void testUpdateMemberRole_Fail_MemberNotBelongToTeam() {
+        Long memberId = 5L;
+        Team anotherTeam = Team.builder().id(999L).name("其他团队").build();
+        TeamMember memberToUpdate = TeamMember.builder()
+                .id(memberId)
+                .team(anotherTeam)
+                .user(mockNewUser)
+                .role(TeamMember.TeamRole.MEMBER)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.of(mockOwner));
+        when(teamMemberRepository.findById(memberId)).thenReturn(Optional.of(memberToUpdate));
+
+        assertThatThrownBy(() -> teamMemberService.updateMemberRole(1L, memberId, "ADMIN", ownerKcId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("成员不属于该团队");
+    }
+
+    @Test
+    @Order(24)
+    @DisplayName("测试24: 更新成员角色失败 - 不能修改OWNER的角色")
+    void testUpdateMemberRole_Fail_CannotModifyOwnerRole() {
+        Long memberId = 1L;
+        TeamMember ownerMember = TeamMember.builder()
+                .id(memberId)
+                .team(mockTeam)
+                .user(mockOwner)
+                .role(TeamMember.TeamRole.OWNER)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.of(mockOwner));
+        when(teamMemberRepository.findById(memberId)).thenReturn(Optional.of(ownerMember));
+
+        assertThatThrownBy(() -> teamMemberService.updateMemberRole(1L, memberId, "ADMIN", ownerKcId))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("不能修改团队拥有者的角色");
+    }
+
+    @Test
+    @Order(30)
+    @DisplayName("测试30: 获取团队成员列表成功")
     void testGetActiveTeamMembers_Success() {
         // Given: 团队有多个活跃成员
         TeamMember member1 = TeamMember.builder()
@@ -401,7 +557,8 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("测试10: 获取团队成员列表失败 - 非成员无权限")
+    @Order(31)
+    @DisplayName("测试31: 获取团队成员列表失败 - 非成员无权限")
     void testGetActiveTeamMembers_Fail_NotMember() {
         // Given: 非成员尝试查看
         String outsiderKcId = "outsider-kc-id";
@@ -423,7 +580,58 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("测试11: 成员主动退出团队成功")
+    @Order(32)
+    @DisplayName("测试32: 获取团队成员列表成功 - 按加入时间排序")
+    void testGetTeamMembers_Success() {
+        TeamMember m1 = TeamMember.builder()
+                .id(1L)
+                .team(mockTeam)
+                .user(mockOwner)
+                .role(TeamMember.TeamRole.OWNER)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+
+        TeamMember m2 = TeamMember.builder()
+                .id(2L)
+                .team(mockTeam)
+                .user(mockAdmin)
+                .role(TeamMember.TeamRole.ADMIN)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.of(mockOwner));
+        when(teamMemberRepository.existsByTeamAndUserAndStatus(mockTeam, mockOwner, TeamMember.MemberStatus.ACTIVE))
+                .thenReturn(true);
+        when(teamMemberRepository.findByTeamOrderByJoinedAtAsc(mockTeam)).thenReturn(Arrays.asList(m1, m2));
+
+        List<TeamMember> result = teamMemberService.getTeamMembers(1L, ownerKcId);
+
+        assertThat(result).hasSize(2);
+        assertThat(result.get(0).getUser().getUsername()).isEqualTo("owner");
+        assertThat(result.get(1).getUser().getUsername()).isEqualTo("admin");
+    }
+
+    @Test
+    @Order(33)
+    @DisplayName("测试33: 获取团队成员列表失败 - 非成员访问")
+    void testGetTeamMembers_Fail_NotMember() {
+        String outsiderKcId = "outsider";
+        User outsider = User.builder().id(99L).kcUserId(outsiderKcId).build();
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(outsiderKcId)).thenReturn(Optional.of(outsider));
+        when(teamMemberRepository.existsByTeamAndUserAndStatus(mockTeam, outsider, TeamMember.MemberStatus.ACTIVE))
+                .thenReturn(false);
+
+        assertThatThrownBy(() -> teamMemberService.getTeamMembers(1L, outsiderKcId))
+                .isInstanceOf(SecurityException.class)
+                .hasMessageContaining("只有团队成员可以查看成员列表");
+    }
+
+    @Test
+    @Order(40)
+    @DisplayName("测试40: 成员主动退出团队成功")
     void testLeaveTeam_Success() {
         // Given: 普通成员退出团队
         TeamMember memberToLeave = TeamMember.builder()
@@ -452,7 +660,8 @@ class TeamMemberServiceImplTest {
     }
 
     @Test
-    @DisplayName("测试12: OWNER不能退出自己的团队")
+    @Order(41)
+    @DisplayName("测试41: OWNER不能退出自己的团队")
     void testLeaveTeam_Fail_OwnerCannotLeave() {
         // Given: OWNER 尝试退出
         TeamMember ownerMember = TeamMember.builder()
@@ -476,4 +685,113 @@ class TeamMemberServiceImplTest {
 
         verify(teamMemberRepository, never()).save(any(TeamMember.class));
     }
+
+    @Test
+    @Order(42)
+    @DisplayName("测试42: 用户退出团队失败 - 用户不存在")
+    void testLeaveTeam_Fail_UserNotFound() {
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(newUserKcId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> teamMemberService.leaveTeam(1L, newUserKcId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("用户不存在");
+    }
+
+    @Test
+    @Order(43)
+    @DisplayName("测试43: 用户退出团队失败 - 团队不存在")
+    void testLeaveTeam_Fail_TeamNotFound() {
+        when(teamRepository.findById(1L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> teamMemberService.leaveTeam(1L, newUserKcId))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessageContaining("团队不存在");
+    }
+
+    @Test
+    @Order(50)
+    @DisplayName("测试50: isMember - 团队或用户不存在返回false")
+    void testIsMember_TeamOrUserNotFound() {
+        when(teamRepository.findById(1L)).thenReturn(Optional.empty());
+        assertThat(teamMemberService.isMember(1L, ownerKcId)).isFalse();
+
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.empty());
+        assertThat(teamMemberService.isMember(1L, ownerKcId)).isFalse();
+    }
+
+    @Test
+    @Order(60)
+    @DisplayName("测试60: hasManagePermission - 用户存在但不是成员")
+    void testHasManagePermission_UserNotMember() {
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.of(mockOwner));
+        when(teamMemberRepository.findByTeamAndUser(mockTeam, mockOwner)).thenReturn(Optional.empty());
+
+        boolean result = teamMemberService.hasManagePermission(1L, ownerKcId);
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @Order(61)
+    @DisplayName("测试61: hasManagePermission - VIEWER 或 MEMBER 无管理权限")
+    void testHasManagePermission_LowRoleNoPermission() {
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(adminKcId)).thenReturn(Optional.of(mockAdmin));
+
+        TeamMember viewer = TeamMember.builder()
+                .team(mockTeam)
+                .user(mockAdmin)
+                .role(TeamMember.TeamRole.VIEWER)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+
+        when(teamMemberRepository.findByTeamAndUser(mockTeam, mockAdmin))
+                .thenReturn(Optional.of(viewer));
+
+        boolean result = teamMemberService.hasManagePermission(1L, adminKcId);
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    @Order(62)
+    @DisplayName("测试62: hasManagePermission - OWNER 有权限")
+    void testHasManagePermission_OwnerHasPermission() {
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(ownerKcId)).thenReturn(Optional.of(mockOwner));
+
+        TeamMember ownerMember = TeamMember.builder()
+                .team(mockTeam)
+                .user(mockOwner)
+                .role(TeamMember.TeamRole.OWNER)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+        when(teamMemberRepository.findByTeamAndUser(mockTeam, mockOwner))
+                .thenReturn(Optional.of(ownerMember));
+
+        boolean result = teamMemberService.hasManagePermission(1L, ownerKcId);
+        assertThat(result).isTrue();
+    }
+
+    @Test
+    @Order(63)
+    @DisplayName("测试63: hasManagePermission - ADMIN 有权限")
+    void testHasManagePermission_AdminHasPermission() {
+        when(teamRepository.findById(1L)).thenReturn(Optional.of(mockTeam));
+        when(userRepository.findByKcUserId(adminKcId)).thenReturn(Optional.of(mockAdmin));
+
+        TeamMember adminMember = TeamMember.builder()
+                .team(mockTeam)
+                .user(mockAdmin)
+                .role(TeamMember.TeamRole.ADMIN)
+                .status(TeamMember.MemberStatus.ACTIVE)
+                .build();
+        when(teamMemberRepository.findByTeamAndUser(mockTeam, mockAdmin))
+                .thenReturn(Optional.of(adminMember));
+
+        boolean result = teamMemberService.hasManagePermission(1L, adminKcId);
+        assertThat(result).isTrue();
+    }
+
 }

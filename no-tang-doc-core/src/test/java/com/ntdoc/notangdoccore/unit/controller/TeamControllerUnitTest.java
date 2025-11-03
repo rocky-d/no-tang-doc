@@ -39,6 +39,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @Slf4j
 @ActiveProfiles("test")
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@DisplayName("TeamController单元测试")
 public class TeamControllerUnitTest {
     @Autowired
     private MockMvc mockMvc;
@@ -48,6 +49,7 @@ public class TeamControllerUnitTest {
 
     @MockitoBean
     private TeamService teamService;
+
     @MockitoBean
     private ClientRegistrationRepository clientRegistrationRepository;
 
@@ -103,7 +105,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(1)
-    @DisplayName("创建团队 - 成功")
+    @DisplayName("测试1：创建团队 - 成功")
     void createTeam_Success() throws Exception {
         log.info("Test: Create Team - Success");
 
@@ -145,7 +147,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(2)
-    @DisplayName("创建团队 - 参数错误")
+    @DisplayName("测试2：创建团队 - 参数错误")
     void createTeam_InvalidArgument() throws Exception {
         log.info("Test: Create Team - Invalid Argument");
 
@@ -173,7 +175,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(3)
-    @DisplayName("创建团队 - 服务器错误")
+    @DisplayName("测试3：创建团队 - 服务器错误")
     void createTeam_ServerError() throws Exception {
         log.info("Test: Create Team - Server Error");
 
@@ -200,7 +202,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(4)
-    @DisplayName("创建团队 - 未认证")
+    @DisplayName("测试4：创建团队 - 未认证")
     void createTeam_Unauthorized() throws Exception {
         log.info("Test: Create Team - Unauthorized");
 
@@ -221,7 +223,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(10)
-    @DisplayName("获取用户团队 - 所有活跃团队")
+    @DisplayName("测试10：获取用户团队 - 所有活跃团队")
     void getUserTeams_ActiveOnly() throws Exception {
         log.info("Test: Get User Teams - Active Only");
 
@@ -253,7 +255,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(11)
-    @DisplayName("获取用户团队 - 所有团队（包括非活跃）")
+    @DisplayName("测试11：获取用户团队 - 所有团队（包括非活跃）")
     void getUserTeams_AllTeams() throws Exception {
         log.info("Test: Get User Teams - All Teams");
 
@@ -281,7 +283,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(12)
-    @DisplayName("获取用户团队 - 默认获取活跃团队")
+    @DisplayName("测试12：获取用户团队 - 默认获取活跃团队")
     void getUserTeams_DefaultActiveOnly() throws Exception {
         log.info("Test: Get User Teams - Default Active Only");
 
@@ -303,7 +305,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(13)
-    @DisplayName("获取用户团队 - 空列表")
+    @DisplayName("测试13：获取用户团队 - 空列表")
     void getUserTeams_EmptyList() throws Exception {
         log.info("Test: Get User Teams - Empty List");
 
@@ -323,7 +325,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(14)
-    @DisplayName("获取用户团队 - 服务器错误")
+    @DisplayName("测试14：获取用户团队 - 服务器错误")
     void getUserTeams_ServerError() throws Exception {
         log.info("Test: Get User Teams - Server Error");
 
@@ -343,7 +345,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(20)
-    @DisplayName("获取团队详情 - 成功")
+    @DisplayName("测试20：获取团队详情 - 成功")
     void getTeamById_Success() throws Exception {
         log.info("Test: Get Team By ID - Success");
 
@@ -368,7 +370,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(21)
-    @DisplayName("获取团队详情 - 团队不存在")
+    @DisplayName("测试21：获取团队详情 - 团队不存在")
     void getTeamById_NotFound() throws Exception {
         log.info("Test: Get Team By ID - Not Found");
 
@@ -390,7 +392,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(30)
-    @DisplayName("更新团队 - 成功")
+    @DisplayName("测试30：更新团队 - 成功")
     void updateTeam_Success() throws Exception {
         log.info("Test: Update Team - Success");
 
@@ -433,7 +435,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(31)
-    @DisplayName("更新团队 - 无权限")
+    @DisplayName("测试31：更新团队 - 无权限")
     void updateTeam_Forbidden() throws Exception {
         log.info("Test: Update Team - Forbidden");
 
@@ -460,7 +462,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(32)
-    @DisplayName("更新团队 - 参数错误")
+    @DisplayName("测试32：更新团队 - 参数错误")
     void updateTeam_InvalidArgument() throws Exception {
         log.info("Test: Update Team - Invalid Argument");
 
@@ -484,7 +486,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(33)
-    @DisplayName("更新团队 - 服务器错误")
+    @DisplayName("测试33：更新团队 - 服务器错误")
     void updateTeam_ServerError() throws Exception {
         log.info("Test: Update Team - Server Error");
 
@@ -510,7 +512,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(40)
-    @DisplayName("删除团队 - 成功")
+    @DisplayName("测试40：删除团队 - 成功")
     void deleteTeam_Success() throws Exception {
         log.info("Test: Delete Team - Success");
 
@@ -532,7 +534,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(41)
-    @DisplayName("删除团队 - 无权限")
+    @DisplayName("测试41：删除团队 - 无权限")
     void deleteTeam_Forbidden() throws Exception {
         log.info("Test: Delete Team - Forbidden");
 
@@ -553,7 +555,7 @@ public class TeamControllerUnitTest {
 
     @Test
     @Order(42)
-    @DisplayName("删除团队 - 团队不存在")
+    @DisplayName("测试42：删除团队 - 团队不存在")
     void deleteTeam_NotFound() throws Exception {
         log.info("Test: Delete Team - Not Found");
 

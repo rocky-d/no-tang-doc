@@ -75,18 +75,13 @@ jobs:
         if: always()
         run: mvn -B surefire-report:report
 
-      - name: Upload JUnit & Jacoco reports
-        if: always()
+      - name: Upload JaCoCo HTML report
         uses: actions/upload-artifact@v4
         with:
-          name: test-and-coverage-reports
+          name: jacoco-html-report
           path: |
-            no-tang-doc-core/target/surefire-reports/
-            no-tang-doc-core/target/site/surefire-report.html
             no-tang-doc-core/target/site/jacoco/
-            no-tang-doc-core/target/jacoco*.xml
-            no-tang-doc-core/target/site/jacoco-ut/
-          compression-level: 9
+            
 
       - name: Upload PMD reports
         if: always()

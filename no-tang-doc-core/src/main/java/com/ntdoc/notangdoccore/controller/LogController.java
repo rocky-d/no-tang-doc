@@ -2,8 +2,10 @@ package com.ntdoc.notangdoccore.controller;
 
 import com.ntdoc.notangdoccore.entity.Log;
 import com.ntdoc.notangdoccore.entity.User;
+import com.ntdoc.notangdoccore.service.LogService;
 import com.ntdoc.notangdoccore.service.UserSyncService;
-import com.ntdoc.notangdoccore.service.log.LogService;
+import com.ntdoc.notangdoccore.service.impl.UserSyncServiceImpl;
+import com.ntdoc.notangdoccore.service.impl.LogServiceImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
