@@ -13,7 +13,7 @@ from no_tang_doc_agent.datetime_excepthook import apply_datetime_excepthook
 from no_tang_doc_agent.mcp_server import (
     FastMCPSettings,
     JWTTokenVerifier,
-    start_mcp_server,
+    launch_mcp_server,
 )
 
 logger = logging.getLogger(__name__)
@@ -138,7 +138,7 @@ def main(
     logger.critical(f"{issuer_url=}")
     logger.critical(f"{resource_server_url=}")
     logger.critical(f"{required_scopes=}")
-    start_mcp_server(
+    launch_mcp_server(
         base_url=base_url,
         mcp_settings=FastMCPSettings(
             name=name,

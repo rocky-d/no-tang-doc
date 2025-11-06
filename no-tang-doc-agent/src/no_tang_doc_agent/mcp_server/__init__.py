@@ -1,11 +1,13 @@
-from .mcp_server import (
+from .server import (
     FastMCPSettings,
     JWTTokenVerifier,
-    start_mcp_server,
+    launch_mcp_server,
 )
+from .tools import register_mcp_tools
 
 __all__ = [
     "JWTTokenVerifier",
     "FastMCPSettings",
-    "start_mcp_server",
+    "launch_mcp_server",
+    "register_mcp_tools",
 ]
