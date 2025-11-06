@@ -1,31 +1,26 @@
-name: Load Test (Reusable)
+name: Load Test
 
 on:
   workflow_call:
     inputs:
       service:
-        description: 'Service to test (agent/core/web)'
+        description: Service to test (agent/core/web)
         required: true
         type: string
       script:
-        description: 'Test script filename (e.g., agent-api.js)'
+        description: Test script filename (e.g., agent-api.js)
         required: true
         type: string
       environment:
-        description: 'Target environment (development/production)'
+        description: Target environment (development/production)
         required: false
         type: string
-        default: 'production'
+        default: production
       scenario:
-        description: 'Test scenario (smoke/load/stress/spike/soak/ci)'
+        description: Test scenario (smoke/load/stress/spike/soak/ci)
         required: false
         type: string
-        default: 'load'
-      test_team_id:
-        description: 'Test team ID for API calls'
-        required: false
-        type: string
-        default: '1'
+        default: load
     secrets:
       KEYCLOAK_CLIENT_ID:
         required: true
@@ -33,7 +28,7 @@ on:
         required: true
 
 env:
-  K6_VERSION: '0.54.0'
+  K6_VERSION: 0.54.0
 
 jobs:
   load-test:
@@ -64,7 +59,6 @@ jobs:
           SCENARIO: ${{ inputs.scenario }}
           KEYCLOAK_CLIENT_ID: ${{ secrets.KEYCLOAK_CLIENT_ID }}
           KEYCLOAK_CLIENT_SECRET: ${{ secrets.KEYCLOAK_CLIENT_SECRET }}
-          TEST_TEAM_ID: ${{ inputs.test_team_id }}
         run: |
           echo "🚀 Starting k6 load test for ${{ inputs.service }}"
           echo "   Script: ${{ inputs.script }}"
