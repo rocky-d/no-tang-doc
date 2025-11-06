@@ -200,9 +200,8 @@ For detailed Helm chart configuration and deployment instructions, please refer 
 **Current Status**
 - **Namespace**: `ntdoc-agent`
 - **Replicas**: 1/1 Ready
-- **Image**: `registry.digitalocean.com/ntdoc/ntdoc-agent:dev-ba4702b`
+- **Image**: `registry.digitalocean.com/ntdoc/ntdoc-agent`
 - **Ingress Host**: `agent.ntdoc.site`
-- **External IP**: `139.59.221.243`
 - **Ports**: 8002 (internal), 80/443 (ingress)
 
 #### CI/CD Workflows
@@ -213,13 +212,13 @@ For detailed CI/CD workflow configurations and deployment procedures, please ref
 
 Triggers: Push, PR, manual (`workflow_dispatch`), reusable (`workflow_call`)
 
-Jobs: Lint (~8s) → Test (~15s) → Deploy (calls CD workflow)
+Jobs: Lint → Test → Deploy (calls CD workflow)
 
 **Agent CD (`.github/workflows/no-tang-doc-agent-cd.yaml`)**
 
 Triggers: CI workflow call, manual trigger
 
-Jobs: Build (~37s) → Deploy (~29s)
+Jobs: Build → Deploy
 
 #### Container Image
 
@@ -227,9 +226,6 @@ For detailed Dockerfile configuration and build instructions, please refer to [`
 
 **Registry**: DigitalOcean Container Registry (DOCR)
 - **Repository**: `registry.digitalocean.com/ntdoc/ntdoc-agent`
-- **Latest Tag**: `dev-ba4702b`
-- **Total Tags**: 16 versions
-- **Last Updated**: 2025-11-01 12:38:10 UTC
 
 > **Note**: For comprehensive Agent service documentation including development setup, testing, deployment, and CI/CD workflows, please refer to [`no-tang-doc-agent/README.md`](no-tang-doc-agent/README.md).
 
@@ -254,10 +250,9 @@ The Core service provides the main backend REST API for the no-tang-doc system.
 #### Kubernetes Deployment
 
 - **Namespace**: `ntdoc-core`
-- **Image**: `registry.digitalocean.com/ntdoc/ntdoc-core:dev`
+- **Image**: `registry.digitalocean.com/ntdoc/ntdoc-core`
 - **Replicas**: 1/1 Ready
 - **Ingress Host**: `api.ntdoc.site`
-- **External IP**: `139.59.221.243`
 
 #### Directory Structure
 
@@ -299,10 +294,7 @@ The Web service provides the frontend user interface for the no-tang-doc system.
 
 #### Container Image
 
-- **Repository**: `registry.digitalocean.com/ntdoc/ntdoc-web:dev`
-- **Latest Tag**: `dev-6fc8fce`
-- **Total Tags**: 3 versions
-- **Last Updated**: 2025-11-01 04:20:40 UTC
+- **Repository**: `registry.digitalocean.com/ntdoc/ntdoc-web`
 
 #### Kubernetes Deployment
 
@@ -363,7 +355,7 @@ no-tang-doc-web/
 
 **Ingress Routes**
 ```
-139.59.221.243 (Load Balancer)
+Load Balancer
     ├── ntdoc.site         → Web Frontend (80/443)
     ├── auth.ntdoc.site    → Keycloak (80/443)
     ├── api.ntdoc.site     → Core Service (80/443)
@@ -376,11 +368,10 @@ no-tang-doc-web/
 
 Registry: `registry.digitalocean.com/ntdoc`
 
-| Repository | Latest Tag | Total Tags | Last Updated |
-|------------|-----------|------------|--------------|
-| `ntdoc-agent` | dev-ba4702b | 16 | 2025-11-01 12:38 UTC |
-| `ntdoc-core` | dev | 3 | 2025-11-01 04:11 UTC |
-| `ntdoc-web` | dev-6fc8fce | 3 | 2025-11-01 04:20 UTC |
+**Available Repositories:**
+- `ntdoc-agent` - Agent service images
+- `ntdoc-core` - Core service images
+- `ntdoc-web` - Web service images
 
 ### Authentication Service
 
