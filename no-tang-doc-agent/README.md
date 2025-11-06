@@ -111,7 +111,8 @@ docker-compose logs -f agent
 docker-compose down
 ```
 
-**Prerequisites:** 
+**Prerequisites:**
+
 - no-tang-doc-core and keycloak must be running on host machine (ports 8070 and 8080)
 - The agent uses `host.docker.internal` to access services running on the host
 - For Linux users, ensure Docker version supports `host.docker.internal` or manually configure host IP
@@ -254,6 +255,7 @@ uv run kb_agent.py --agent kb_agent --message "List documents" --quiet
 ```
 
 For more information, see:
+
 - [fast-agent Documentation](https://fast-agent.ai/)
 - [fast-agent GitHub](https://github.com/evalstate/fast-agent-mcp)
 - [MCP Specification](https://modelcontextprotocol.io/)
