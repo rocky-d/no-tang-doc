@@ -46,6 +46,7 @@ The agent is an MCP (Model Context Protocol) server that:
 - **URL**: https://github.com/rocky-d/no-tang-doc
 - **Default Branch**: `dev`
 - **Protected Branches**: `main`, `dev`, `docs`, `mod/*` (require PR)
+- **Persistent Branches**: `main`, `dev`, `docs`, `cicd` (never delete)
 - **Development Branches**: `feat/{module}/*`
 
 ---
@@ -122,6 +123,7 @@ Key variables (see `.env.example`):
 ### Branch Strategy
 
 - **Protected**: `main`, `dev`, `docs`, `mod/*` (require PR)
+- **Persistent**: `main`, `dev`, `docs`, `cicd` (never delete, always keep synchronized)
 - **Development**: `feat/{module}/*` (e.g., `feat/agent/<name>`)
 
 **Typical workflow:**
@@ -293,11 +295,12 @@ Before pushing:
 3. **Working Directory**: Always in `/no-tang-doc-agent/` when running uv
 4. **Protected Branches**: Never push to `main`/`dev`/`docs`/`mod/*` - use PR only
 5. **Pull Request Permission**: NEVER create PR to `main` or `dev` without explicit user permission
-6. **Test Coverage**: Minimum 95% coverage required
-7. **Type Hints**: Required for all function parameters and returns
-8. **Async First**: Use async/await for all I/O operations
-9. **No Over-Summarization**: Do not create summary documents or excessively document completed work
-10. **Project Boundary**: Only create files/directories within project scope; never access outside project directory (e.g., C:\ root)
+6. **Persistent Branches**: NEVER delete `main`, `dev`, `docs`, or `cicd` branches - they are permanent
+7. **Test Coverage**: Minimum 95% coverage required
+8. **Type Hints**: Required for all function parameters and returns
+9. **Async First**: Use async/await for all I/O operations
+10. **No Over-Summarization**: Do not create summary documents or excessively document completed work
+11. **Project Boundary**: Only create files/directories within project scope; never access outside project directory (e.g., C:\ root)
 
 ### Development Constraints
 
