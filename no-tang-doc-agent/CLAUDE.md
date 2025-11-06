@@ -275,6 +275,13 @@ Before pushing:
 4. ✅ Coverage ≥ 95%
 5. ✅ English-only code
 
+### Pull Request Guidelines
+
+- **NEVER** create PRs to `main` or `dev` without explicit user approval
+- Default PR target: `mod/agent` (module branch)
+- Wait for user instruction before merging to protected branches
+- Use conventional commit messages in PR title
+
 ---
 
 ## Critical Rules
@@ -285,9 +292,12 @@ Before pushing:
 2. **Use uv**: Never use `python` or `pip` directly, always use `uv` commands
 3. **Working Directory**: Always in `/no-tang-doc-agent/` when running uv
 4. **Protected Branches**: Never push to `main`/`dev`/`docs`/`mod/*` - use PR only
-5. **Test Coverage**: Minimum 95% coverage required
-6. **Type Hints**: Required for all function parameters and returns
-7. **Async First**: Use async/await for all I/O operations
+5. **Pull Request Permission**: NEVER create PR to `main` or `dev` without explicit user permission
+6. **Test Coverage**: Minimum 95% coverage required
+7. **Type Hints**: Required for all function parameters and returns
+8. **Async First**: Use async/await for all I/O operations
+9. **No Over-Summarization**: Do not create summary documents or excessively document completed work
+10. **Project Boundary**: Only create files/directories within project scope; never access outside project directory (e.g., C:\ root)
 
 ### Development Constraints
 
@@ -296,6 +306,10 @@ Before pushing:
 - **OAuth**: All MCP tools require Keycloak authentication
 - **MCP Spec**: Follow https://modelcontextprotocol.io/specification
 - **Branch Flow**: feat/agent/* → mod/agent → dev → main
+- **Temporary Files**: 
+  - Create only within project directory (`/no-tang-doc-agent/`)
+  - Add `.gitignore` with `*` to ignore all temp directory contents
+  - Never access or create files outside project scope (C:\ root, system directories, etc.)
 
 ### Security
 
