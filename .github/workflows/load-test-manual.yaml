@@ -33,11 +33,6 @@ on:
           - soak
           - ci
         default: smoke
-      test_team_id:
-        description: Test team ID (for API calls)
-        required: false
-        type: string
-        default: "1"
 
 concurrency:
   group: load-test-manual-${{ github.ref }}
@@ -53,7 +48,6 @@ jobs:
       script: agent-api.js
       environment: ${{ inputs.environment }}
       scenario: ${{ inputs.scenario }}
-      test_team_id: ${{ inputs.test_team_id }}
     secrets:
       KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
       KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
@@ -67,13 +61,12 @@ jobs:
       script: core-api.js
       environment: ${{ inputs.environment }}
       scenario: ${{ inputs.scenario }}
-      test_team_id: ${{ inputs.test_team_id }}
     secrets:
       KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
       KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
 
   test-web:
-    name: Web Frontend
+    name: Web Load Test
     if: inputs.service == 'web' || inputs.service == 'all'
     uses: ./.github/workflows/load-test.yaml
     with:
@@ -81,7 +74,6 @@ jobs:
       script: web-frontend.js
       environment: ${{ inputs.environment }}
       scenario: ${{ inputs.scenario }}
-      test_team_id: "N/A"
     secrets:
       KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
       KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
