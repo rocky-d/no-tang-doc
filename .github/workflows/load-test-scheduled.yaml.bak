@@ -3,50 +3,49 @@ name: Load Test (Scheduled)
 on:
   schedule:
     # Run every Sunday at 2:00 AM UTC (10:00 AM CST)
-    - cron: '0 2 * * 0'
-  workflow_dispatch:  # Allow manual trigger
+    - cron: "0 2 * * 0"
+  workflow_dispatch: {}  # Allow manual trigger
 
 concurrency:
   group: load-test-scheduled
   cancel-in-progress: false
 
 jobs:
-  # Weekly smoke test on all services
   test-agent:
     name: Agent - Weekly Smoke Test
-    uses: ./.github/workflows/load-test-reusable.yaml
+    uses: ./.github/workflows/load-test.yaml
     with:
-      service: 'agent'
-      script: 'agent-api.js'
-      environment: 'production'
-      scenario: 'smoke'
-      test_team_id: '1'
+      service: agent
+      script: agent-api.js
+      environment: production
+      scenario: smoke
+      test_team_id: "1"
     secrets:
       KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
       KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
 
   test-core:
     name: Core - Weekly Smoke Test
-    uses: ./.github/workflows/load-test-reusable.yaml
+    uses: ./.github/workflows/load-test.yaml
     with:
-      service: 'core'
-      script: 'core-api.js'
-      environment: 'production'
-      scenario: 'smoke'
-      test_team_id: '1'
+      service: core
+      script: core-api.js
+      environment: production
+      scenario: smoke
+      test_team_id: "1"
     secrets:
       KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
       KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
 
   test-web:
     name: Web - Weekly Smoke Test
-    uses: ./.github/workflows/load-test-reusable.yaml
+    uses: ./.github/workflows/load-test.yaml
     with:
-      service: 'web'
-      script: 'web-frontend.js'
-      environment: 'production'
-      scenario: 'smoke'
-      test_team_id: 'N/A'
+      service: web
+      script: web-frontend.js
+      environment: production
+      scenario: smoke
+      test_team_id: "N/A"
     secrets:
       KEYCLOAK_CLIENT_ID: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_ID }}
       KEYCLOAK_CLIENT_SECRET: ${{ secrets.LOAD_TEST_KEYCLOAK_CLIENT_SECRET }}
