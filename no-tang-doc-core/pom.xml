@@ -239,6 +239,28 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <!--只统计 controller 与 service 包 -->
+                    <includes>
+                        <include>**/controller/**</include>
+                        <include>**/service/impl/**</include>
+                    </includes>
+
+                    <!--忽略其他所有包 -->
+                    <excludes>
+                        <exclude>**/config/**</exclude>
+                        <exclude>**/dto/**</exclude>
+                        <exclude>**/entity/**</exclude>
+                        <exclude>**/event/**</exclude>
+                        <exclude>**/exception/**</exclude>
+                        <exclude>**/keycloak/**</exclude>
+                        <exclude>**/listener/**</exclude>
+                        <exclude>**/repository/**</exclude>
+                        <exclude>**/security/**</exclude>
+                        <exclude>**/swaggerconfig/**</exclude>
+                        <exclude>**/NoTangDocCoreApplication*</exclude>
+                    </excludes>
+                </configuration>
             </plugin>
         </plugins>
     </build>

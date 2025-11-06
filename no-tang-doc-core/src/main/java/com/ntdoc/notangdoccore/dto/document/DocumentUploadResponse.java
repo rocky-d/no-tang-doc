@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * 文档上传响应DTO
@@ -20,4 +21,6 @@ public class DocumentUploadResponse {
     private String userId;
     private String url;
     private String description;
+    private List<String> tags;
+
 }

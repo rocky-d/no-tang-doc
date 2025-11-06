@@ -49,22 +49,22 @@ export default defineConfig({
     },
   },
   build: {
-    target: 'esnext',
+    // target: 'esnext',
     outDir: 'build',
     chunkSizeWarningLimit: 800, // 先保持适中阈值, 后续再评估
-    rollupOptions: {
-      output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('react')) return 'react';          // react / react-dom
-            if (id.includes('react-router')) return 'router';  // 路由
-            if (id.includes('lodash')) return 'lodash';        // 工具库示例
-            // 大图表/富文本库将来可单独命名: if (id.includes('echarts')) return 'echarts';
-            return 'vendor';                                   // 其余第三方
-          }
-        }
-      }
-    }
+    // rollupOptions: {
+    //   output: {
+    //     manualChunks(id) {
+    //       if (id.includes('node_modules')) {
+    //         if (id.includes('react')) return 'react';          // react / react-dom
+    //         if (id.includes('react-router')) return 'router';  // 路由
+    //         if (id.includes('lodash')) return 'lodash';        // 工具库示例
+    //         // 大图表/富文本库将来可单独命名: if (id.includes('echarts')) return 'echarts';
+    //         return 'vendor';                                   // 其余第三方
+    //       }
+    //     }
+    //   }
+    // }
   },
   server: {
     port: 3000,

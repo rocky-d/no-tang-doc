@@ -20,7 +20,7 @@
 //import com.ntdoc.notangdoccore.service.DocumentService;
 //
 //import com.ntdoc.notangdoccore.service.FileStorageService;
-//import com.ntdoc.notangdoccore.service.UserSyncService;
+//import com.ntdoc.notangdoccore.service.impl.UserSyncService;
 //import lombok.extern.slf4j.Slf4j;
 //import org.junit.jupiter.api.*;
 //import org.junit.jupiter.api.extension.ExtendWith;
