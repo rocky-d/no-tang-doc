@@ -299,6 +299,7 @@ Before pushing:
 9. **No Over-Summarization**: Do not create summary documents or excessively document completed work
 10. **Project Boundary**: Only create files/directories within project scope; never access outside project directory (e.g., C:\ root)
 11. **README Documentation Standards**: Never include time-sensitive or deployment-specific information in README.md files (deployment IPs, container image tags, timestamps, line counts, specific version hashes, execution times, concrete output values). Focus on structure, configuration methods, and development guides instead
+12. **Concise Commit Messages**: Keep commit messages and PR descriptions concise and focused. Avoid excessive detail or overly verbose explanations. Follow conventional commit format with brief, clear summaries
 
 ### Development Constraints
 
