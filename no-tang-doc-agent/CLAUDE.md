@@ -21,6 +21,7 @@ This document provides essential context and guidelines for AI assistants workin
 ## Project Overview
 
 **no-tang-doc** is a Notion-like document knowledge base system with three microservices:
+
 - **no-tang-doc-agent** (This project) - MCP Server for AI assistant integration
 - **no-tang-doc-core** - Spring Boot REST API backend
 - **no-tang-doc-web** - React frontend
@@ -28,6 +29,7 @@ This document provides essential context and guidelines for AI assistants workin
 ### Agent Responsibilities
 
 The agent is an MCP (Model Context Protocol) server that:
+
 - Exposes Core API as MCP tools for AI assistants
 - Implements OAuth 2.0 authentication via Keycloak
 - Provides access to documents, teams, and logging features
@@ -36,16 +38,16 @@ The agent is an MCP (Model Context Protocol) server that:
 
 | Service | URL |
 |---------|-----|
-| Agent | https://agent.ntdoc.site |
-| Core API | https://api.ntdoc.site |
-| Keycloak | https://auth.ntdoc.site |
-| Web UI | https://ntdoc.site |
+| Agent | <https://agent.ntdoc.site> |
+| Core API | <https://api.ntdoc.site> |
+| Keycloak | <https://auth.ntdoc.site> |
+| Web UI | <https://ntdoc.site> |
 
 ### Repository
 
-- **URL**: https://github.com/rocky-d/no-tang-doc
+- **URL**: <https://github.com/rocky-d/no-tang-doc>
 - **Default Branch**: `dev`
-- **Protected Branches**: `main`, `dev`, `docs`, `mod/*` (require PR)
+- **Protected Branches**: `main`, `dev`, `docs`, `cicd`, `mod/*` (require PR, never delete)
 - **Development Branches**: `feat/{module}/*`
 
 ---
@@ -105,6 +107,7 @@ uv run no-tang-doc-agent-mcp-server \
 ### Environment Variables
 
 Key variables (see `.env.example`):
+
 - `BASE_URL` - Core API URL
 - `ISSUER_URL` - Keycloak OAuth issuer
 - `REQUIRED_SCOPES` - OAuth scopes (e.g., "email profile mcp-user")
@@ -121,10 +124,11 @@ Key variables (see `.env.example`):
 
 ### Branch Strategy
 
-- **Protected**: `main`, `dev`, `docs`, `mod/*` (require PR)
+- **Protected**: `main`, `dev`, `docs`, `cicd`, `mod/*` (require PR, never delete)
 - **Development**: `feat/{module}/*` (e.g., `feat/agent/<name>`)
 
 **Typical workflow:**
+
 ```powershell
 # Create feature branch from dev
 git checkout dev
@@ -159,6 +163,7 @@ docker-compose up -d
 ### CRITICAL: English-Only Codebase
 
 **All code, comments, docstrings, variable names MUST be in English.**
+
 - No Chinese or non-English characters in code
 - Exception: Communication with humans can be in Chinese
 - This is a strict, non-negotiable team standard
@@ -171,6 +176,7 @@ docker-compose up -d
 - Async/await for all I/O operations
 
 **Example:**
+
 ```python
 async def fetch_team(
     ctx: Context[ServerSession, None],
@@ -257,11 +263,13 @@ class TestMCPServer:
 ### GitHub Actions
 
 **CI Workflow** (`.github/workflows/no-tang-doc-agent-ci.yaml`):
+
 - Triggers: Push/PR to `main`, `dev`, `mod/agent`, `feat/agent/**`
 - Jobs: Lint (Ruff) + Test (pytest with 95% coverage)
 - Auto-comments PR with coverage results
 
 **CD Workflow** (`.github/workflows/no-tang-doc-agent-cd.yaml`):
+
 - Builds Docker image → DigitalOcean Container Registry
 - Deploys to DOKS via Helm
 - Tags: `main` → `latest`, other → `dev`
@@ -269,11 +277,19 @@ class TestMCPServer:
 ### Pre-commit Checklist
 
 Before pushing:
+
 1. ✅ Fix lint: `uv run ruff check --fix src/ tests/`
 2. ✅ Format: `uv run ruff format src/ tests/`
 3. ✅ Test: `uv run pytest tests/ --cov`
 4. ✅ Coverage ≥ 95%
 5. ✅ English-only code
+
+### Pull Request Guidelines
+
+- **NEVER** create PRs to `main` or `dev` without explicit user approval
+- Default PR target: `mod/agent` (module branch)
+- Wait for user instruction before merging to protected branches
+- Use conventional commit messages in PR title
 
 ---
 
@@ -284,18 +300,27 @@ Before pushing:
 1. **English-Only**: All code, comments, variable names in English (no exceptions)
 2. **Use uv**: Never use `python` or `pip` directly, always use `uv` commands
 3. **Working Directory**: Always in `/no-tang-doc-agent/` when running uv
-4. **Protected Branches**: Never push to `main`/`dev`/`docs`/`mod/*` - use PR only
-5. **Test Coverage**: Minimum 95% coverage required
-6. **Type Hints**: Required for all function parameters and returns
-7. **Async First**: Use async/await for all I/O operations
+4. **Protected Branches**: Never push to `main`/`dev`/`docs`/`cicd`/`mod/*` - use PR only; NEVER delete these branches
+5. **Pull Request Permission**: NEVER create PR to `main` or `dev` without explicit user permission
+6. **Test Coverage**: Minimum 95% coverage required
+7. **Type Hints**: Required for all function parameters and returns
+8. **Async First**: Use async/await for all I/O operations
+9. **No Over-Summarization**: Do not create summary documents or excessively document completed work
+10. **Project Boundary**: Only create files/directories within project scope; never access outside project directory (e.g., C:\ root)
+11. **README Documentation Standards**: Never include time-sensitive or deployment-specific information in README.md files (deployment IPs, container image tags, timestamps, line counts, specific version hashes, execution times, concrete output values). Focus on structure, configuration methods, and development guides instead
+12. **Concise Commit Messages**: Keep commit messages and PR descriptions concise and focused. Avoid excessive detail or overly verbose explanations. Follow conventional commit format with brief, clear summaries
 
 ### Development Constraints
 
 - **OS**: Windows 10 Pro + PowerShell 7 (no Linux commands)
 - **Python**: 3.13.7+ (strictly enforced)
 - **OAuth**: All MCP tools require Keycloak authentication
-- **MCP Spec**: Follow https://modelcontextprotocol.io/specification
+- **MCP Spec**: Follow <https://modelcontextprotocol.io/specification>
 - **Branch Flow**: feat/agent/* → mod/agent → dev → main
+- **Temporary Files**:
+  - Create only within project directory (`/no-tang-doc-agent/`)
+  - Add `.gitignore` with `*` to ignore all temp directory contents
+  - Never access or create files outside project scope (C:\ root, system directories, etc.)
 
 ### Security
 
@@ -311,19 +336,22 @@ Before pushing:
 ### Official Documentation
 
 **Project**:
-- Repository: https://github.com/rocky-d/no-tang-doc
+
+- Repository: <https://github.com/rocky-d/no-tang-doc>
 - Agent README: `/no-tang-doc-agent/README.md`
 - IaC Guide: `/IaC/README.md`
 
 **Core Technologies**:
-- **uv**: https://docs.astral.sh/uv/ (Learn package management)
-- **MCP Spec**: https://modelcontextprotocol.io/
-- **MCP Python SDK**: https://github.com/modelcontextprotocol/python-sdk
-- **Ruff**: https://docs.astral.sh/ruff/
-- **pytest**: https://docs.pytest.org/
-- **Python 3.13**: https://docs.python.org/3.13/
+
+- **uv**: <https://docs.astral.sh/uv/> (Learn package management)
+- **MCP Spec**: <https://modelcontextprotocol.io/>
+- **MCP Python SDK**: <https://github.com/modelcontextprotocol/python-sdk>
+- **Ruff**: <https://docs.astral.sh/ruff/>
+- **pytest**: <https://docs.pytest.org/>
+- **Python 3.13**: <https://docs.python.org/3.13/>
 
 **Infrastructure**:
+
 - Deployment details in `/charts/ntdoc-agent/`
 - Terraform configs in `/IaC/`
 
@@ -339,4 +367,3 @@ Before pushing:
 
 **Version**: 1.0.0 | **Last Updated**: 2025-11-01  
 **For**: AI assistants working on no-tang-doc-agent
-

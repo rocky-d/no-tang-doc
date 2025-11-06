@@ -57,7 +57,7 @@ npm install
 npm run dev
 ```
 
-应用将在 http://localhost:3000 开启。
+应用将在 <http://localhost:3000> 开启。
 
 ### 构建生产版本
 
@@ -106,7 +106,7 @@ docker build -t adamxin/no-tang-doc-web:latest ^
 docker run --rm -p 8080:8080 adamxin/no-tang-doc-web:latest
 ```
 
-浏览器访问 http://localhost:8080
+浏览器访问 <http://localhost:8080>
 
 ### 推送镜像到 DigitalOcean 容器镜像仓库（可选）
 
@@ -127,14 +127,14 @@ docker push registry.digitalocean.com/your-namespace/no-tang-doc-web:latest
 - HTTP Port：8080（容器内部监听端口）
 - Build & Run Commands：无需额外命令，Dockerfile 已定义
 - 环境变量（Build time）：配置以下变量以注入到 Vite 构建
-    - VITE_KEYCLOAK_URL
-    - VITE_KEYCLOAK_REALM
-    - VITE_KEYCLOAK_CLIENT_ID
-    - VITE_API_BASE_URL
-    - VITE_DOCS_API_PREFIX
-    - VITE_UPLOAD_PATH（可选）
-    - VITE_OIDC_SCOPES（可选，默认 openid profile email）
-    - VITE_TEST_REFRESH_INTERVAL_MS（可选）
+  - VITE_KEYCLOAK_URL
+  - VITE_KEYCLOAK_REALM
+  - VITE_KEYCLOAK_CLIENT_ID
+  - VITE_API_BASE_URL
+  - VITE_DOCS_API_PREFIX
+  - VITE_UPLOAD_PATH（可选）
+  - VITE_OIDC_SCOPES（可选，默认 openid profile email）
+  - VITE_TEST_REFRESH_INTERVAL_MS（可选）
 
 部署完成后，前端通过上述变量访问后端（no-tang-doc-core 在 DOKS 暴露的域名/网关）。
 

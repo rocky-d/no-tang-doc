@@ -122,6 +122,7 @@ We follow the [Conventional Commits](https://www.conventionalcommits.org/) speci
 ### Scope
 
 Use the service name or module affected:
+
 - `agent`: Agent service
 - `core`: Core service
 - `web`: Web service
@@ -132,6 +133,7 @@ Use the service name or module affected:
 ### Examples
 
 **Good commits:**
+
 ```
 feat(agent): Add document export functionality
 
@@ -160,6 +162,7 @@ docs: Update installation instructions in README
 ```
 
 **Bad commits:**
+
 ```
 fix bug
 update code
@@ -212,6 +215,7 @@ gh pr create --base mod/agent --title "feat(agent): Your feature title" --body "
 
 **PR Title**: Follow commit message format
 **PR Description**: Include:
+
 - Overview of changes
 - Testing done
 - Screenshots (if UI changes)
@@ -228,6 +232,7 @@ gh pr create --base mod/agent --title "feat(agent): Your feature title" --body "
 ### 7. Merge
 
 After approval and passing CI:
+
 - Squash and merge (preferred for feature branches)
 - Merge commit (for release branches)
 - Delete branch after merging
@@ -239,11 +244,13 @@ After approval and passing CI:
 ### Agent Service
 
 **Minimum Requirements:**
+
 - Unit test coverage: ≥95%
 - All new features must have tests
 - Run tests locally before pushing
 
 **Running Tests:**
+
 ```bash
 cd no-tang-doc-agent
 uv run pytest tests/ \
@@ -256,6 +263,7 @@ uv run pytest tests/ \
 ```
 
 **Test Structure:**
+
 ```python
 def test_feature_name():
     """Test description."""
@@ -284,11 +292,13 @@ Refer to [`no-tang-doc-web/README.md`](no-tang-doc-web/README.md) for Web servic
 ### Agent Service
 
 **Prerequisites:**
+
 - Python 3.13.7+
 - uv package manager
 - Docker (optional)
 
 **Setup:**
+
 ```bash
 cd no-tang-doc-agent
 uv sync --all-extras --dev
@@ -296,12 +306,14 @@ uv run no-tang-doc-agent-mcp-server
 ```
 
 **Linting:**
+
 ```bash
 uv run ruff check src/ tests/ --output-format=github
 uv run ruff format --check src/ tests/
 ```
 
 **Auto-fix:**
+
 ```bash
 uv run ruff check --fix src/ tests/
 uv run ruff format src/ tests/
