@@ -1,0 +1,126 @@
+databaseChangeLog:
+  - changeSet:
+      id: 0012-create-document-comment-table
+      author: developer
+      changes:
+        - createTable:
+            tableName: document_comment
+            columns:
+              - column:
+                  name: id
+                  type: BIGINT
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: document_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: team_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                  remarks: "团队ID，如果评论是在团队上下文中创建的"
+              - column:
+                  name: content
+                  type: TEXT
+                  constraints:
+                    nullable: false
+              - column:
+                  name: parent_comment_id
+                  type: BIGINT
+                  constraints:
+                    nullable: true
+                  remarks: "父评论ID，用于支持评论回复"
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: 'ACTIVE'
+                  constraints:
+                    nullable: false
+                  remarks: "评论状态：ACTIVE, DELETED, HIDDEN"
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: TIMESTAMP
+                  defaultValueComputed: CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: document_comment
+            baseColumnNames: document_id
+            referencedTableName: document
+            referencedColumnNames: id
+            constraintName: fk_document_comment_document
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: document_comment
+            baseColumnNames: user_id
+            referencedTableName: app_user
+            referencedColumnNames: id
+            constraintName: fk_document_comment_user
+            onDelete: CASCADE
+
+        - addForeignKeyConstraint:
+            baseTableName: document_comment
+            baseColumnNames: team_id
+            referencedTableName: team
+            referencedColumnNames: id
+            constraintName: fk_document_comment_team
+            onDelete: SET NULL
+
+        - addForeignKeyConstraint:
+            baseTableName: document_comment
+            baseColumnNames: parent_comment_id
+            referencedTableName: document_comment
+            referencedColumnNames: id
+            constraintName: fk_document_comment_parent
+            onDelete: CASCADE
+
+        - createIndex:
+            indexName: idx_document_comment_document
+            tableName: document_comment
+            columns:
+              - column:
+                  name: document_id
+
+        - createIndex:
+            indexName: idx_document_comment_user
+            tableName: document_comment
+            columns:
+              - column:
+                  name: user_id
+
+        - createIndex:
+            indexName: idx_document_comment_team
+            tableName: document_comment
+            columns:
+              - column:
+                  name: team_id
+
+        - createIndex:
+            indexName: idx_document_comment_created_at
+            tableName: document_comment
+            columns:
+              - column:
+                  name: created_at
+
+      rollback:
+        - dropTable:
+            tableName: document_comment
+

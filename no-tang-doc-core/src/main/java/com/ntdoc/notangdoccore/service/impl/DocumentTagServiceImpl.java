@@ -1,0 +1,106 @@
+package com.ntdoc.notangdoccore.service.impl;
+
+import com.ntdoc.notangdoccore.entity.Document;
+import com.ntdoc.notangdoccore.entity.Tag;
+import com.ntdoc.notangdoccore.repository.DocumentRepository;
+import com.ntdoc.notangdoccore.repository.TagRepository;
+import com.ntdoc.notangdoccore.service.DocumentService;
+import com.ntdoc.notangdoccore.service.DocumentTagService;
+import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.*;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+@Transactional
+public class DocumentTagServiceImpl implements DocumentTagService {
+    private final DocumentRepository documentRepository;
+    private final TagRepository tagRepository;
+
+    @Override
+    @Transactional
+    public Document addTags(Long documentId, List<String> tagNames, String kcUserId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new EntityNotFoundException("Document not found"));
+
+        Set<Tag> tags = convertStringsToTags(tagNames);
+        document.getTags().addAll(tags);
+
+        return documentRepository.save(document);
+    }
+
+    @Override
+    @Transactional
+    public Document removeTag(Long documentId, String tagName, String kcUserId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new EntityNotFoundException("Document not found"));
+
+        boolean removed =tagRepository.findByTag(tagName)
+                .map(tag -> document.getTags().remove(tag))
+                .orElse(false);
+
+        if (removed) {
+            return documentRepository.save(document);
+        }
+
+        return document;
+    }
+
+    @Override
+    @Transactional
+    public Document replaceTags(Long documentId, List<String> tagNames, String kcUserId) {
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new EntityNotFoundException("Document not found"));
+
+        document.getTags().clear();
+        addTags(documentId, tagNames, kcUserId);
+        return documentRepository.save(document);
+    }
+
+    @Override
+    @Transactional
+    public List<Tag> getTags(Long documentId) {
+        return documentRepository.findById(documentId)
+                .map(d -> new ArrayList<>(d.getTags()))
+                .orElseGet(ArrayList::new);
+    }
+
+    @Override
+    @Transactional
+    public List<Document> getDocumentsByTag(String tagName,String kcUserId) {
+        return tagRepository.findDocumentsByTagName(tagName,kcUserId);
+    }
+
+    public Set<Tag> convertStringsToTags(List<String> tagNames) {
+        if (tagNames == null || tagNames.isEmpty()) {
+            return new HashSet<>();
+        }
+
+        Set<Tag> tags = new HashSet<>();
+
+        for (String tagName : tagNames) {
+            if (tagName == null || tagName.isBlank()) continue;
+
+            String normalized = tagName.trim()
+                    .replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5_-]", "")  // 移除特殊字符
+                    .replaceAll("^[_-]+|[_-]+$", "");                 // 移除首尾特殊字符
+
+            if (normalized.isEmpty()) continue;
+
+            Tag existingTag = tagRepository.findByTag(normalized)
+                    .orElseGet(() -> tagRepository.save(
+                            Tag.builder().tag(normalized).build()
+                    ));
+
+            tags.add(existingTag);
+        }
+
+        return tags;
+    }
+}
+

@@ -5,6 +5,7 @@ import com.ntdoc.notangdoccore.dto.document.DocumentUploadResponse;
 import com.ntdoc.notangdoccore.entity.Document;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.time.Instant;
 import java.util.List;
 
 /**
@@ -72,4 +73,25 @@ public interface DocumentService {
      * @param documentId 文档ID
      */
     void incrementDownloadCount(Long documentId);
+
+    /**
+     * 按文件名搜索
+     *
+     * @param kcUserId 当前用户ID
+     * @param nameOrKeyword 文件名或关键字（不区分大小写）
+     * @return 文档列表
+     */
+    List<Document> searchDocumentsByFilename(String kcUserId, String nameOrKeyword);
+
+    /**
+     * 根据所有者、上传日期、文件类型过滤文档
+     *
+     * @param kcUserId 当前用户ID
+     * @param contentType 文件类型，可为空
+     * @param start 上传日期的左边界（即查询 createdAt >= start），可为空
+     * @param end 上传日期的右边界（即查询createdAt <= end），可为空
+     * @return 符合条件的文档列表
+     */
+    List<Document> filterDocuments(String kcUserId, String contentType, Instant start, Instant end);
+
 }

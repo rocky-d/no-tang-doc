@@ -1,0 +1,70 @@
+replicaCount: 1
+
+image:
+  repository: registry.digitalocean.com/ntdoc/ntdoc-core
+  tag: "dev"   # CI/CD 用 --set image.tag 覆盖
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: regcred   # 先确保已创建
+
+serviceAccount:
+  create: true
+  name: ""
+
+containerPort: 8070
+
+probes:
+  enabled: true
+  readinessPath: /actuator/health
+  livenessPath: /actuator/health
+  initialDelaySeconds: 10
+  livenessInitialDelaySeconds: 30
+  periodSeconds: 10
+  livenessPeriodSeconds: 20
+  timeoutSeconds: 2
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8070
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: api.ntdoc.site
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: ntdoc-core-tls
+      hosts: [api.ntdoc.site]
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+    nginx.ingress.kubernetes.io/proxy-body-size: "50m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+# ✅ 非敏感配置（ConfigMap）
+config:
+  SPRING_PROFILES_ACTIVE: "dev"
+
+# ✅ 敏感配置（Secret）
+secrets:
+  # Digital Ocean Spaces
+  DO_SPACES_ACCESS_KEY: ""
+  DO_SPACES_SECRET_KEY: ""
+  # Keycloak
+  KEYCLOAK_ADMIN_USERNAME: ""
+  KEYCLOAK_ADMIN_PASSWORD: ""
+  KEYCLOAK_CLIENT_SECRET: ""
+  # Database
+  SPRING_DATASOURCE_URL: ""
+  SPRING_DATASOURCE_USERNAME: ""
+  SPRING_DATASOURCE_PASSWORD: ""

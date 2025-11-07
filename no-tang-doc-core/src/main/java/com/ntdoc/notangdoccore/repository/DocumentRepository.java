@@ -3,6 +3,7 @@ package com.ntdoc.notangdoccore.repository;
 import com.ntdoc.notangdoccore.entity.Document;
 import com.ntdoc.notangdoccore.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,17 +13,31 @@ import java.util.Optional;
 /**
  * 文档数据访问层
  */
-public interface DocumentRepository extends JpaRepository<Document, Long> {
+public interface DocumentRepository extends JpaRepository<Document, Long>, JpaSpecificationExecutor<Document> {
 
     /**
      * 根据用户和状态查找文档
      */
-    List<Document> findByUploadedByAndStatusOrderByCreatedAtDesc(User uploadedBy, Document.DocumentStatus status);
+    @Query("SELECT d FROM Document d " +
+            "LEFT JOIN FETCH d.tags " +
+            "WHERE d.uploadedBy = :user AND d.status = :status " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findByUploadedByAndStatusOrderByCreatedAtDesc(@Param("user")User uploadedBy, @Param("status") Document.DocumentStatus status);
+
 
     /**
      * 根据用户查找所有文档
      */
-    List<Document> findByUploadedByOrderByCreatedAtDesc(User uploadedBy);
+    @Query("SELECT d FROM Document d " +
+            "LEFT JOIN FETCH d.tags " +
+            "WHERE d.uploadedBy = :user " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findByUploadedByOrderByCreatedAtDesc(@Param("user") User uploadedBy);
+
+    /**
+     * 根据原始文件名查找文件（模糊匹配、不区分大小写）
+     */
+    List<Document> findByUploadedByAndOriginalFilenameContainingIgnoreCaseOrderByCreatedAtDesc(User uploadedBy, String partialFilename);
 
     /**
      * 根据S3键查找文档

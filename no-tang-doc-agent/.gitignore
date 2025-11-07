@@ -1,0 +1,17 @@
+out
+*log*
+*tmp*
+*temp*
+
+.idea/
+.vscode/
+__pycache__/
+node_modules/
+
+.coverage
+coverage.xml
+
+fastagent.jsonl
+fastagent.secrets.yaml
+
+!logging.yaml

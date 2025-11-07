@@ -74,6 +74,7 @@ public class DigitalOceanSpacesService implements FileStorageService {
             GetObjectRequest getRequest = GetObjectRequest.builder()
                     .bucket(bucketName)
                     .key(s3Key)
+                    .responseContentDisposition("attachment")
                     .build();
 
             GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
@@ -88,6 +89,29 @@ public class DigitalOceanSpacesService implements FileStorageService {
         } catch (Exception e) {
             log.error("Failed to generate download URL for key: {}", s3Key, e);
             throw new RuntimeException("Failed to generate download URL", e);
+        }
+    }
+
+    @Override
+    public URL generateShareUrl(String s3Key,Duration expiration){
+        try{
+            GetObjectRequest getRequest = GetObjectRequest.builder()
+                    .bucket(bucketName)
+                    .key(s3Key)
+                    .responseContentDisposition("inline")
+                    .build();
+
+            GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+                    .signatureDuration(expiration)
+                    .getObjectRequest(getRequest)
+                    .build();
+
+            URL url = s3Presigner.presignGetObject(presignRequest).url();
+            log.debug("Generated share URL for key: {}", s3Key);
+            return url;
+        }catch (Exception e){
+            log.error("Failed to generate share URL for key: {}", s3Key, e);
+            throw new RuntimeException("Failed to generate share URL", e);
         }
     }
 

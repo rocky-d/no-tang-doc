@@ -1,0 +1,79 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+env/
+
+# UV cache
+.uv/
+
+# Testing
+.pytest_cache/
+.coverage
+coverage.xml
+coverage_html/
+htmlcov/
+.tox/
+.nox/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Documentation
+docs/_build/
+*.md
+!README.md
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# CI/CD
+.github/
+
+# Archive and temporary files
+archive/
+tmp/
+*.tmp
+*.log
+
+# FastAgent specific
+fastagent.jsonl
+fastagent.secrets.yaml
+.fast-agent/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+
+# Configuration files (may contain secrets)
+*.env
+.env.*
+!.env.example
+
+# Docker
+.dockerignore
+docker-compose*.yml
+
+# Package management
+# Note: uv.lock is needed for Docker build
+package.json
+package-lock.json
+
+# Test files
+tests/
+pytest.ini

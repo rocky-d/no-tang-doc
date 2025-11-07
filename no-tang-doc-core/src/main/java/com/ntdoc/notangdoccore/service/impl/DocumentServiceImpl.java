@@ -4,13 +4,20 @@ import com.ntdoc.notangdoccore.dto.document.DocumentDownloadResponse;
 import com.ntdoc.notangdoccore.dto.document.DocumentUploadResponse;
 import com.ntdoc.notangdoccore.entity.Document;
 import com.ntdoc.notangdoccore.entity.User;
+import com.ntdoc.notangdoccore.entity.logenum.ActorType;
+import com.ntdoc.notangdoccore.entity.logenum.OperationType;
+import com.ntdoc.notangdoccore.event.UserOperationEvent;
+import com.ntdoc.notangdoccore.exception.DocumentException;
 import com.ntdoc.notangdoccore.repository.DocumentRepository;
+import com.ntdoc.notangdoccore.repository.DocumentSpecification;
 import com.ntdoc.notangdoccore.repository.UserRepository;
 import com.ntdoc.notangdoccore.service.DocumentService;
 import com.ntdoc.notangdoccore.service.FileStorageService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -20,6 +27,7 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -31,6 +39,8 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentRepository documentRepository;
     private final UserRepository userRepository;
     private final FileStorageService fileStorageService;
+    //日志发布放在服务中而不是Controller里
+    private final ApplicationEventPublisher eventPublisher;
 
     @Value("${digitalocean.spaces.bucket}")
     private String bucketName;
@@ -54,7 +64,7 @@ public class DocumentServiceImpl implements DocumentService {
             String fileHash = calculateFileHash(file);
 
             Document document = Document.builder()
-                    .originalFilename(originalFilename)
+                    .originalFilename(finalFileName)
                     .storedFilename(extractFilenameFromS3Key(s3Key))
                     .fileSize(file.getSize())
                     .contentType(file.getContentType())
@@ -70,6 +80,20 @@ public class DocumentServiceImpl implements DocumentService {
             document = documentRepository.save(document);
             log.info("Document saved to database: id={}", document.getId());
 
+            // 发布文件上传成功日志
+            eventPublisher.publishEvent(
+                    UserOperationEvent.success(
+                            this,
+                            ActorType.USER,
+                            user.getUsername(),
+                            user.getId(),
+                            document.getId(),
+                            OperationType.UPLOAD_DOCUMENT,
+                            finalFileName
+                    )
+            );
+            log.info("Publish Upload Document Successful Log");
+
             return DocumentUploadResponse.builder()
                     .documentId(document.getId())
                     .fileName(finalFileName)
@@ -83,6 +107,19 @@ public class DocumentServiceImpl implements DocumentService {
                     .build();
 
         } catch (Exception e) {
+            // 发布上传失败日志
+            eventPublisher.publishEvent(
+                    UserOperationEvent.fail(
+                            this,
+                            ActorType.USER,
+                            user.getUsername(),
+                            user.getId(),
+                            OperationType.UPLOAD_DOCUMENT,
+                            fileName,
+                            e.getMessage()
+                    )
+            );
+
             log.error("Failed to upload document: {}", e.getMessage(), e);
             throw new RuntimeException("文件上传失败: " + e.getMessage(), e);
         }
@@ -111,6 +148,20 @@ public class DocumentServiceImpl implements DocumentService {
 
             incrementDownloadCount(documentId);
 
+            // 发布下载文档日志
+            eventPublisher.publishEvent(
+                    UserOperationEvent.success(
+                            this,
+                            ActorType.USER,
+                            user.getUsername(),
+                            user.getId(),
+                            documentId,
+                            OperationType.DOWNLOAD_DOCUMENT,
+                            document.getOriginalFilename()
+                    )
+            );
+            log.info("Record Download Document Successful Log");
+
             return DocumentDownloadResponse.builder()
                     .documentId(document.getId())
                     .fileName(document.getOriginalFilename())
@@ -121,6 +172,17 @@ public class DocumentServiceImpl implements DocumentService {
                     .build();
 
         } catch (Exception e) {
+            eventPublisher.publishEvent(
+                    UserOperationEvent.fail(
+                            this,
+                            ActorType.USER,
+                            user.getUsername(),
+                            user.getId(),
+                            OperationType.DOWNLOAD_DOCUMENT,
+                            document.getOriginalFilename(),
+                            e.getMessage()
+                    )
+            );
             log.error("Failed to generate download URL for document: {}", documentId, e);
             throw new RuntimeException("生成下载链接失败: " + e.getMessage(), e);
         }
@@ -128,24 +190,80 @@ public class DocumentServiceImpl implements DocumentService {
 
     @Override
     public void deleteDocument(Long documentId, String kcUserId) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        log.info("Starting document delete for document: {} by user: {}", documentId, kcUserId);
+
+        User user = getUserByKcUserId(kcUserId);
+        Document document = getDocumentById(documentId, kcUserId);
+
+        // 物理删除
+        try{
+            documentRepository.delete(document);
+            fileStorageService.deleteFile(document.getS3Key());
+
+            // 发布用户删除文档日志
+            eventPublisher.publishEvent(
+                    UserOperationEvent.success(
+                            this,
+                            ActorType.USER,
+                            user.getUsername(),
+                            user.getId(),
+                            documentId,
+                            OperationType.DELETE_DOCUMENT,
+                            document.getOriginalFilename()
+                    )
+            );
+            log.info("Record Delete Document Successful Log");
+
+        } catch (Exception e) {
+            // 发布删除失败日志
+            eventPublisher.publishEvent(
+                    UserOperationEvent.fail(
+                            this,
+                            ActorType.USER,
+                            user.getUsername(),
+                            user.getId(),
+                            OperationType.DELETE_DOCUMENT,
+                            document.getOriginalFilename(),
+                            e.getMessage()
+                    )
+            );
+            log.error("Failed to delete document: {},{}", documentId, e.getMessage());
+        }
+        // 软删除：只是更新状态，可恢复
+//        document.setStatus(Document.DocumentStatus.DELETED);
+//        documentRepository.save(document);
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<Document> getUserDocuments(String kcUserId) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        User user = getUserByKcUserId(kcUserId);
+        return documentRepository.findByUploadedByOrderByCreatedAtDesc(user);
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Document> getUserDocuments(String kcUserId, Document.DocumentStatus status) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        User user = getUserByKcUserId(kcUserId);
+        return documentRepository.findByUploadedByAndStatusOrderByCreatedAtDesc(user, status);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Document getDocumentById(Long documentId, String kcUserId) {
-        throw new UnsupportedOperationException("Method not implemented yet");
+        User user = getUserByKcUserId(kcUserId);
+
+        Document document = documentRepository.findById(documentId)
+                .orElseThrow(() -> new RuntimeException("文档不存在: " + documentId));
+
+//        if (!document.getUploadedBy().getId().equals(user.getId())) {
+//            throw new SecurityException("无权删除该文档");
+//        }
+        if (!document.getUploadedBy().equals(user)) {
+            throw new SecurityException("You are not allowed to delete this document.");
+        }
+
+        return document;
     }
 
     @Override
@@ -172,6 +290,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     private User getUserByKcUserId(String kcUserId) {
         return userRepository.findByKcUserId(kcUserId)
                 .orElseGet(() -> {
@@ -211,4 +330,43 @@ public class DocumentServiceImpl implements DocumentService {
             return String.valueOf(System.currentTimeMillis());
         }
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Document> searchDocumentsByFilename(String kcUserId, String nameOrKeyword) {
+        log.info("Searching document by name for keyword: {} by user: {}", nameOrKeyword, kcUserId);
+
+        if (nameOrKeyword == null || nameOrKeyword.isBlank()) {
+            throw new DocumentException("Search keyword must not be empty");
+        }
+
+        User user = getUserByKcUserId(kcUserId);
+        return documentRepository.findByUploadedByAndOriginalFilenameContainingIgnoreCaseOrderByCreatedAtDesc(user, nameOrKeyword.trim());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Document> filterDocuments(String kcUserId, String contentType, Instant start, Instant end) {
+        User user = getUserByKcUserId(kcUserId);
+
+        // 初始 Specification 直接用 uploadedBy 条件
+        Specification<Document> spec = DocumentSpecification.uploadedBy(user);
+
+        // 根据文件类型过滤
+        if (contentType != null && !contentType.isBlank()) {
+            spec = spec.and(DocumentSpecification.fileTypeEquals(contentType));
+        }
+
+        // 根据上传日期过滤
+        if (start != null) {
+            spec = spec.and(DocumentSpecification.uploadedAfter(start));
+        }
+
+        if (end != null) {
+            spec = spec.and(DocumentSpecification.uploadedBefore(end));
+        }
+
+        return documentRepository.findAll(spec);
+    }
+
 }

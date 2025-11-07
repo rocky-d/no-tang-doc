@@ -10,25 +10,32 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class UserOperationLogListener {
     private final LogRepository logRepository;
 
-    @Async
+    @Async("taskExecutor")
     @EventListener
     @Transactional
     public void handleUserOperation(UserOperationEvent event){
+        // 记录当前线程
+        log.info("Async thread: {}",Thread.currentThread().getName());
+
         try{
             Log logEntity = new Log();
+            logEntity.setUserId(event.getUserId());
+            logEntity.setTargetId(event.getTargetId());
             logEntity.setActorType(event.getActorType());
             logEntity.setActorName(event.getActorName());
             logEntity.setOperationType(event.getOperationType());
             logEntity.setTargetName(event.getTargetName());
             logEntity.setOperationStatus(event.getOperationStatus());
             logEntity.setMessage(event.getMessage());
-            logEntity.setTimestamp(event.getTimestamp());
+            logEntity.setTime(Instant.ofEpochMilli(event.getTimestamp()));
 
             logRepository.save(logEntity);
 

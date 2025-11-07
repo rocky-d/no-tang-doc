@@ -1,0 +1,56 @@
+# Docker Compose configuration for no-tang-doc-agent
+# Simplified for local development - assumes core backend is already running
+
+services:
+  agent:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        PYTHON_VERSION: 3.13
+    image: no-tang-doc-agent:latest
+    container_name: no-tang-doc-agent
+    restart: unless-stopped
+    ports:
+      - "8002:8002"
+    environment:
+      # Base URL for no-tang-doc-core API
+      # Default assumes core is running on host or in Docker network
+      BASE_URL: ${BASE_URL:-http://host.docker.internal:8070}
+      
+      # MCP Server configuration
+      SERVER_NAME: ${SERVER_NAME:-no-tang-doc-agent-mcp-server}
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      HOST: ${HOST:-0.0.0.0}
+      PORT: ${PORT:-8002}
+      
+      # Keycloak OAuth2/OIDC configuration
+      # Default assumes keycloak is running on host
+      ISSUER_URL: ${ISSUER_URL:-http://host.docker.internal:8080/realms/ntdoc}
+      RESOURCE_SERVER_URL: ${RESOURCE_SERVER_URL:-http://localhost:8002/mcp}
+      REQUIRED_SCOPES: ${REQUIRED_SCOPES:-email profile mcp-user}
+    command:
+      - "--base-url"
+      - "${BASE_URL:-http://host.docker.internal:8070}"
+      - "--name"
+      - "${SERVER_NAME:-no-tang-doc-agent-mcp-server}"
+      - "--log-level"
+      - "${LOG_LEVEL:-INFO}"
+      - "--host"
+      - "0.0.0.0"
+      - "--port"
+      - "8002"
+      - "--issuer-url"
+      - "${ISSUER_URL:-http://host.docker.internal:8080/realms/ntdoc}"
+      - "--resource-server-url"
+      - "${RESOURCE_SERVER_URL:-http://localhost:8002/mcp}"
+      - "--required-scopes"
+      - "${REQUIRED_SCOPES:-email profile mcp-user}"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', 8002)); s.close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s

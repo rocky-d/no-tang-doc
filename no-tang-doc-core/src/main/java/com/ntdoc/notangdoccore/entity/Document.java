@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.util.*;
 
 /**
  * Document entity class
@@ -59,6 +60,49 @@ public class Document {
 
     @Column(length = 500)
     private String description;
+
+    //Tags
+    @ManyToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinTable(
+            name = "document_tags",
+            joinColumns = @JoinColumn(name = "document_id", foreignKey = @ForeignKey(name = "fk_document_tags_document")),
+            inverseJoinColumns = @JoinColumn(name = "tag_id", foreignKey = @ForeignKey(name = "fk_document_tag_tag")),
+            uniqueConstraints = @UniqueConstraint(name = "uk_document_tag", columnNames = {"document_id", "tag_id"})
+    )
+    @Builder.Default
+    private Set<Tag> tags = new LinkedHashSet<>();
+
+    public void addTag(Tag tag) {
+        if (tag != null) {
+            tags.add(tag);
+            tag.getDocuments().add(this); // 双向维护
+        }
+    }
+
+    public void removeTag(Tag tag) {
+        if (tag != null) {
+            tags.remove(tag);
+            tag.getDocuments().remove(this);
+        }
+    }
+
+    //Metadata
+    @ElementCollection
+    @CollectionTable(
+            name = "document_metadata",
+            joinColumns = @JoinColumn(name = "document_id"),
+            uniqueConstraints = @UniqueConstraint(columnNames = {"document_id", "meta_key"})
+    )
+    @MapKeyColumn(name = "meta_key", length = 128)
+    @Column(name = "meta_value", length = 1024, nullable = false)
+    @Builder.Default
+    private Map<String, String> metadata = new LinkedHashMap<>();
+
+    public void putMetadata(String key, String value) {
+        if (key != null && !key.isBlank()) {
+            metadata.put(key.trim(), value == null ? "" : value.trim());
+        }
+    }
 
     @Column(name = "download_count", nullable = false)
     @Builder.Default

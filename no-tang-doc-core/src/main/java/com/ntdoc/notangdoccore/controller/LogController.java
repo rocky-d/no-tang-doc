@@ -2,8 +2,10 @@ package com.ntdoc.notangdoccore.controller;
 
 import com.ntdoc.notangdoccore.entity.Log;
 import com.ntdoc.notangdoccore.entity.User;
+import com.ntdoc.notangdoccore.service.LogService;
 import com.ntdoc.notangdoccore.service.UserSyncService;
-import com.ntdoc.notangdoccore.service.log.LogService;
+import com.ntdoc.notangdoccore.service.impl.UserSyncServiceImpl;
+import com.ntdoc.notangdoccore.service.impl.LogServiceImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.constraints.Pattern;
 import lombok.RequiredArgsConstructor;
@@ -58,7 +60,7 @@ public class LogController {
     * 获取当前用户的日志条数
     * 可以设置每周或者每月
     */
-    @GetMapping("/list")
+    @GetMapping("/count")
     public ResponseEntity<Map<String,Long>> getLogsCount(@AuthenticationPrincipal Jwt jwt,
                                                          @RequestParam(defaultValue = "week")
                                                          @Pattern(regexp = "^(week|month)$",message = "period can only be week or month")
@@ -74,6 +76,23 @@ public class LogController {
             return ResponseEntity.ok(logsCount);
         }catch (Exception e){
             log.info("Get {} logs failed",period,e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
+        }
+    }
+
+    /*
+     * 获取当前文档的操作日志，查看对文档操作的log记录
+     */
+    @GetMapping("/documents")
+    public ResponseEntity<List<Log>> listDocumentsLog(@AuthenticationPrincipal Jwt jwt,@RequestParam Long documentId){
+        try{
+            log.info("Receive list documents log request");
+
+            List<Log> documentLogList = logService.getAllLogsByTargetId(documentId);
+            log.info("Get all documents log successfully");
+            return ResponseEntity.ok(documentLogList);
+        }catch (Exception e){
+            log.info("Get all documents log failed：{}",e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }

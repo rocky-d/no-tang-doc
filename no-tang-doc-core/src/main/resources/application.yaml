@@ -3,7 +3,7 @@ server:
 
 spring:
   profiles:
-    active: local
+    active: ${SPRING_PROFILES_ACTIVE:local}
   application:
     name: no-tang-doc-core
   datasource:
@@ -30,26 +30,26 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          jwk-set-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/certs
+          jwk-set-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/certs
       client:
         registration:
           keycloak:
             client-id: ${KEYCLOAK_CLIENT_ID:no-tang-doc-core}
             authorization-grant-type: authorization_code
-            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:http://localhost:3000/auth/callback}
+            redirect-uri: ${SPRING_SECURITY_OAUTH2_CLIENT_REGISTRATION_KEYCLOAK_REDIRECT_URI:https://ntdoc.site/auth/callback}
             scope: openid,profile,email
             client-secret: ${KEYCLOAK_CLIENT_SECRET:no-tang-doc-core-secret}
         provider:
           keycloak:
-            authorization-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/auth
-            token-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/token
-            user-info-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/userinfo
-            jwk-set-uri: http://auth.local:8080/realms/ntdoc/protocol/openid-connect/certs
-            issuer-uri: http://auth.local:8080/realms/ntdoc
+            authorization-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/auth
+            token-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/token
+            user-info-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/userinfo
+            jwk-set-uri: https://auth.ntdoc.site/realms/ntdoc/protocol/openid-connect/certs
+            issuer-uri: https://auth.ntdoc.site/realms/ntdoc
 
 keycloak:
   realm: ntdoc
-  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:http://auth.local:8080}
+  auth-server-url: ${KEYCLOAK_AUTH_SERVER_URL:https://auth.ntdoc.site}
   admin:
     realm: master
     username: ${KEYCLOAK_ADMIN_USERNAME:admin}

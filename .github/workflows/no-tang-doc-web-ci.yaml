@@ -1,0 +1,119 @@
+name: no-tang-doc-web CI
+
+on:
+  push:
+    branches:
+      - main
+      - dev
+      - mod/web
+      - feat/web/**
+    paths:
+      - "no-tang-doc-web/**"
+      - ".github/workflows/no-tang-doc-web-ci.yaml"
+      - ".github/workflows/no-tang-doc-web-cd.yaml"
+  pull_request:
+    branches:
+      - main
+      - dev
+      - mod/web
+    paths:
+      - "no-tang-doc-web/**"
+  workflow_call:
+    inputs:
+      ref:
+        description: Git ref (branch, tag, or SHA) to check
+        required: false
+        type: string
+        default: ""
+    secrets:
+      DO_ACCESS_TOKEN:
+        required: false
+  workflow_dispatch: {}
+
+defaults:
+  run:
+    working-directory: no-tang-doc-web
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    # Skip CI when syncing between mod/web and dev
+    if: |
+      !(
+        (github.head_ref == 'mod/web' && github.base_ref == 'dev') ||
+        (github.head_ref == 'dev' && github.base_ref == 'mod/web')
+      )
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: no-tang-doc-web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint:ci
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    # Skip CI when syncing between mod/web and dev
+    if: |
+      !(
+        (github.head_ref == 'mod/web' && github.base_ref == 'dev') ||
+        (github.head_ref == 'dev' && github.base_ref == 'mod/web')
+      )
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: no-tang-doc-web/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm run test:ci
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-test-results
+          path: |
+            no-tang-doc-web/coverage/
+          compression-level: 9
+
+  deploy:
+    name: Deploy
+    needs: [lint, test]
+    # Only deploy when:
+    # 1. Both lint and test jobs succeed (CI passes)
+    # 2. Push to protected branches: main, dev, or mod/web
+    # 3. Push event (triggered after PR merge to protected branches)
+    if: |
+      needs.lint.result == 'success' &&
+      needs.test.result == 'success' &&
+      contains(fromJson('["main","dev","mod/web"]'), github.ref_name) &&
+      github.event_name == 'push'
+    uses: ./.github/workflows/no-tang-doc-web-cd.yaml
+    with:
+      sha: ${{ github.sha }}
+      branch: ${{ github.ref_name }}
+    secrets: inherit
