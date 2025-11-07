@@ -17,6 +17,8 @@ from mcp.server.streamable_http import EventStore
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import Icon
 
+from .prompts import register_mcp_prompts
+from .resources import register_mcp_resources
 from .tools import register_mcp_tools
 
 __all__ = [
@@ -127,4 +129,7 @@ def launch_mcp_server(
         transport_security=mcp_settings.transport_security,
     )
     register_mcp_tools(mcp, base_url=base_url)
+    # Register resources and prompts so clients can reference document resources
+    register_mcp_resources(mcp, base_url=base_url)
+    register_mcp_prompts(mcp)
     mcp.run(transport=transport, mount_path=mount_path)
