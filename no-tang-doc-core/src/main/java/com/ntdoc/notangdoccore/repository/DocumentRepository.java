@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * 文档数据访问层
@@ -65,4 +66,25 @@ public interface DocumentRepository extends JpaRepository<Document, Long>, JpaSp
      */
     @Query("SELECT d FROM Document d WHERE d.uploadedBy = :user AND d.status = 'ACTIVE' ORDER BY d.createdAt DESC")
     List<Document> findRecentDocumentsByUser(@Param("user") User user);
+
+    /**
+     * 根据tags查找文档
+     */
+    @Query("SELECT DISTINCT d FROM Document d JOIN d.tags t " +
+            "WHERE d.uploadedBy = :user AND t IN :tags " +
+            "AND d.status = 'ACTIVE' " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findByUserAndTags(@Param("user") User user, @Param("tags") Set<String> tags);
+
+    /**
+     * 根据metadata的键值对匹配查找文档
+     */
+    @Query("SELECT DISTINCT d FROM Document d JOIN d.metadata m " +
+            "WHERE d.uploadedBy = :user " +
+            "AND d.status = 'ACTIVE'" +
+            "AND KEY(m) = :key AND VALUE(m) = :value")
+    List<Document> findByUserAndMetadataKeyValue(@Param("user") User user,
+                                                 @Param("key") String key,
+                                                 @Param("value") String value);
+
 }

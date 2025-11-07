@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 
 /**
  * 文档业务服务接口
@@ -93,5 +94,20 @@ public interface DocumentService {
      * @return 符合条件的文档列表
      */
     List<Document> filterDocuments(String kcUserId, String contentType, Instant start, Instant end);
+
+    /**
+     * 通过 tags 查询
+     * @param kcUserId 当前用户ID
+     * @param tags 标签集合（非空）
+     */
+    List<Document> searchByTags(String kcUserId, Set<String> tags);
+
+    /**
+     * 通过 metadata 查询（精确键值对）
+     * @param kcUserId 当前用户ID
+     * @param key Metadata中的key
+     * @param value Metadata中的value
+     */
+    List<Document> searchByMetadata(String kcUserId, String key, String value);
 
 }

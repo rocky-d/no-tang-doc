@@ -29,6 +29,7 @@ import java.net.URL;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -361,6 +362,35 @@ public class DocumentController {
 
         DocumentListResponse response = DocumentListResponse.fromDocuments(docs);
         return ResponseEntity.ok(response);
+    }
+
+    /**
+     * 根据tags查找文档
+     */
+    @GetMapping("/search/tags")
+    public ResponseEntity<DocumentListResponse> searchByTags(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam("tags") Set<String> tags
+    ) {
+        String kcUserId = jwt.getClaimAsString("sub");
+
+        List<Document> docs = documentService.searchByTags(kcUserId, tags);
+        return ResponseEntity.ok(DocumentListResponse.fromDocuments(docs));
+    }
+
+    /**
+     * 按metadata键值对精确查询文档
+     * 例：/api/v1/documents/search/metadata?key=author&value=张三
+     */
+    @GetMapping("/search/metadata")
+    public ResponseEntity<DocumentListResponse> searchByMetadata(
+            @AuthenticationPrincipal Jwt jwt,
+            @RequestParam("key") String key,
+            @RequestParam("value") String value
+    ) {
+        String kcUserId = jwt.getClaimAsString("sub");
+        List<Document> docs = documentService.searchByMetadata(kcUserId, key, value);
+        return ResponseEntity.ok(DocumentListResponse.fromDocuments(docs));
     }
 
 }
