@@ -372,6 +372,22 @@ class TestMCPTools:
     @patch("no_tang_doc_agent.mcp_server.server.FastMCP")
     @patch("no_tang_doc_agent.mcp_server.server.APIClient")
     @patch("no_tang_doc_agent.mcp_server.tools.APIClient")
+    async def test_download_document_content_no_download_url(
+        self, mock_tools_api_client, mock_httpx, mock_mcp, mock_context, url
+    ):
+        # Simulate core API returning no downloadUrl in the metadata response
+        client, metadata_response = create_mock_client(json_data={})
+        mock_httpx.side_effect = make_api_client_factory(client)
+        mock_tools_api_client.side_effect = make_api_client_factory(client)
+        download = setup_capture(mock_mcp, "download-document-content")
+        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+
+        with pytest.raises(ValueError):
+            await download()(mock_context, document_id=456)
+
+    @patch("no_tang_doc_agent.mcp_server.server.FastMCP")
+    @patch("no_tang_doc_agent.mcp_server.server.APIClient")
+    @patch("no_tang_doc_agent.mcp_server.tools.APIClient")
     async def test_delete_document(
         self, mock_tools_api_client, mock_httpx, mock_mcp, mock_context, url
     ):
