@@ -6,8 +6,6 @@ on:
       - main
       - dev
       - mod/core
-      - feat/core/NTDOC-11-Setup-CI-CD-pipeline
-      - feat/core/deploy-5006-demo
     paths:
       - 'no-tang-doc-core/**'
       - '.github/workflows/no-tang-doc-core-ci.yaml'
@@ -106,13 +104,13 @@ jobs:
     name: Push image to DOCR
     needs: ci
     # Only Dev ci passed then do the push and deploy
-    if: >-
-      ${{
-        needs.ci.result == 'success' &&
-        contains(fromJson('["main","dev","mod/core","feat/core/NTDOC-11-Setup-CI-CD-pipeline","feat/core/deploy-5006-demo"]'), github.ref_name) &&
-        github.event_name == 'push'
-      }}
-#    if: ${{ needs.ci.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/dev' }}
+#    if: >-
+#      ${{
+#        needs.ci.result == 'success' &&
+#        contains(fromJson('["main","dev","mod/core","feat/core/NTDOC-11-Setup-CI-CD-pipeline","feat/core/deploy-5006-demo"]'), github.ref_name) &&
+#        github.event_name == 'push'
+#      }}
+    if: ${{ needs.ci.result == 'success' && github.event_name == 'push' && github.ref == 'refs/heads/dev' }}
     uses: ./.github/workflows/deploy-to-doks.yaml
     with:
       sha: ${{ github.sha }}
