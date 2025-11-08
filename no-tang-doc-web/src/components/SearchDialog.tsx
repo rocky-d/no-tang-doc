@@ -30,9 +30,8 @@ export function SearchDialog({
   open,
   onOpenChange,
   onSearch,
-  initialMode = 'simple',
-  placeholder = 'Search documents...'
-}: SearchDialogProps) {
+  initialMode = 'simple'
+                             }: SearchDialogProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchMode, setSearchMode] = useState<SearchMode>(initialMode);
   const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);

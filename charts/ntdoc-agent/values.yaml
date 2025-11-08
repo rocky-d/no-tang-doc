@@ -1,0 +1,79 @@
+replicaCount: 1
+
+image:
+  repository: registry.digitalocean.com/ntdoc/ntdoc-agent
+  tag: "dev"   # CI/CD will override with --set image.tag
+  pullPolicy: IfNotPresent
+
+imagePullSecrets:
+  - name: regcred   # Ensure this secret is created in the namespace
+
+serviceAccount:
+  create: true
+  name: ""
+
+containerPort: 8002
+
+probes:
+  enabled: true
+  # MCP server health check using TCP socket probe (no dedicated health endpoint)
+  readinessProbe:
+    tcpSocket:
+      port: 8002
+    initialDelaySeconds: 15
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  livenessProbe:
+    tcpSocket:
+      port: 8002
+    initialDelaySeconds: 40
+    periodSeconds: 20
+    timeoutSeconds: 5
+    failureThreshold: 3
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8002
+
+ingress:
+  enabled: true
+  className: "nginx"
+  hosts:
+    - host: agent.ntdoc.site
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: ntdoc-agent-tls
+      hosts: [agent.ntdoc.site]
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 128Mi
+  limits:
+    cpu: 200m
+    memory: 512Mi
+
+# Non-sensitive configuration (ConfigMap)
+config:
+  BASE_URL: "https://api.ntdoc.site"
+  SERVER_NAME: "no-tang-doc-agent-mcp-server"
+  LOG_LEVEL: "INFO"
+  HOST: "0.0.0.0"
+  PORT: "8002"
+  ISSUER_URL: "https://auth.ntdoc.site/realms/ntdoc"
+  RESOURCE_SERVER_URL: "https://agent.ntdoc.site/mcp"
+  REQUIRED_SCOPES: "email profile mcp-user"
+
+# Sensitive configuration (Secret)
+# These will be injected via --set-string in the CD workflow
+secrets: {}
+  # KEYCLOAK_CLIENT_SECRET: ""  # If needed for client credentials flow

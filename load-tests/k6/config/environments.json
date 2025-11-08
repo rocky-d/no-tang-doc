@@ -1,0 +1,14 @@
+{
+  "development": {
+    "issuerUrl": "http://auth.local:8080/realms/ntdoc",
+    "agentBaseUrl": "http://localhost:8002",
+    "coreBaseUrl": "http://localhost:8070",
+    "webBaseUrl": "http://localhost:3000"
+  },
+  "production": {
+    "issuerUrl": "https://auth.ntdoc.site/realms/ntdoc",
+    "agentBaseUrl": "https://agent.ntdoc.site",
+    "coreBaseUrl": "https://api.ntdoc.site",
+    "webBaseUrl": "https://ntdoc.site"
+  }
+}

@@ -2,7 +2,7 @@
 // Includes: code_verifier (base64url), code_challenge(S256), state, nonce generation
 
 function base64UrlEncode(bytes: Uint8Array) {
-  let str = btoa(String.fromCharCode(...Array.from(bytes)));
+  const str = btoa(String.fromCharCode(...Array.from(bytes)));
   return str.replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
