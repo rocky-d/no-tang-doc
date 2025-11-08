@@ -150,6 +150,40 @@ public class TeamServiceImpl implements TeamService {
         return team.getOwner().getId().equals(user.getId());
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public String getUserRoleInTeam(Long teamId, String kcUserId) {
+        log.debug("Getting user role in team: teamId={}, kcUserId={}", teamId, kcUserId);
+
+        try {
+            Team team = getTeamById(teamId);
+            User user = getUserByKcUserId(kcUserId);
+
+            // 查询用户在团队中的成员记录
+            Optional<TeamMember> memberOpt = teamMemberRepository
+                    .findByTeamAndUserAndStatus(team, user, TeamMember.MemberStatus.ACTIVE);
+
+            if (memberOpt.isPresent()) {
+                String role = memberOpt.get().getRole().name();
+                log.debug("User role found: teamId={}, kcUserId={}, role={}", teamId, kcUserId, role);
+                return role;
+            }
+
+            log.debug("User is not a member of team: teamId={}, kcUserId={}", teamId, kcUserId);
+            return null;
+        } catch (Exception e) {
+            log.error("Error getting user role in team: teamId={}, kcUserId={}", teamId, kcUserId, e);
+            return null;
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean isTeamMember(Long teamId, String kcUserId) {
+        String role = getUserRoleInTeam(teamId, kcUserId);
+        return role != null;
+    }
+
     /**
      * 根据 Keycloak 用户ID 获取用户
      */
@@ -158,4 +192,3 @@ public class TeamServiceImpl implements TeamService {
                 .orElseThrow(() -> new RuntimeException("用户不存在: " + kcUserId));
     }
 }
-

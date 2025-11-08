@@ -44,7 +44,10 @@ public class TeamController {
             String kcUserId = jwt.getClaimAsString("sub");
 
             Team team = teamService.createTeam(request, kcUserId);
-            TeamResponse response = TeamResponse.fromEntity(team);
+
+            // 获取当前用户在团队中的角色（创建者为OWNER）
+            String currentUserRole = teamService.getUserRoleInTeam(team.getId(), kcUserId);
+            TeamResponse response = TeamResponse.fromEntityWithRole(team, currentUserRole);
 
             log.info("Team created successfully: teamId={}, name={}", team.getId(), team.getName());
 
@@ -81,7 +84,18 @@ public class TeamController {
                     ? teamService.getUserActiveTeams(kcUserId)
                     : teamService.getUserOwnedTeams(kcUserId);
 
-            TeamListResponse response = TeamListResponse.fromEntities(teams);
+            // 为每个团队添加当前用户的角色信息
+            List<TeamResponse> teamResponses = teams.stream()
+                    .map(team -> {
+                        String role = teamService.getUserRoleInTeam(team.getId(), kcUserId);
+                        return TeamResponse.fromEntityWithRole(team, role);
+                    })
+                    .toList();
+
+            TeamListResponse response = TeamListResponse.builder()
+                    .teams(teamResponses)
+                    .total(teamResponses.size())
+                    .build();
 
             log.info("Retrieved {} teams for user", teams.size());
 
@@ -107,8 +121,12 @@ public class TeamController {
         try {
             log.info("Received request to get team: teamId={}", teamId);
 
+            String kcUserId = jwt.getClaimAsString("sub");
             Team team = teamService.getTeamById(teamId);
-            TeamResponse response = TeamResponse.fromEntity(team);
+
+            // 获取当前用户在团队中的角色
+            String currentUserRole = teamService.getUserRoleInTeam(teamId, kcUserId);
+            TeamResponse response = TeamResponse.fromEntityWithRole(team, currentUserRole);
 
             log.info("Retrieved team successfully: teamId={}", teamId);
 
@@ -142,7 +160,10 @@ public class TeamController {
             String kcUserId = jwt.getClaimAsString("sub");
 
             Team team = teamService.updateTeam(teamId, request, kcUserId);
-            TeamResponse response = TeamResponse.fromEntity(team);
+
+            // 获取当前用户在团队中的角色
+            String currentUserRole = teamService.getUserRoleInTeam(teamId, kcUserId);
+            TeamResponse response = TeamResponse.fromEntityWithRole(team, currentUserRole);
 
             log.info("Team updated successfully: teamId={}", teamId);
 
@@ -199,4 +220,3 @@ public class TeamController {
         }
     }
 }
-
