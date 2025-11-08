@@ -111,7 +111,8 @@ docker-compose logs -f agent
 docker-compose down
 ```
 
-**Prerequisites:** 
+**Prerequisites:**
+
 - no-tang-doc-core and keycloak must be running on host machine (ports 8070 and 8080)
 - The agent uses `host.docker.internal` to access services running on the host
 - For Linux users, ensure Docker version supports `host.docker.internal` or manually configure host IP
@@ -254,6 +255,7 @@ uv run kb_agent.py --agent kb_agent --message "List documents" --quiet
 ```
 
 For more information, see:
+
 - [fast-agent Documentation](https://fast-agent.ai/)
 - [fast-agent GitHub](https://github.com/evalstate/fast-agent-mcp)
 - [MCP Specification](https://modelcontextprotocol.io/)
@@ -319,14 +321,11 @@ See `.github/workflows/no-tang-doc-agent-ci.yaml` for details.
 
 ## Contributing
 
-1. Create a feature branch from `dev`: `feat/agent/NTDOC-XX-description`
-2. Make your changes
-3. Ensure tests pass and coverage meets requirements
-4. Submit a pull request to `dev` branch
+Please refer to [CONTRIBUTING.md](../CONTRIBUTING.md) in the repository root for contribution guidelines.
 
 ## License
 
-[Add license information here]
+This project is licensed under the terms specified in [LICENSE](../LICENSE) in the repository root.
 
 ## Related Projects
 

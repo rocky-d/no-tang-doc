@@ -1,12 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/AuthContext';
 import { Dashboard } from '../components/Dashboard';
 import { UserLayout } from '../components/UserLayout';
-import { SearchMode } from '../components/SearchDialog';
+import type {SearchMode} from '../components/SearchDialog';
 
 export function DashboardPage() {
-    const { user } = useAuth();
+    useAuth();
     const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchMode, setSearchMode] = useState<'simple' | 'advanced'>('simple');

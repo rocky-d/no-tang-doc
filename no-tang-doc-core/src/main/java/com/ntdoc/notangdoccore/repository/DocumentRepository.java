@@ -18,12 +18,21 @@ public interface DocumentRepository extends JpaRepository<Document, Long>, JpaSp
     /**
      * 根据用户和状态查找文档
      */
-    List<Document> findByUploadedByAndStatusOrderByCreatedAtDesc(User uploadedBy, Document.DocumentStatus status);
+    @Query("SELECT d FROM Document d " +
+            "LEFT JOIN FETCH d.tags " +
+            "WHERE d.uploadedBy = :user AND d.status = :status " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findByUploadedByAndStatusOrderByCreatedAtDesc(@Param("user")User uploadedBy, @Param("status") Document.DocumentStatus status);
+
 
     /**
      * 根据用户查找所有文档
      */
-    List<Document> findByUploadedByOrderByCreatedAtDesc(User uploadedBy);
+    @Query("SELECT d FROM Document d " +
+            "LEFT JOIN FETCH d.tags " +
+            "WHERE d.uploadedBy = :user " +
+            "ORDER BY d.createdAt DESC")
+    List<Document> findByUploadedByOrderByCreatedAtDesc(@Param("user") User uploadedBy);
 
     /**
      * 根据原始文件名查找文件（模糊匹配、不区分大小写）

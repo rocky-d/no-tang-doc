@@ -1,4 +1,5 @@
 # OUTPUT
+
 ```text
 cdn_base_url = "https://ntdoc-cdn.sgp1.cdn.digitaloceanspaces.com"
 cdn_bucket_name = "ntdoc-cdn"

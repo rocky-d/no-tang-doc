@@ -1,7 +1,9 @@
-package com.ntdoc.notangdoccore.service.log;
+package com.ntdoc.notangdoccore.service.impl;
 
 import com.ntdoc.notangdoccore.entity.Log;
 import com.ntdoc.notangdoccore.repository.LogRepository;
+import com.ntdoc.notangdoccore.service.LogService;
+import com.ntdoc.notangdoccore.service.log.LogGroupStrategy;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -13,7 +15,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
-public class LogService {
+public class LogServiceImpl implements LogService {
     private final LogRepository logRepository;
 
     @Autowired
@@ -32,21 +34,24 @@ public class LogService {
         }
     }
 
+    @Override
     public List<Log> getAllLogsByUsername(String username){
         return logRepository.findByActorName(username);
     }
 
+    @Override
     public List<Log> getAllLogsByTargetId(Long targetId){
         return logRepository.findByTargetId(targetId);
     }
 
+    @Override
     public Map<String,Long> getLogsCountByUser(Long userId,String period){
         LogGroupStrategy logGroupStrategy = getLogGroupStrategy(period);
         return logGroupStrategy.groupLogs(userId, Instant.now());
     }
 
+    @Override
     public List<Log> getAllLogsByUserId(Long userId){
         return logRepository.findByUserId(userId);
     }
-
 }

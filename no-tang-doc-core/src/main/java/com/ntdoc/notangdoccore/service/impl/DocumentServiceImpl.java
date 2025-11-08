@@ -27,6 +27,7 @@ import java.net.URL;
 import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -241,6 +242,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public List<Document> getUserDocuments(String kcUserId, Document.DocumentStatus status) {
         User user = getUserByKcUserId(kcUserId);
         return documentRepository.findByUploadedByAndStatusOrderByCreatedAtDesc(user, status);
@@ -288,6 +290,7 @@ public class DocumentServiceImpl implements DocumentService {
         }
     }
 
+    @Transactional(propagation = org.springframework.transaction.annotation.Propagation.REQUIRES_NEW)
     private User getUserByKcUserId(String kcUserId) {
         return userRepository.findByKcUserId(kcUserId)
                 .orElseGet(() -> {

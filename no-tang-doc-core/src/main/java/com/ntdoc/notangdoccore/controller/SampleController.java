@@ -4,8 +4,8 @@ import com.ntdoc.notangdoccore.keycloak.KeycloakAdminService;
 import com.ntdoc.notangdoccore.dto.keycloak.RegistrationRequest;
 
 import com.ntdoc.notangdoccore.service.UserSyncService;
+import com.ntdoc.notangdoccore.service.impl.UserSyncServiceImpl;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;

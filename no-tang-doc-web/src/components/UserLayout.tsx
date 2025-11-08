@@ -11,10 +11,10 @@ import {
   Moon,
   Sun,
   ChevronRight,
-  Tag,
   X,
   Sparkles,
-  Users
+  Users,
+  ScrollText
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -156,7 +156,7 @@ export function UserLayout({
                   onClick={() => navigate('/')}
               >
                 <FileText className="h-6 w-6 text-primary" />
-                <span className="font-semibold">DocRepo</span>
+                <span className="font-semibold">NTDoc</span>
               </button>
             </SidebarHeader>
             <SidebarContent>
@@ -192,13 +192,23 @@ export function UserLayout({
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
+
+                        {/*<SidebarMenuSubItem>*/}
+                        {/*  <SidebarMenuSubButton*/}
+                        {/*      onClick={() => navigate('/manage/tags')}*/}
+                        {/*      isActive={location.pathname === '/manage/tags'}*/}
+                        {/*  >*/}
+                        {/*    <Tag className="h-4 w-4" />*/}
+                        {/*    <span>Tags</span>*/}
+                        {/*  </SidebarMenuSubButton>*/}
+                        {/*</SidebarMenuSubItem>*/}
                         <SidebarMenuSubItem>
                           <SidebarMenuSubButton
-                              onClick={() => navigate('/manage/tags')}
-                              isActive={location.pathname === '/manage/tags'}
+                              onClick={() => navigate('/manage/logs')}
+                              isActive={location.pathname === '/manage/logs'}
                           >
-                            <Tag className="h-4 w-4" />
-                            <span>Tags</span>
+                            <ScrollText className="h-4 w-4" />
+                            <span>Logs</span>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
                       </SidebarMenuSub>
@@ -234,15 +244,15 @@ export function UserLayout({
                             <span>My Teams</span>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
-                        <SidebarMenuSubItem>
-                          <SidebarMenuSubButton
-                              onClick={() => navigate('/teams/team-space')}
-                              isActive={location.pathname === '/teams/team-space'}
-                          >
-                            <Users className="h-4 w-4" />
-                            <span>TeamSpace</span>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
+                        {/*<SidebarMenuSubItem>*/}
+                        {/*  <SidebarMenuSubButton*/}
+                        {/*      onClick={() => navigate('/teams/team-space')}*/}
+                        {/*      isActive={location.pathname === '/teams/team-space'}*/}
+                        {/*  >*/}
+                        {/*    <Users className="h-4 w-4" />*/}
+                        {/*    <span>TeamSpace</span>*/}
+                        {/*  </SidebarMenuSubButton>*/}
+                        {/*</SidebarMenuSubItem>*/}
                       </SidebarMenuSub>
                     </CollapsibleContent>
                   </SidebarMenuItem>

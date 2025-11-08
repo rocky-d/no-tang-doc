@@ -25,7 +25,7 @@ import java.util.List;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/teams/{teamId}/members")
+@RequestMapping("/api/v1/teamMembers")
 @RequiredArgsConstructor
 @Tag(name = "团队成员管理", description = "团队成员的添加、移除、角色管理等操作")
 public class TeamMemberController {
@@ -36,7 +36,7 @@ public class TeamMemberController {
     /**
      * 添加成员到团队
      */
-    @PostMapping
+    @PostMapping("/{teamId}/addMembers")
     @Operation(summary = "添加成员到团队", description = "只有团队拥有者或管理员可以添加成员")
     public ResponseEntity<ApiResponse<TeamMemberResponse>> addMember(
             @Parameter(description = "团队ID", required = true)
@@ -45,14 +45,14 @@ public class TeamMemberController {
             @AuthenticationPrincipal Jwt jwt) {
 
         try {
-            log.info("Received request to add member: teamId={}, userKcId={}",
-                    teamId, request.getUserKcId());
+            log.info("Received request to add member: teamId={}, userEmail={}",
+                    teamId, request.getUserEmail());
 
             String operatorKcId = jwt.getClaimAsString("sub");
 
             TeamMember member = teamMemberService.addMember(
                     teamId,
-                    request.getUserKcId(),
+                    request.getUserEmail(),
                     request.getRole(),
                     operatorKcId
             );
@@ -82,7 +82,7 @@ public class TeamMemberController {
     /**
      * 获取团队成员列表
      */
-    @GetMapping
+    @GetMapping("/{teamId}/memberList")
     @Operation(summary = "获取团队成员列表", description = "获取团队的所有活跃成员")
     public ResponseEntity<ApiResponse<TeamMemberListResponse>> getTeamMembers(
             @Parameter(description = "团队ID", required = true)
@@ -97,7 +97,7 @@ public class TeamMemberController {
 
             String operatorKcId = jwt.getClaimAsString("sub");
 
-            List<TeamMember> members = activeOnly
+            List<TeamMemberResponse> members = activeOnly
                     ? teamMemberService.getActiveTeamMembers(teamId, operatorKcId)
                     : teamMemberService.getTeamMembers(teamId, operatorKcId);
 
@@ -122,7 +122,7 @@ public class TeamMemberController {
     /**
      * 更新成员角色
      */
-    @PutMapping("/{memberId}")
+    @PutMapping("/{teamId}/member/{memberId}")
     @Operation(summary = "更新成员角色", description = "只有团队拥有者可以修改成员角色")
     public ResponseEntity<ApiResponse<TeamMemberResponse>> updateMemberRole(
             @Parameter(description = "团队ID", required = true)
@@ -138,18 +138,17 @@ public class TeamMemberController {
 
             String operatorKcId = jwt.getClaimAsString("sub");
 
-            TeamMember member = teamMemberService.updateMemberRole(
+            TeamMemberResponse member = teamMemberService.updateMemberRole(
                     teamId,
                     memberId,
                     request.getRole(),
                     operatorKcId
             );
 
-            TeamMemberResponse response = TeamMemberResponse.fromEntity(member);
 
             log.info("Member role updated successfully: teamId={}, memberId={}", teamId, memberId);
 
-            return ResponseEntity.ok(ApiResponse.success("成员角色更新成功", response));
+            return ResponseEntity.ok(ApiResponse.success("成员角色更新成功", member));
 
         } catch (SecurityException e) {
             log.warn("Access denied for updating member role: teamId={}, memberId={}", teamId, memberId);
@@ -169,7 +168,7 @@ public class TeamMemberController {
     /**
      * 移除团队成员
      */
-    @DeleteMapping("/{memberId}")
+    @DeleteMapping("/{teamId}/removeMember/{memberId}")
     @Operation(summary = "移除团队成员", description = "只有团队拥有者或管理员可以移除成员")
     public ResponseEntity<ApiResponse<Void>> removeMember(
             @Parameter(description = "团队ID", required = true)
@@ -207,7 +206,7 @@ public class TeamMemberController {
     /**
      * 退出团队（成员自己退出）
      */
-    @PostMapping("/leave")
+    @PostMapping("/{teamId}/leave")
     @Operation(summary = "退出团队", description = "成员主动退出团队（拥有者不能退出）")
     public ResponseEntity<ApiResponse<Void>> leaveTeam(
             @Parameter(description = "团队ID", required = true)

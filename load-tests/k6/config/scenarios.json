@@ -1,0 +1,51 @@
+{
+  "smoke": {
+    "executor": "constant-vus",
+    "vus": 1,
+    "duration": "1m"
+  },
+  "load": {
+    "executor": "ramping-vus",
+    "startVUs": 0,
+    "stages": [
+      { "duration": "2m", "target": 10 },
+      { "duration": "5m", "target": 10 },
+      { "duration": "2m", "target": 0 }
+    ],
+    "gracefulRampDown": "30s"
+  },
+  "stress": {
+    "executor": "ramping-vus",
+    "startVUs": 0,
+    "stages": [
+      { "duration": "2m", "target": 20 },
+      { "duration": "5m", "target": 20 },
+      { "duration": "2m", "target": 40 },
+      { "duration": "5m", "target": 40 },
+      { "duration": "2m", "target": 0 }
+    ],
+    "gracefulRampDown": "30s"
+  },
+  "spike": {
+    "executor": "ramping-vus",
+    "startVUs": 0,
+    "stages": [
+      { "duration": "10s", "target": 5 },
+      { "duration": "10s", "target": 50 },
+      { "duration": "3m", "target": 50 },
+      { "duration": "10s", "target": 5 },
+      { "duration": "3m", "target": 5 }
+    ],
+    "gracefulRampDown": "30s"
+  },
+  "soak": {
+    "executor": "constant-vus",
+    "vus": 15,
+    "duration": "30m"
+  },
+  "ci": {
+    "executor": "constant-vus",
+    "vus": 5,
+    "duration": "3m"
+  }
+}

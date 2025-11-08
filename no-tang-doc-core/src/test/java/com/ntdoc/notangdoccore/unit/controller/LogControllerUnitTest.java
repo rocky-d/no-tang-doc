@@ -7,21 +7,16 @@ import com.ntdoc.notangdoccore.entity.User;
 import com.ntdoc.notangdoccore.entity.logenum.ActorType;
 import com.ntdoc.notangdoccore.entity.logenum.OperationStatus;
 import com.ntdoc.notangdoccore.entity.logenum.OperationType;
-import com.ntdoc.notangdoccore.repository.LogRepository;
-import com.ntdoc.notangdoccore.service.UserSyncService;
-import com.ntdoc.notangdoccore.service.log.LogService;
+import com.ntdoc.notangdoccore.service.impl.UserSyncServiceImpl;
+import com.ntdoc.notangdoccore.service.impl.LogServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.validation.ConstraintViolationException;
-import jdk.dynalink.Operation;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.util.NestedServletException;
 
 import java.time.Instant;
 import java.util.*;
@@ -44,7 +39,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         org.springframework.boot.autoconfigure.security.saml2.Saml2RelyingPartyAutoConfiguration.class
 })
 @AutoConfigureMockMvc(addFilters = false)
-class LogControllerUnitTest {
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
+@DisplayName("LogController单元测试")
+public class LogControllerUnitTest {
     @Autowired
     private MockMvc mockMvc;
 
@@ -52,10 +49,10 @@ class LogControllerUnitTest {
     private ObjectMapper objectMapper;
 
     @MockitoBean
-    private LogService logService;
+    private LogServiceImpl logService;
 
     @MockitoBean
-    private UserSyncService userSyncService;
+    private UserSyncServiceImpl userSyncService;
 
     private User mockUser;
     private Log mockLog;
@@ -96,7 +93,8 @@ class LogControllerUnitTest {
 
     // 测试 GET /api/logs/list 找到
     @Test
-    @DisplayName("获取用户的所有日志，成功")
+    @Order(1)
+    @DisplayName("测试1：获取用户的所有日志 - 成功")
     void testGetLogs_Found() throws Exception {
         when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
         when(logService.getAllLogsByUserId(100L)).thenReturn(mockLogs);
@@ -121,7 +119,8 @@ class LogControllerUnitTest {
 
     //测试 GET /api/logs/list 未找到
     @Test
-    @DisplayName("获取用户的所有日志，未找到{空列表}")
+    @Order(2)
+    @DisplayName("测试2：获取用户的所有日志 - 未找到{空列表}")
     void testGetLogs_NotFound() throws Exception {
         when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
         when(logService.getAllLogsByUserId(100L)).thenReturn(Collections.emptyList());
@@ -138,7 +137,8 @@ class LogControllerUnitTest {
 
     //测试 GET /api/logs/list 用户认证失败
     @Test
-    @DisplayName("获取用户的所有日志，用户认证失败")
+    @Order(3)
+    @DisplayName("测试3：获取用户的所有日志 - 用户认证失败")
     void testGetLogs_UserAuthFailed() throws Exception {
         when(userSyncService.ensureFromJwt(any())).thenThrow(new RuntimeException("User Auth Failed"));
 
@@ -150,9 +150,41 @@ class LogControllerUnitTest {
         verify(logService,never()).getAllLogsByUserId(anyLong());
     }
 
+    @Test
+    @Order(4)
+    @DisplayName("测试4：获取用户的所有日志 - 服务异常导致500返回")
+    void testGetLogs_ServiceException() throws Exception {
+        when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
+        when(logService.getAllLogsByUserId(anyLong())).thenThrow(new RuntimeException("DB Error"));
+
+        mockMvc.perform(get("/api/v1/logs/list").with(jwt()))
+                .andDo(print())
+                .andExpect(status().isInternalServerError());
+
+        verify(userSyncService, times(1)).ensureFromJwt(any());
+        verify(logService, times(1)).getAllLogsByUserId(100L);
+    }
+
+    @Test
+    @Order(5)
+    @DisplayName("测试5：获取用户的所有日志 - 空列表但成功触发log.info")
+    void testGetLogs_EmptyButSuccess() throws Exception {
+        when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
+        when(logService.getAllLogsByUserId(100L)).thenReturn(Collections.emptyList());
+
+        mockMvc.perform(get("/api/v1/logs/list").with(jwt()))
+                .andDo(print())
+                .andExpect(status().isOk())
+                .andExpect(content().contentType("application/json"))
+                .andExpect(jsonPath("$", hasSize(0)));
+
+        verify(logService, times(1)).getAllLogsByUserId(100L);
+    }
+
     //测试获取周日志-成功
     @Test
-    @DisplayName("获取周日志统计,成功")
+    @Order(10)
+    @DisplayName("测试10：获取周日志统计 - 成功")
     void testGetLogsCount_Week_Success() throws Exception {
         Map<String,Long> weeklyCount = new HashMap<>();
         weeklyCount.put("2025-10-09", 3L);
@@ -184,7 +216,8 @@ class LogControllerUnitTest {
     }
 
     @Test
-    @DisplayName("获取周日志统计,部分日期有数据")
+    @Order(11)
+    @DisplayName("测试11：获取周日志统计 - 部分日期有数据")
     void testGetLogsCount_Week_PartialData() throws Exception {
         // Given - 只有部分日期有日志
         Map<String, Long> weeklyCount = new LinkedHashMap<>();
@@ -209,7 +242,8 @@ class LogControllerUnitTest {
     }
 
     @Test
-    @DisplayName("获取周日志统计,无数据")
+    @Order(12)
+    @DisplayName("测试12：获取周日志统计 - 无数据")
     void testGetLogsCount_Week_NoData() throws Exception {
         when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
         when(logService.getLogsCountByUser(100L,"week")).thenReturn(Collections.emptyMap());
@@ -226,7 +260,8 @@ class LogControllerUnitTest {
     }
 
     @Test
-    @DisplayName("获取月日志统计，成功（按周统计过去4周）")
+    @Order(13)
+    @DisplayName("测试13：获取月日志统计 - 成功（按周统计过去4周）")
     void testGetLogsCount_Month_Success() throws Exception {
         // Given - 模拟过去4周的日志统计，key是 Week + 周数
         Map<String, Long> monthlyCount = new LinkedHashMap<>();
@@ -256,7 +291,8 @@ class LogControllerUnitTest {
     }
 
     @Test
-    @DisplayName("获取月日志统计，部分周有数据")
+    @Order(14)
+    @DisplayName("测试14：获取月日志统计 - 部分周有数据")
     void testGetLogsCount_Month_PartialData() throws Exception {
         // Given - 只有2周有数据
         Map<String, Long> monthlyCount = new LinkedHashMap<>();
@@ -281,7 +317,8 @@ class LogControllerUnitTest {
     }
 
     @Test
-    @DisplayName("获取月日志统计，无数据")
+    @Order(15)
+    @DisplayName("测试15：获取月日志统计 - 无数据")
     void testGetLogsCount_Month_NoData() throws Exception {
         // Given
         when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
@@ -300,7 +337,8 @@ class LogControllerUnitTest {
     }
 
     @Test
-    @DisplayName("获取日志统计，无效period参数")
+    @Order(16)
+    @DisplayName("测试16：获取日志统计 - 无效period参数")
     void testGetLogsCount_InvalidPeriod() throws Exception {
         when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
 
@@ -324,7 +362,26 @@ class LogControllerUnitTest {
     }
 
     @Test
-    @DisplayName("获取文档操作日志 - 成功")
+    @Order(17)
+    @DisplayName("测试17：获取日志统计 - 服务异常导致400返回")
+    void testGetLogsCount_ServiceException() throws Exception {
+        when(userSyncService.ensureFromJwt(any())).thenReturn(mockUser);
+        when(logService.getLogsCountByUser(anyLong(), anyString()))
+                .thenThrow(new RuntimeException("Query failed"));
+
+        mockMvc.perform(get("/api/v1/logs/count")
+                        .param("period", "week")
+                        .with(jwt()))
+                .andDo(print())
+                .andExpect(status().isBadRequest());
+
+        verify(logService, times(1)).getLogsCountByUser(100L, "week");
+    }
+
+
+    @Test
+    @Order(20)
+    @DisplayName("测试20：获取文档操作日志 - 成功")
     void testListDocumentsLog_Success() throws Exception {
         // Given
         Long documentId = 500L;
@@ -354,7 +411,8 @@ class LogControllerUnitTest {
     }
 
     @Test
-    @DisplayName("获取文档操作日志 - 未找到")
+    @Order(21)
+    @DisplayName("测试21：获取文档操作日志 - 未找到")
     void testListDocumentsLog_NotFound() throws Exception {
         // Given
         Long documentId = 999L;
@@ -373,7 +431,8 @@ class LogControllerUnitTest {
     }
 
     @Test
-    @DisplayName("获取文档操作日志 - 缺少documentId参数")
+    @Order(22)
+    @DisplayName("测试22：获取文档操作日志 - 缺少documentId参数")
     void testListDocumentsLog_MissingParameter() throws Exception {
         // When & Then
         mockMvc.perform(get("/api/v1/logs/documents")
@@ -382,6 +441,23 @@ class LogControllerUnitTest {
                 .andExpect(status().isBadRequest());
 
         verify(logService, never()).getAllLogsByTargetId(anyLong());
+    }
+
+    @Test
+    @Order(23)
+    @DisplayName("测试23：获取文档操作日志 - 服务异常导致500返回")
+    void testListDocumentsLog_ServiceException() throws Exception {
+        Long documentId = 123L;
+        when(logService.getAllLogsByTargetId(documentId))
+                .thenThrow(new RuntimeException("DB connection failed"));
+
+        mockMvc.perform(get("/api/v1/logs/documents")
+                        .param("documentId", String.valueOf(documentId))
+                        .with(jwt()))
+                .andDo(print())
+                .andExpect(status().isInternalServerError());
+
+        verify(logService, times(1)).getAllLogsByTargetId(documentId);
     }
 
 }
