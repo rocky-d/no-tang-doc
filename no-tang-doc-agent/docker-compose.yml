@@ -11,24 +11,30 @@ services:
     image: no-tang-doc-agent:latest
     container_name: no-tang-doc-agent
     restart: unless-stopped
+    # Host port (HOST_PORT) maps to container port (PORT). Defaults keep previous behavior 8002.
     ports:
-      - "8002:8002"
+      - "${HOST_PORT:-8002}:${PORT:-8002}"
     environment:
       # Base URL for no-tang-doc-core API
       # Default assumes core is running on host or in Docker network
       BASE_URL: ${BASE_URL:-http://host.docker.internal:8070}
-      
+
       # MCP Server configuration
       SERVER_NAME: ${SERVER_NAME:-no-tang-doc-agent-mcp-server}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       HOST: ${HOST:-0.0.0.0}
       PORT: ${PORT:-8002}
-      
+      # Allow optionally overriding the host-side port mapping separately
+      # Host-side port mapping. Avoid nested variable expansion for portability.
+      # If you want HOST_PORT to match PORT, set both in .env or export both env vars.
+      HOST_PORT: ${HOST_PORT:-8002}
+
       # Keycloak OAuth2/OIDC configuration
       # Default assumes keycloak is running on host
       ISSUER_URL: ${ISSUER_URL:-http://host.docker.internal:8080/realms/ntdoc}
-      RESOURCE_SERVER_URL: ${RESOURCE_SERVER_URL:-http://localhost:8002/mcp}
-      REQUIRED_SCOPES: ${REQUIRED_SCOPES:-email profile mcp-user}
+      # RESOURCE_SERVER_URL defaults to localhost:8002/mcp. If you change PORT, update RESOURCE_SERVER_URL in .env.
+      RESOURCE_SERVER_URL: "${RESOURCE_SERVER_URL:-http://localhost:8002/mcp}"
+      REQUIRED_SCOPES: "${REQUIRED_SCOPES:-email profile mcp-user}"
     command:
       - "--base-url"
       - "${BASE_URL:-http://host.docker.internal:8070}"
@@ -39,7 +45,7 @@ services:
       - "--host"
       - "0.0.0.0"
       - "--port"
-      - "8002"
+      - "${PORT:-8002}"
       - "--issuer-url"
       - "${ISSUER_URL:-http://host.docker.internal:8080/realms/ntdoc}"
       - "--resource-server-url"
@@ -49,7 +55,16 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     healthcheck:
-      test: ["CMD", "python", "-c", "import socket; s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', 8002)); s.close()"]
+      # Use uv to run the python healthcheck so uv is consistently used for Python-related tasks.
+      test:
+        [
+          "CMD",
+          "uv",
+          "run",
+          "python",
+          "-c",
+          "import os,socket; p=int(os.getenv('PORT','8002')); s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', p)); s.close()",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3

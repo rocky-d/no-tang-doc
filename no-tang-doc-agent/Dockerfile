@@ -1,6 +1,11 @@
 # Multi-stage build for no-tang-doc-agent MCP Server
 # Python version aligned with project requirements
 ARG PYTHON_VERSION=3.13
+# Build-time default port for documentation (can be overridden with --build-arg PORT=...)
+ARG PORT=8002
+
+# Use a small helper stage to install uv so we don't rely on COPY from a remote image
+FROM ghcr.io/astral-sh/uv:latest AS uv-stage
 
 # ========== Runtime Stage ==========
 FROM python:${PYTHON_VERSION}-slim-bookworm
@@ -8,7 +13,7 @@ FROM python:${PYTHON_VERSION}-slim-bookworm
 WORKDIR /app
 
 # Install uv for dependency management
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+COPY --from=uv-stage /uv /usr/local/bin/uv
 
 # Copy project files
 COPY pyproject.toml uv.lock README.md logging.yaml ./
@@ -27,15 +32,17 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 USER appuser
 
-# Expose default MCP server port
-EXPOSE 8002
+# Expose default MCP server port (build-time, documentation only)
+# Use build ARG so image can declare a different default port when built with --build-arg PORT=...
+EXPOSE ${PORT}
 
 # Configure Python to run in unbuffered mode for better logging
 ENV PYTHONUNBUFFERED=1
 
-# Health check using socket connection
+# Health check using socket connection and respect PORT env var
+# Use uv to run python so uv is consistently used for Python-related tasks.
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD uv run python -c "import socket; s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', 8002)); s.close()" || exit 1
+    CMD uv run python -c "import os,socket; p=int(os.getenv('PORT','8002')); s=socket.socket(); s.settimeout(5); s.connect(('127.0.0.1', p)); s.close()" || exit 1
 
 # Use uv to run the application via the defined script
 # Environment variables from Helm values.yaml will be used

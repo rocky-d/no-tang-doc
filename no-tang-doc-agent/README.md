@@ -117,6 +117,11 @@ docker-compose down
 - The agent uses `host.docker.internal` to access services running on the host
 - For Linux users, ensure Docker version supports `host.docker.internal` or manually configure host IP
 
+Notes:
+
+- Docker builds use Buildx/BuildKit features (multi-stage builds and mount caching). Ensure your local Docker/CI uses Buildx/BuildKit for reliable builds.
+- If you change the runtime `PORT`, update `RESOURCE_SERVER_URL` in `.env` or pass an explicit `RESOURCE_SERVER_URL` environment variable so the service resource URL remains correct.
+
 ## Using fast-agent as MCP Client
 
 [fast-agent](https://fast-agent.ai/) is a powerful MCP client that enables you to interact with MCP servers through simple declarative syntax. It supports both stdio and HTTP transports with OAuth authentication.

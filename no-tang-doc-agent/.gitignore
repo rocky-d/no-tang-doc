@@ -15,3 +15,5 @@ fastagent.jsonl
 fastagent.secrets.yaml
 
 !logging.yaml
+
+.env

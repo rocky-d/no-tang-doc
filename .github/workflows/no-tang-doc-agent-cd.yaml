@@ -11,6 +11,11 @@ on:
         description: Branch name
         required: true
         type: string
+      port:
+        description: Optional build-time PORT to set ARG PORT in the Dockerfile
+        required: false
+        type: string
+        default: "8002"
     secrets:
       DO_ACCESS_TOKEN:
         required: true
@@ -24,6 +29,11 @@ on:
         description: Commit SHA to build (leave empty for latest commit on selected branch)
         required: false
         type: string
+      port:
+        description: Optional build-time PORT to set ARG PORT in the Dockerfile
+        required: false
+        type: string
+        default: "8002"
       branch:
         description: Branch to deploy from
         required: true
@@ -106,6 +116,8 @@ jobs:
           context: ${{ env.APP_DIR }}
           file: ${{ env.APP_DIR }}/Dockerfile
           push: true
+          build-args: |
+            PORT=${{ inputs.port }}
           tags: |
             ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.TAG }}
             ${{ env.REGISTRY }}/${{ env.REGISTRY_NAME }}/${{ env.IMAGE_NAME }}:${{ steps.meta.outputs.EXTRA }}
