@@ -78,5 +78,70 @@ public class KeycloakAdminService {
             return list.stream().filter(u -> username.equals(u.getUsername())).findFirst().map(UserRepresentation::getId);
         }
     }
+
+    /**
+     * 为用户分配Realm角色
+     */
+    public void assignRealmRole(String kcUserId, String roleName) {
+        try (Keycloak kc = adminClient()) {
+            RealmResource realm = kc.realm(props.getRealm());
+
+            // 获取角色
+            RoleRepresentation role = realm.roles()
+                .get(roleName)
+                .toRepresentation();
+
+            // 分配给用户
+            realm.users()
+                .get(kcUserId)
+                .roles()
+                .realmLevel()
+                .add(List.of(role));
+        }
+    }
+
+    /**
+     * 撤销用户的Realm角色
+     */
+    public void removeRealmRole(String kcUserId, String roleName) {
+        try (Keycloak kc = adminClient()) {
+            RealmResource realm = kc.realm(props.getRealm());
+
+            RoleRepresentation role = realm.roles()
+                .get(roleName)
+                .toRepresentation();
+
+            realm.users()
+                .get(kcUserId)
+                .roles()
+                .realmLevel()
+                .remove(List.of(role));
+        }
+    }
+
+    /**
+     * 获取用户的所有Realm角色
+     */
+    public List<String> getUserRealmRoles(String kcUserId) {
+        try (Keycloak kc = adminClient()) {
+            return kc.realm(props.getRealm())
+                .users()
+                .get(kcUserId)
+                .roles()
+                .realmLevel()
+                .listAll()
+                .stream()
+                .map(RoleRepresentation::getName)
+                .toList();
+        }
+    }
+
+    /**
+     * 检查用户是否拥有指定角色
+     */
+    public boolean hasRealmRole(String kcUserId, String roleName) {
+        List<String> roles = getUserRealmRoles(kcUserId);
+        return roles.contains(roleName);
+    }
 }
 
