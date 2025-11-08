@@ -22,6 +22,8 @@ services:
       # MCP Server configuration
       SERVER_NAME: ${SERVER_NAME:-no-tang-doc-agent-mcp-server}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      # Enable debug mode (true/false). Default is false.
+      DEBUG: ${DEBUG:-false}
       HOST: ${HOST:-0.0.0.0}
       PORT: ${PORT:-8002}
       # Allow optionally overriding the host-side port mapping separately

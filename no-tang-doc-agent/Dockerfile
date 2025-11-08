@@ -3,6 +3,7 @@
 ARG PYTHON_VERSION=3.13
 # Build-time default port for documentation (can be overridden with --build-arg PORT=...)
 ARG PORT=8002
+ARG DEBUG=false
 
 # Use a small helper stage to install uv so we don't rely on COPY from a remote image
 FROM ghcr.io/astral-sh/uv:latest AS uv-stage
@@ -38,6 +39,9 @@ EXPOSE ${PORT}
 
 # Configure Python to run in unbuffered mode for better logging
 ENV PYTHONUNBUFFERED=1
+
+# Allow passing build-time DEBUG and expose as runtime env var. Default is false.
+ENV DEBUG=${DEBUG}
 
 # Health check using socket connection and respect PORT env var
 # Use uv to run python so uv is consistently used for Python-related tasks.

@@ -65,7 +65,8 @@ class ScopesParamType(click.ParamType):
 @click.option(
     "--debug",
     is_flag=True,
-    default=True,
+    envvar="DEBUG",
+    default=False,
     help="Enable debug mode",
     show_default=True,
 )
