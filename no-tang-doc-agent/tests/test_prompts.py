@@ -7,7 +7,7 @@ from no_tang_doc_agent.mcp_server import (
     register_mcp_resources,
 )
 
-from .test_utils import setup_capture_prompt
+from .helpers import setup_capture_prompt
 
 
 def test_register_functions_are_callables():
