@@ -17,13 +17,14 @@ from mcp.server.streamable_http import EventStore
 from mcp.server.transport_security import TransportSecuritySettings
 from mcp.types import Icon
 
+from .api_client import APIClient
 from .prompts import register_mcp_prompts
 from .resources import register_mcp_resources
 from .tools import register_mcp_tools
 
 __all__ = [
-    "JWTTokenVerifier",
     "FastMCPSettings",
+    "JWTTokenVerifier",
     "launch_mcp_server",
 ]
 
@@ -99,6 +100,7 @@ def launch_mcp_server(
     transport: Literal["streamable-http"] = "streamable-http",
     mount_path: str | None = None,
 ) -> None:
+    APIClient(base_url=base_url)
     if mcp_settings is None:
         mcp_settings = FastMCPSettings()
     mcp = FastMCP(
@@ -128,8 +130,7 @@ def launch_mcp_server(
         auth=mcp_settings.auth,
         transport_security=mcp_settings.transport_security,
     )
-    register_mcp_tools(mcp, base_url=base_url)
-    # Register resources and prompts so clients can reference document resources
-    register_mcp_resources(mcp, base_url=base_url)
+    register_mcp_tools(mcp)
+    register_mcp_resources(mcp)
     register_mcp_prompts(mcp)
     mcp.run(transport=transport, mount_path=mount_path)

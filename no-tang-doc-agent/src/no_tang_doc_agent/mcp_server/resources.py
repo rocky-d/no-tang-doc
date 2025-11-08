@@ -1,8 +1,9 @@
 from typing import Any
 
-import httpx
 from mcp import ServerSession
 from mcp.server.fastmcp import Context, FastMCP
+
+from .api_client import APIClient
 
 __all__ = [
     "register_mcp_resources",
@@ -11,9 +12,9 @@ __all__ = [
 
 def register_mcp_resources(
     mcp: FastMCP,
-    *,
-    base_url: str,
 ) -> None:
+    client: APIClient = APIClient()
+
     @mcp.resource(
         "resource://document/{document_id}",
         description="Document content resource.",
@@ -29,21 +30,16 @@ def register_mcp_resources(
         at that URL. Authorization headers are forwarded from the MCP request
         context.
         """
-        authorization = ctx.request_context.request.headers.get("authorization")
-
-        async with httpx.AsyncClient(
-            headers={"Authorization": authorization},
-        ) as client:
-            response = await client.get(
-                f"{base_url}/api/v1/documents/download/{document_id}"
-            )
-            response.raise_for_status()
-            data = response.json()
-            download_url = data.get("data", {}).get("downloadUrl")
-            if not download_url:
-                raise ValueError("No download URL returned from core API")
-
-        async with httpx.AsyncClient() as client:
-            resp = await client.get(download_url)
-            resp.raise_for_status()
-            return resp.content
+        resp = await client.get(
+            f"/api/v1/documents/download/{document_id}",
+            ctx=ctx,
+        )
+        resp.raise_for_status()
+        download_url = resp.json().get("data", {}).get("downloadUrl")
+        if not download_url:
+            raise ValueError("No download URL returned from core API")
+        resp = await client.get(
+            download_url,
+        )
+        resp.raise_for_status()
+        return resp.content
