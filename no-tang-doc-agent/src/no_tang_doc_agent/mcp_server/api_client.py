@@ -9,15 +9,9 @@ from mcp.server.fastmcp import Context
 
 __all__ = [
     "APIClient",
-    "ClientState",
+    "APIClientState",
     "LazySingletonMeta",
 ]
-
-
-class ClientState(enum.StrEnum):
-    UNOPENED = "UNOPENED"
-    OPENED = "OPENED"
-    CLOSED = "CLOSED"
 
 
 class LazySingletonMeta(type):
@@ -37,22 +31,28 @@ class LazySingletonMeta(type):
         return cls._singletons[cls]
 
 
+class APIClientState(enum.StrEnum):
+    UNOPENED = "UNOPENED"
+    OPENED = "OPENED"
+    CLOSED = "CLOSED"
+
+
 class APIClient(metaclass=LazySingletonMeta):
     """
     Singleton HTTP client.
 
-    WARNING: Only the first instantiation's parameters are used.
+    NOTE: Only the first instantiation's parameters are used.
     Subsequent calls with different parameters will return the
     same instance without warning.
     """
 
     _client: httpx.AsyncClient
-    _state: ClientState
+    _state: APIClientState
 
     @property
     def state(
         self,
-    ) -> ClientState:
+    ) -> APIClientState:
         return self._state
 
     def __init__(
@@ -61,7 +61,7 @@ class APIClient(metaclass=LazySingletonMeta):
         **kwargs,
     ) -> None:
         self._client = httpx.AsyncClient(*args, **kwargs)
-        self._state = ClientState.UNOPENED
+        self._state = APIClientState.UNOPENED
 
     async def request(
         self,
@@ -72,11 +72,11 @@ class APIClient(metaclass=LazySingletonMeta):
         **kwargs,
     ) -> httpx.Response:
         match self._state:
-            case ClientState.UNOPENED:
-                await self.open()
-            case ClientState.OPENED:
+            case APIClientState.UNOPENED:
+                await self.aopen()
+            case APIClientState.OPENED:
                 pass
-            case ClientState.CLOSED:
+            case APIClientState.CLOSED:
                 raise RuntimeError("Cannot make requests with a closed client.")
         if ctx is not None:
             authorization = ctx.request_context.request.headers["authorization"]
@@ -146,39 +146,39 @@ class APIClient(metaclass=LazySingletonMeta):
     ) -> httpx.Response:
         return await self.request("DELETE", url, ctx=ctx, **kwargs)
 
-    async def open(
+    async def aopen(
         self,
     ) -> None:
         match self._state:
-            case ClientState.UNOPENED:
+            case APIClientState.UNOPENED:
                 pass
-            case ClientState.OPENED:
+            case APIClientState.OPENED:
                 raise RuntimeError("Cannot reopen an opened client.")
-            case ClientState.CLOSED:
+            case APIClientState.CLOSED:
                 raise RuntimeError("Cannot reopen a closed client.")
-        self._state = ClientState.OPENED
+        self._state = APIClientState.OPENED
         await self._client.__aenter__()
 
-    async def close(
+    async def aclose(
         self,
         exc_type: type[BaseException] | None = None,
         exc_value: BaseException | None = None,
         exc_traceback: TracebackType | None = None,
     ) -> None:
         match self._state:
-            case ClientState.UNOPENED:
+            case APIClientState.UNOPENED:
                 raise RuntimeError("Cannot close an unopened client.")
-            case ClientState.OPENED:
+            case APIClientState.OPENED:
                 pass
-            case ClientState.CLOSED:
+            case APIClientState.CLOSED:
                 raise RuntimeError("Cannot reclose a closed client.")
         await self._client.__aexit__(exc_type, exc_value, exc_traceback)
-        self._state = ClientState.CLOSED
+        self._state = APIClientState.CLOSED
 
     async def __aenter__(
         self,
     ) -> Self:
-        await self.open()
+        await self.aopen()
         return self
 
     async def __aexit__(
@@ -187,4 +187,4 @@ class APIClient(metaclass=LazySingletonMeta):
         exc_value: BaseException | None,
         exc_traceback: TracebackType | None,
     ) -> None:
-        await self.close(exc_type, exc_value, exc_traceback)
+        await self.aclose(exc_type, exc_value, exc_traceback)

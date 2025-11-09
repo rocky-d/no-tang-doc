@@ -2,9 +2,9 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 
-from no_tang_doc_agent.mcp_server.api_client import (
+from no_tang_doc_agent.mcp_server import (
     APIClient,
-    ClientState,
+    APIClientState,
     LazySingletonMeta,
 )
 
@@ -24,16 +24,16 @@ async def test_open_close_and_state(mock_async_client):
     client, resp = create_mock_client()
     mock_async_client.return_value = client
 
-    api = APIClient()
-    assert api.state == ClientState.UNOPENED
+    api: APIClient = APIClient()
+    assert api.state == APIClientState.UNOPENED
 
-    await api.open()
-    assert api.state == ClientState.OPENED
+    await api.aopen()
+    assert api.state == APIClientState.OPENED
     # underlying client's __aenter__ should have been awaited
     client.__aenter__.assert_awaited()
 
-    await api.close()
-    assert api.state == ClientState.CLOSED
+    await api.aclose()
+    assert api.state == APIClientState.CLOSED
     client.__aexit__.assert_awaited()
 
 
@@ -44,7 +44,7 @@ async def test_request_forwards_headers_and_opens(mock_async_client):
     client.request = AsyncMock(return_value=resp)
     mock_async_client.return_value = client
 
-    api = APIClient()
+    api: APIClient = APIClient()
     ctx = Mock()
     ctx.request_context = Mock()
     ctx.request_context.request = Mock()
@@ -67,23 +67,23 @@ async def test_context_manager_and_errors(mock_async_client):
 
     # context manager opens and closes
     async with APIClient() as api:
-        assert api.state == ClientState.OPENED
-    assert api.state == ClientState.CLOSED
+        assert api.state == APIClientState.OPENED
+    assert api.state == APIClientState.CLOSED
 
     # cannot close unopened
     LazySingletonMeta._singletons.clear()
     mock_async_client.return_value = client
-    api2 = APIClient()
+    api2: APIClient = APIClient()
     with pytest.raises(RuntimeError):
-        await api2.close()
+        await api2.aclose()
 
     # cannot reopen an opened client
     LazySingletonMeta._singletons.clear()
     mock_async_client.return_value = client
-    api3 = APIClient()
-    await api3.open()
+    api3: APIClient = APIClient()
+    await api3.aopen()
     with pytest.raises(RuntimeError):
-        await api3.open()
+        await api3.aopen()
 
 
 @patch("no_tang_doc_agent.mcp_server.api_client.httpx.AsyncClient")
@@ -92,9 +92,9 @@ async def test_request_on_closed_raises(mock_async_client):
     client.request = AsyncMock(return_value=resp)
     mock_async_client.return_value = client
 
-    api = APIClient()
-    await api.open()
-    await api.close()
+    api: APIClient = APIClient()
+    await api.aopen()
+    await api.aclose()
     with pytest.raises(RuntimeError):
         await api.get("/some")
 
@@ -104,8 +104,8 @@ async def test_singleton_behavior(mock_async_client):
     client, resp = create_mock_client()
     mock_async_client.return_value = client
 
-    a1 = APIClient()
-    a2 = APIClient()
+    a1: APIClient = APIClient()
+    a2: APIClient = APIClient()
     assert a1 is a2
     # AsyncClient constructor should have been called only once
     assert mock_async_client.call_count == 1
@@ -117,7 +117,7 @@ async def test_all_wrappers_delegate(mock_async_client):
     client.request = AsyncMock(return_value=resp)
     mock_async_client.return_value = client
 
-    api = APIClient()
+    api: APIClient = APIClient()
     # call each wrapper; request will auto-open the client
     await api.options("/a")
     await api.head("/b")
@@ -136,8 +136,8 @@ async def test_init_uses_first_args(mock_async_client):
     client, resp = create_mock_client()
     mock_async_client.return_value = client
 
-    a1 = APIClient(base_url="http://first.example")
-    a2 = APIClient(base_url="http://second.example")
+    a1: APIClient = APIClient(base_url="http://first.example")
+    a2: APIClient = APIClient(base_url="http://second.example")
     assert a1 is a2
     mock_async_client.assert_called_once()
     # the first instantiation's kwargs should be the ones passed to AsyncClient
@@ -150,11 +150,11 @@ async def test_close_reclose_raises(mock_async_client):
     client, resp = create_mock_client()
     mock_async_client.return_value = client
 
-    api = APIClient()
-    await api.open()
-    await api.close()
+    api: APIClient = APIClient()
+    await api.aopen()
+    await api.aclose()
     with pytest.raises(RuntimeError):
-        await api.close()
+        await api.aclose()
 
 
 @patch("no_tang_doc_agent.mcp_server.api_client.httpx.AsyncClient")
@@ -163,7 +163,7 @@ async def test_request_without_ctx_no_headers(mock_async_client):
     client.request = AsyncMock(return_value=resp)
     mock_async_client.return_value = client
 
-    api = APIClient()
+    api: APIClient = APIClient()
     await api.get("/some/path")
     client.request.assert_awaited()
     _, called_kwargs = client.request.call_args
@@ -179,8 +179,8 @@ async def test_request_when_already_open_does_not_reopen(mock_async_client):
     client.__aenter__ = AsyncMock()
     mock_async_client.return_value = client
 
-    api = APIClient()
-    await api.open()
+    api: APIClient = APIClient()
+    await api.aopen()
     # clear the enter call history so we can assert it isn't awaited again
     client.__aenter__.reset_mock()
     await api.get("/already-open")
@@ -195,21 +195,21 @@ async def test_aexit_passes_exc_info_to_underlying(mock_async_client):
     client.__aexit__ = AsyncMock()
     mock_async_client.return_value = client
 
-    api = APIClient()
-    await api.open()
+    api: APIClient = APIClient()
+    await api.aopen()
     await api.__aexit__(ValueError, ValueError("bad"), None)
     client.__aexit__.assert_awaited_once()
     called_args = client.__aexit__.call_args[0]
     assert called_args[0] is ValueError
     assert isinstance(called_args[1], ValueError)
     assert called_args[2] is None
-    assert api.state == ClientState.CLOSED
+    assert api.state == APIClientState.CLOSED
 
 
-def test_clientstate_values():
-    assert ClientState.UNOPENED.value == "UNOPENED"
-    assert ClientState.OPENED.value == "OPENED"
-    assert ClientState.CLOSED.value == "CLOSED"
+def test_apiclientstate_values():
+    assert APIClientState.UNOPENED.value == "UNOPENED"
+    assert APIClientState.OPENED.value == "OPENED"
+    assert APIClientState.CLOSED.value == "CLOSED"
 
 
 def test_lazy_singleton_meta_with_new_class():
@@ -231,8 +231,8 @@ async def test_open_after_closed_raises(mock_async_client):
     client, resp = create_mock_client()
     mock_async_client.return_value = client
 
-    api = APIClient()
-    await api.open()
-    await api.close()
+    api: APIClient = APIClient()
+    await api.aopen()
+    await api.aclose()
     with pytest.raises(RuntimeError):
-        await api.open()
+        await api.aopen()

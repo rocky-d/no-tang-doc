@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pytest
 
-from no_tang_doc_agent.mcp_server import FastMCPSettings, launch_mcp_server
+from no_tang_doc_agent.mcp_server import FastMCPSettings, launch_server
 
 from .helpers import create_mock_client, make_api_client_factory, setup_capture
 
@@ -23,7 +23,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         get = setup_capture(mock_mcp, "get-team-by-id")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await get()(mock_context, team_id=123)
         client.get.assert_called_once_with(f"{url}/api/v1/teams/123")
         resp.raise_for_status.assert_called_once()
@@ -38,7 +38,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         update = setup_capture(mock_mcp, "update-team-by-id")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await update()(
             mock_context, team_id=123, name="Updated Team", description="New desc"
         )
@@ -58,7 +58,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         delete = setup_capture(mock_mcp, "delete-team-by-id")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await delete()(mock_context, team_id=123)
         client.delete.assert_called_once_with(f"{url}/api/v1/teams/123")
         resp.raise_for_status.assert_called_once()
@@ -73,7 +73,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         get = setup_capture(mock_mcp, "get-teams")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await get()(mock_context, active_only=True)
         client.get.assert_called_once_with(
             f"{url}/api/v1/teams", params={"activeOnly": True}
@@ -90,7 +90,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         get = setup_capture(mock_mcp, "get-teams")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await get()(mock_context)
         client.get.assert_called_once_with(f"{url}/api/v1/teams", params={})
         resp.raise_for_status.assert_called_once()
@@ -105,7 +105,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         create = setup_capture(mock_mcp, "create-team")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await create()(
             mock_context, name="New Team", description="Team description"
         )
@@ -127,7 +127,7 @@ class TestMCPTools:
         mock_httpx.side_effect = factory
         mock_tools_api_client.side_effect = factory
         update = setup_capture(mock_mcp, "update-team-member-role")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await update()(mock_context, team_id=123, member_id=456, role="admin")
         client.put.assert_called_once_with(
             f"{url}/api/v1/teams/123/members/456", json={"role": "admin"}
@@ -145,7 +145,7 @@ class TestMCPTools:
         mock_httpx.side_effect = factory
         mock_tools_api_client.side_effect = factory
         remove = setup_capture(mock_mcp, "remove-team-member")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await remove()(mock_context, team_id=123, member_id=456)
         client.delete.assert_called_once_with(f"{url}/api/v1/teams/123/members/456")
         resp.raise_for_status.assert_called_once()
@@ -161,7 +161,7 @@ class TestMCPTools:
         mock_httpx.side_effect = factory
         mock_tools_api_client.side_effect = factory
         get = setup_capture(mock_mcp, "get-team-members")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await get()(mock_context, team_id=123, active_only=False)
         client.get.assert_called_once_with(
             f"{url}/api/v1/teams/123/members", params={"activeOnly": False}
@@ -179,7 +179,7 @@ class TestMCPTools:
         mock_httpx.side_effect = factory
         mock_tools_api_client.side_effect = factory
         get = setup_capture(mock_mcp, "get-team-members")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await get()(mock_context, team_id=123)
         client.get.assert_called_once_with(f"{url}/api/v1/teams/123/members", params={})
         resp.raise_for_status.assert_called_once()
@@ -195,7 +195,7 @@ class TestMCPTools:
         mock_httpx.side_effect = factory
         mock_tools_api_client.side_effect = factory
         add = setup_capture(mock_mcp, "add-team-member")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await add()(mock_context, team_id=123, user_kc_id=789, role="member")
         client.post.assert_called_once_with(
             f"{url}/api/v1/teams/123/members", json={"userKcId": 789, "role": "member"}
@@ -213,7 +213,7 @@ class TestMCPTools:
         mock_httpx.side_effect = factory
         mock_tools_api_client.side_effect = factory
         leave = setup_capture(mock_mcp, "leave-team")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await leave()(mock_context, team_id=123)
         client.post.assert_called_once_with(f"{url}/api/v1/teams/123/members/leave")
         resp.raise_for_status.assert_called_once()
@@ -229,7 +229,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         upload = setup_capture(mock_mcp, "upload-document")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await upload()(
             mock_context,
             file_content="test content",
@@ -253,7 +253,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         upload = setup_capture(mock_mcp, "upload-document")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await upload()(mock_context, file_content="test content")
         client.post.assert_called_once_with(
             f"{url}/api/v1/documents/upload", params={}, files={"file": b"test content"}
@@ -270,7 +270,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         get = setup_capture(mock_mcp, "get-documents")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await get()(mock_context, status="ACTIVE")
         client.get.assert_called_once_with(
             f"{url}/api/v1/documents", params={"status": "ACTIVE"}
@@ -287,7 +287,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         get = setup_capture(mock_mcp, "get-documents")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await get()(mock_context)
         client.get.assert_called_once_with(f"{url}/api/v1/documents", params={})
         resp.raise_for_status.assert_called_once()
@@ -302,7 +302,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         share = setup_capture(mock_mcp, "share-document")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await share()(mock_context, document_id=456, expiration_minutes=60)
         client.get.assert_called_once_with(
             f"{url}/api/v1/documents/share",
@@ -320,7 +320,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         share = setup_capture(mock_mcp, "share-document")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await share()(mock_context, document_id=456)
         client.get.assert_called_once_with(
             f"{url}/api/v1/documents/share", params={"documentId": 456}
@@ -337,7 +337,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         download = setup_capture(mock_mcp, "download-document-metadata")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await download()(mock_context, document_id=456)
         client.get.assert_called_once_with(f"{url}/api/v1/documents/download/456")
         resp.raise_for_status.assert_called_once()
@@ -360,7 +360,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         download = setup_capture(mock_mcp, "download-document-content")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         result = await download()(mock_context, document_id=456)
         # both calls are proxied through the same mocked client
         assert client.get.call_args_list == [
@@ -380,7 +380,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         download = setup_capture(mock_mcp, "download-document-content")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
 
         with pytest.raises(ValueError):
             await download()(mock_context, document_id=456)
@@ -395,7 +395,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         delete = setup_capture(mock_mcp, "delete-document")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await delete()(mock_context, document_id=456)
         client.delete.assert_called_once_with(f"{url}/api/v1/documents/456")
         resp.raise_for_status.assert_called_once()
@@ -411,7 +411,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         get = setup_capture(mock_mcp, "get-logs-list")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await get()(mock_context)
         client.get.assert_called_once_with(f"{url}/api/v1/logs/list")
         resp.raise_for_status.assert_called_once()
@@ -426,7 +426,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         get = setup_capture(mock_mcp, "get-logs-documents")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await get()(mock_context, document_id=789)
         client.get.assert_called_once_with(
             f"{url}/api/v1/logs/documents", params={"documentId": 789}
@@ -443,7 +443,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         get = setup_capture(mock_mcp, "get-logs-count")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await get()(mock_context, period="week")
         client.post.assert_called_once_with(
             f"{url}/api/v1/logs/count", params={"period": "week"}
@@ -460,7 +460,7 @@ class TestMCPTools:
         mock_httpx.side_effect = make_api_client_factory(client)
         mock_tools_api_client.side_effect = make_api_client_factory(client)
         get = setup_capture(mock_mcp, "get-logs-count")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await get()(mock_context)
         client.post.assert_called_once_with(f"{url}/api/v1/logs/count", params={})
         resp.raise_for_status.assert_called_once()
@@ -477,7 +477,7 @@ class TestMCPTools:
         mock_tools_api_client.side_effect = factory
         mock_server_api_client.side_effect = factory
         get = setup_capture(mock_mcp, "get-api-auth-me")
-        launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+        launch_server(base_url=url, mcp_settings=FastMCPSettings())
         await get()(mock_context)
         client.get.assert_called_once_with(f"{url}/api/auth/me")
         resp.raise_for_status.assert_called_once()

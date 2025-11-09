@@ -2,7 +2,7 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from no_tang_doc_agent.mcp_server import FastMCPSettings, launch_mcp_server
+from no_tang_doc_agent.mcp_server import FastMCPSettings, launch_server
 
 from .helpers import create_mock_client, make_api_client_factory, setup_capture_resource
 
@@ -27,7 +27,7 @@ async def test_get_document_resource_success(
     mock_server_api_client.side_effect = factory
 
     get_resource = setup_capture_resource(mock_mcp, "resource://document/{document_id}")
-    launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+    launch_server(base_url=url, mcp_settings=FastMCPSettings())
     func = get_resource()
     # Create a mock ctx with request headers
     ctx = Mock()
@@ -58,7 +58,7 @@ async def test_get_document_resource_no_download_url(
     mock_server_api_client.side_effect = factory
 
     get_resource = setup_capture_resource(mock_mcp, "resource://document/{document_id}")
-    launch_mcp_server(base_url=url, mcp_settings=FastMCPSettings())
+    launch_server(base_url=url, mcp_settings=FastMCPSettings())
     func = get_resource()
     ctx = Mock()
     ctx.request_context.request.headers = {"authorization": "Bearer test-token"}

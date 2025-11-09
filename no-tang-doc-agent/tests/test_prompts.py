@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from no_tang_doc_agent.mcp_server import (
     FastMCPSettings,
-    launch_mcp_server,
+    launch_server,
     register_mcp_prompts,
     register_mcp_resources,
 )
@@ -19,9 +19,7 @@ def test_register_functions_are_callables():
 async def test_summarize_prompt_structure(mock_mcp):
     # Capture the prompt registered as summarize-document
     get_prompt = setup_capture_prompt(mock_mcp, "summarize-document")
-    launch_mcp_server(
-        base_url="http://test.example.com", mcp_settings=FastMCPSettings()
-    )
+    launch_server(base_url="http://test.example.com", mcp_settings=FastMCPSettings())
     func = get_prompt()
     # Call the prompt function (synchronous)
     messages = func(document_id=42, length="short")
@@ -45,9 +43,7 @@ async def test_summarize_prompt_structure(mock_mcp):
 @patch("no_tang_doc_agent.mcp_server.server.FastMCP")
 async def test_create_team_prompt_structure(mock_mcp):
     get_prompt = setup_capture_prompt(mock_mcp, "create-team-prompt")
-    launch_mcp_server(
-        base_url="http://test.example.com", mcp_settings=FastMCPSettings()
-    )
+    launch_server(base_url="http://test.example.com", mcp_settings=FastMCPSettings())
     func = get_prompt()
     msgs = func()
     assert isinstance(msgs, list)
@@ -63,9 +59,7 @@ async def test_create_team_prompt_structure(mock_mcp):
 async def test_create_team_prompt_with_values(mock_mcp):
     # When name and description are provided, the prompt should include them
     get_prompt = setup_capture_prompt(mock_mcp, "create-team-prompt")
-    launch_mcp_server(
-        base_url="http://test.example.com", mcp_settings=FastMCPSettings()
-    )
+    launch_server(base_url="http://test.example.com", mcp_settings=FastMCPSettings())
     func = get_prompt()
     msgs = func(name="TeamX", description="A nice team")
     assert any(

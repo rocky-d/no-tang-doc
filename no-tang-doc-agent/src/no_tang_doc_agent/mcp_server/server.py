@@ -25,7 +25,7 @@ from .tools import register_mcp_tools
 __all__ = [
     "FastMCPSettings",
     "JWTTokenVerifier",
-    "launch_mcp_server",
+    "launch_server",
 ]
 
 
@@ -94,7 +94,7 @@ class FastMCPSettings:
     transport_security: TransportSecuritySettings | None = None
 
 
-def launch_mcp_server(
+def launch_server(
     base_url: str = "https://api.ntdoc.site",
     mcp_settings: FastMCPSettings | None = None,
     transport: Literal["streamable-http"] = "streamable-http",

@@ -5,7 +5,7 @@ import pytest
 from no_tang_doc_agent.mcp_server import (
     FastMCPSettings,
     JWTTokenVerifier,
-    launch_mcp_server,
+    launch_server,
 )
 
 
@@ -81,9 +81,9 @@ class TestFastMCPSettings:
         assert s.port == 9000
 
 
-class TestLaunchMCPServer:
+class TestLaunchServer:
     @patch("no_tang_doc_agent.mcp_server.server.FastMCP")
     def test_default_settings(self, mock_mcp):
         mock_mcp.return_value.run = Mock()
-        launch_mcp_server()
+        launch_server()
         assert mock_mcp.return_value.tool.call_count == 20
