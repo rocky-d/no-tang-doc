@@ -51,24 +51,46 @@ spec:
             {{- toYaml .Values.resources | nindent 12 }}
 
           {{- if and .Values.probes .Values.probes.enabled }}
+          # --- Readiness Probe ---
           readinessProbe:
             httpGet:
-              path: {{ default "/actuator/health" .Values.probes.readinessPath }}
+              path: {{ default "/actuator/health/readiness" .Values.probes.readinessPath }}
               port: http
-            initialDelaySeconds: {{ default 10 .Values.probes.initialDelaySeconds }}
+            initialDelaySeconds: {{ default 20 .Values.probes.initialDelaySeconds }}
             periodSeconds: {{ default 10 .Values.probes.periodSeconds }}
-            timeoutSeconds: {{ default 2 .Values.probes.timeoutSeconds }}
-            failureThreshold: 3
+            timeoutSeconds: {{ default 5 .Values.probes.timeoutSeconds }}
+            failureThreshold: {{ default 6 .Values.probes.readinessFailureThreshold }}
 
+          # --- Liveness Probe ---
           livenessProbe:
             httpGet:
-              path: {{ default "/actuator/health" .Values.probes.livenessPath }}
+              path: {{ default "/actuator/health/liveness" .Values.probes.livenessPath }}
               port: http
-            initialDelaySeconds: {{ default 30 .Values.probes.livenessInitialDelaySeconds }}
+            initialDelaySeconds: {{ default 60 .Values.probes.livenessInitialDelaySeconds }}
             periodSeconds: {{ default 20 .Values.probes.livenessPeriodSeconds }}
-            timeoutSeconds: {{ default 2 .Values.probes.timeoutSeconds }}
-            failureThreshold: 3
+            timeoutSeconds: {{ default 5 .Values.probes.timeoutSeconds }}
+            failureThreshold: {{ default 6 .Values.probes.livenessFailureThreshold }}
+
+          # --- Startup Probe ---
+          {{- if and .Values.probes.startupProbe .Values.probes.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: {{ default "/actuator/health/liveness" .Values.probes.startupProbe.path }}
+              port: http
+            periodSeconds: {{ default 5 .Values.probes.startupProbe.periodSeconds }}
+            failureThreshold: {{ default 30 .Values.probes.startupProbe.failureThreshold }}
           {{- end }}
+          {{- end }}
+
+      {{- if .Values.topologySpread.enabled }}
+      topologySpreadConstraints:
+        - maxSkew: {{ default 1 .Values.topologySpread.hostname.maxSkew }}
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: {{ default "ScheduleAnyway" .Values.topologySpread.hostname.whenUnsatisfiable }}
+          labelSelector:
+            matchLabels:
+              {{- include "ntdoc-core.selectorLabels" . | nindent 14 }}
+      {{- end }}
 
       {{- if .Values.nodeSelector }}
       nodeSelector:

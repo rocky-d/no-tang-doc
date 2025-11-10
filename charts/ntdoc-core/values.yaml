@@ -1,4 +1,33 @@
-replicaCount: 1
+replicaCount: 2
+# --- 自动扩缩容（按业务容器 CPU 利用率）---
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 8
+  containerBased: true
+  containerName: ntdoc-core     # 你的容器名是 {{ .Chart.Name }}，通常为 ntdoc-core
+  targetCPUUtilizationPercentage: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      selectPolicy: Max
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      selectPolicy: Max
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
 
 image:
   repository: registry.digitalocean.com/ntdoc/ntdoc-core
@@ -16,13 +45,20 @@ containerPort: 8070
 
 probes:
   enabled: true
-  readinessPath: /actuator/health
-  livenessPath: /actuator/health
-  initialDelaySeconds: 10
-  livenessInitialDelaySeconds: 30
+  readinessPath: /actuator/health/readiness
+  livenessPath:  /actuator/health/liveness
+  initialDelaySeconds: 20
   periodSeconds: 10
+  timeoutSeconds: 5
+  livenessInitialDelaySeconds: 60
   livenessPeriodSeconds: 20
-  timeoutSeconds: 2
+  readinessFailureThreshold: 6
+  livenessFailureThreshold: 6
+  startupProbe:
+    enabled: true
+    path: /actuator/health/liveness
+    periodSeconds: 5
+    failureThreshold: 30
 
 service:
   type: ClusterIP
@@ -45,11 +81,18 @@ ingress:
     nginx.ingress.kubernetes.io/proxy-body-size: "50m"
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
     nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
-
+topologySpread:
+  enabled: true
+  hostname:
+    maxSkew: 1
+    whenUnsatisfiable: ScheduleAnyway
 resources:
   requests:
-    cpu: 100m
-    memory: 128Mi
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: "1"
+    memory: 1Gi
 
 # ✅ 非敏感配置（ConfigMap）
 config:
