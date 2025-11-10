@@ -23,6 +23,7 @@ public class DocumentTagServiceImpl implements DocumentTagService {
     private final TagRepository tagRepository;
 
     @Override
+    @Transactional
     public Document addTags(Long documentId, List<String> tagNames, String kcUserId) {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("Document not found"));
@@ -34,6 +35,7 @@ public class DocumentTagServiceImpl implements DocumentTagService {
     }
 
     @Override
+    @Transactional
     public Document removeTag(Long documentId, String tagName, String kcUserId) {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("Document not found"));
@@ -50,6 +52,7 @@ public class DocumentTagServiceImpl implements DocumentTagService {
     }
 
     @Override
+    @Transactional
     public Document replaceTags(Long documentId, List<String> tagNames, String kcUserId) {
         Document document = documentRepository.findById(documentId)
                 .orElseThrow(() -> new EntityNotFoundException("Document not found"));
@@ -60,6 +63,7 @@ public class DocumentTagServiceImpl implements DocumentTagService {
     }
 
     @Override
+    @Transactional
     public List<Tag> getTags(Long documentId) {
         return documentRepository.findById(documentId)
                 .map(d -> new ArrayList<>(d.getTags()))
@@ -67,11 +71,9 @@ public class DocumentTagServiceImpl implements DocumentTagService {
     }
 
     @Override
-    public List<Document> getDocumentsByTag(String tagName) {
-        return tagRepository.findByTag(tagName)
-                .map(Tag::getDocuments)
-                .map(ArrayList::new)
-                .orElseGet(ArrayList::new);
+    @Transactional
+    public List<Document> getDocumentsByTag(String tagName,String kcUserId) {
+        return tagRepository.findDocumentsByTagName(tagName,kcUserId);
     }
 
     public Set<Tag> convertStringsToTags(List<String> tagNames) {
@@ -83,9 +85,13 @@ public class DocumentTagServiceImpl implements DocumentTagService {
 
         for (String tagName : tagNames) {
             if (tagName == null || tagName.isBlank()) continue;
-            String normalized = tagName.trim();
 
-            // 查询数据库中是否已有
+            String normalized = tagName.trim()
+                    .replaceAll("[^a-zA-Z0-9\\u4e00-\\u9fa5_-]", "")  // 移除特殊字符
+                    .replaceAll("^[_-]+|[_-]+$", "");                 // 移除首尾特殊字符
+
+            if (normalized.isEmpty()) continue;
+
             Tag existingTag = tagRepository.findByTag(normalized)
                     .orElseGet(() -> tagRepository.save(
                             Tag.builder().tag(normalized).build()

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { UserLayout } from '@/components/UserLayout';
 import { TagManagement } from '@/components/TagManagement';
-import { SearchMode } from '@/components/SearchDialog';
+import type {SearchMode} from '@/components/SearchDialog';
 
 export function TagManagementPage() {
     const navigate = useNavigate();

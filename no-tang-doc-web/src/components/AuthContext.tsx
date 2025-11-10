@@ -40,7 +40,7 @@ const AUTH_ENDPOINT = `${KC_BASE}realms/${KC_REALM}/protocol/openid-connect/auth
 const OIDC_SCOPE = (import.meta.env.VITE_OIDC_SCOPES || 'openid profile email').trim();
 const PERSIST_KEY = 'auth_tokens_v1';
 const REFRESH_LEEWAY_MS = 60000; // 剩余 <= 60s 时触发刷新
-const TEST_REFRESH_INTERVAL_MS = Number((import.meta as any).env?.VITE_TEST_REFRESH_INTERVAL_MS || '0'); // 测试用强制刷新间隔（毫秒）
+const TEST_REFRESH_INTERVAL_MS = Number((import.meta as unknown).env?.VITE_TEST_REFRESH_INTERVAL_MS || '0'); // 测试用强制刷新间隔（毫秒）
 
 interface PersistedTokens {
     access_token: string;
@@ -57,7 +57,7 @@ function buildRedirectUri() {
 function parseUserFromTokens(accessToken?: string, idToken?: string): OIDCUser | null {
     const tokenToParse = idToken || accessToken;
     if (!tokenToParse) return null;
-    const payload: any = decodeJwt(tokenToParse);
+    const payload: unknown = decodeJwt(tokenToParse);
     if (!payload) return null;
     const roles: string[] = payload.realm_access?.roles || payload.resource_access?.[KC_CLIENT_ID]?.roles || [];
     return {
@@ -75,7 +75,7 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
     const [accessToken, setAccessToken] = useState<string | null>(null);
     const [refreshToken, setRefreshToken] = useState<string | null>(null);
     const [accessExpiresAt, setAccessExpiresAt] = useState<number | null>(null);
-    const [refreshExpiresAt, setRefreshExpiresAt] = useState<number | null>(null);
+    const [_refreshExpiresAt, setRefreshExpiresAt] = useState<number | null>(null);
     const [idToken, setIdToken] = useState<string | undefined>(undefined);
     const [error, setError] = useState<string | null>(null);
     const refreshTimer = useRef<number | null>(null);

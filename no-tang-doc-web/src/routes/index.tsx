@@ -1,53 +1,62 @@
-import {Routes, Route, Navigate} from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import {Suspense} from 'react';
-import {HomePage} from '@/pages/HomePage';
-import {LoginPage} from '@/pages/LoginPage';
-import {RegisterPage} from '@/pages/RegisterPage';
-import {DashboardPage} from '@/pages/DashboardPage';
-import {UploadDocumentPage} from '@/pages/UploadDocumentPage';
-import {useNavigate} from 'react-router-dom';
-import {DocumentsPage} from "@/pages/DocumentsPage.tsx";
-import {NotFoundPage} from "@/pages/NotFoundPage.tsx";
-import {ProfilePage} from "@/pages/ProfilePage.tsx";
-import {TagManagementPage} from "@/pages/TagManagementPage.tsx";
-import {MyTeamsPage} from "../pages/MyTeamsPage.tsx";
-import {TeamSpacePage} from "../pages/TeamSpacePage.tsx";
-import {useAuth} from "../components/AuthContext.tsx";
+import {HomePage} from '../pages/HomePage';
+import {LoginPage} from '../pages/LoginPage';
+import {RegisterPage} from '../pages/RegisterPage';
+import {DashboardPage} from '../pages/DashboardPage';
+import {UploadDocumentPage} from '../pages/UploadDocumentPage';
+import {DocumentsPage} from "../pages/DocumentsPage";
+import {NotFoundPage} from "../pages/NotFoundPage";
+import {ProfilePage} from "../pages/ProfilePage";
+import {TagManagementPage} from "../pages/TagManagementPage";
+import {MyTeamsPage} from "../pages/MyTeamsPage";
+import {TeamSpacePage} from "../pages/TeamSpacePage";
+import {useAuth} from "../components/AuthContext";
 import { AuthCallbackPage } from '../pages/AuthCallbackPage';
+import {LogsPage} from "../pages/LogsPage";
 
 function HomeRoute() {
     const navigate = useNavigate();
     return (
         <HomePage
-            onNavigateToAuth={(mode) => navigate(mode === 'login' ? '/login' : '/register')}
+            onNavigateToAuth={(mode: 'login' | 'register') => navigate(mode === 'login' ? '/login' : '/register')}
             onNavigateToDashboard={() => navigate('/dashboard')}
             onNavigateHome={() => navigate('/')}
             onStartUploading={() => navigate('/upload')}
         />
     );
 }
+
+function NotFoundRoute() {
+    const navigate = useNavigate();
+    return (
+        <NotFoundPage
+            onNavigateToAuth={(mode: 'login' | 'register') => navigate(mode === 'login' ? '/login' : '/register')}
+            onNavigateToDashboard={() => navigate('/dashboard')}
+            onNavigateHome={() => navigate('/')}
+            onStartUploading={() => navigate('/upload')}
+        />
+    );
+}
+
 // Protected Route wrapper
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children }: { readonly children: React.ReactNode }) {
     const { isAuthenticated, isLoading } = useAuth();
+    const location = useLocation();
 
     if (isLoading) {
         return <div style={{ padding: '2rem', textAlign: 'center' }}>Checking authentication...</div>;
     }
     if (!isAuthenticated) {
-        // 如果刚刚执行过登出，直接回首页，避免跳到 /login 触发自动 OIDC 流程
-        const recentLogoutTs = Number(sessionStorage.getItem('recent_logout') || '0');
-        const justLoggedOut = recentLogoutTs && Date.now() - recentLogoutTs < 8000; // 8秒窗口
-        if (justLoggedOut) {
-            return <Navigate to="/" replace />;
-        }
-        // 默认也返回首页，由用户主动点击登录
-        return <Navigate to="/" replace />;
+        const target = location.pathname + (location.search || '') + (location.hash || '');
+        const to = `/login?redirect=${encodeURIComponent(target)}`;
+        return <Navigate to={to} replace />;
     }
     return <>{children}</>;
 }
 
 // Route wrapper to redirect authenticated users from auth pages
-function AuthRoute({ children }: { children: React.ReactNode }) {
+function AuthRoute({ children }: { readonly children: React.ReactNode }) {
     const { isAuthenticated, isLoading } = useAuth();
     if (isLoading) {
         return <div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>;
@@ -102,6 +111,11 @@ export function AppRoutes() {
                         <TagManagementPage/>
                     </ProtectedRoute>
                 }/>
+                <Route path="/manage/logs" element={
+                    <ProtectedRoute>
+                        <LogsPage/>
+                    </ProtectedRoute>
+                }/>
                 <Route path="/teams/my-teams" element={
                     <ProtectedRoute>
                         <MyTeamsPage/>
@@ -113,7 +127,7 @@ export function AppRoutes() {
                     </ProtectedRoute>
                 }/>
                 {/* Invalid route */}
-                <Route path="*" element={<NotFoundPage/>}/>
+                <Route path="*" element={<NotFoundRoute/>}/>
             </Routes>
         </Suspense>
     );
