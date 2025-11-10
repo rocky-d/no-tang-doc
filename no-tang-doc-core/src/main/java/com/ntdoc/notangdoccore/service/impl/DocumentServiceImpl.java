@@ -28,7 +28,9 @@ import java.security.MessageDigest;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -367,6 +369,41 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         return documentRepository.findAll(spec);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Document> searchByTags(String kcUserId, Set<String> tags) {
+        if (tags == null || tags.isEmpty()) {
+            throw new DocumentException("Tags cannot be empty");
+        }
+        // 规范化：去空白、去重
+        Set<String> normalized = new LinkedHashSet<>();
+        for (String t : tags) {
+            if (t != null && !t.isBlank()) {
+                normalized.add(t.trim());
+            }
+        }
+        if (normalized.isEmpty()) {
+            throw new DocumentException("Tags cannot be all blank");
+        }
+
+        User user = getUserByKcUserId(kcUserId);
+        return documentRepository.findByUserAndTags(user, normalized);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Document> searchByMetadata(String kcUserId, String key, String value) {
+        if (key == null || key.isBlank()) {
+            throw new DocumentException("Metadata key cannot be empty");
+        }
+        if (value == null) value = "";
+        key = key.trim();
+        value = value.trim();
+
+        User user = getUserByKcUserId(kcUserId);
+        return documentRepository.findByUserAndMetadataKeyValue(user, key, value);
     }
 
 }
