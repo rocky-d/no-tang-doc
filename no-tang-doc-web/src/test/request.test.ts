@@ -1,26 +1,20 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { http, request as rawRequest } from '@/utils/request';
 
-declare global {
-  // extend type for mocked fetch
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace NodeJS { interface Global {} }
-}
-
 const PERSIST_KEY = 'auth_tokens_v1';
 
 function mockFetchJsonOnce(data: any, init: Partial<Response> = {}) {
   const headers = new Headers({ 'content-type': 'application/json', ...(init.headers as any) });
-  (global.fetch as any).mockResolvedValueOnce(new Response(JSON.stringify(data), { status: init.status ?? 200, headers }));
+  (globalThis.fetch as any).mockResolvedValueOnce(new Response(JSON.stringify(data), { status: init.status ?? 200, headers }));
 }
 
 function mockFetchTextOnce(text: string, init: Partial<Response> = {}) {
   const headers = new Headers({ 'content-type': 'text/plain', ...(init.headers as any) });
-  (global.fetch as any).mockResolvedValueOnce(new Response(text, { status: init.status ?? 200, headers }));
+  (globalThis.fetch as any).mockResolvedValueOnce(new Response(text, { status: init.status ?? 200, headers }));
 }
 
 function setupAbortableFetch() {
-  (global.fetch as any).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+  (globalThis.fetch as any).mockImplementation((_input: RequestInfo | URL, init?: RequestInit) => {
     return new Promise((_resolve, reject) => {
       const signal = init?.signal as AbortSignal | undefined;
       if (signal) {
@@ -35,8 +29,10 @@ function setupAbortableFetch() {
 
 describe('http/request helper', () => {
   beforeEach(() => {
+    // Important: clear any spies/mocks from other test files (e.g., http.get spies)
+    vi.restoreAllMocks();
     vi.useRealTimers();
-    (global.fetch as any) = vi.fn();
+    (globalThis.fetch as any) = vi.fn();
     localStorage.clear();
     sessionStorage.clear();
   });
@@ -50,7 +46,7 @@ describe('http/request helper', () => {
     const res = await http.get<{ ok: boolean }>('/any');
 
     expect(res.ok).toBe(true);
-    const lastCall = (global.fetch as any).mock.calls.at(-1);
+    const lastCall = (globalThis.fetch as any).mock.calls.at(-1);
     const init = lastCall?.[1] as RequestInit;
     expect(init?.headers).toMatchObject({ Authorization: 'Bearer abc123' });
   });
@@ -58,7 +54,7 @@ describe('http/request helper', () => {
   it('omits Authorization when withAuth=false', async () => {
     mockFetchJsonOnce({ ok: 1 });
     await rawRequest('/x', { withAuth: false });
-    const init = (global.fetch as any).mock.calls.at(-1)?.[1] as RequestInit;
+    const init = (globalThis.fetch as any).mock.calls.at(-1)?.[1] as RequestInit;
     expect(init?.headers).not.toHaveProperty('Authorization');
   });
 
@@ -74,7 +70,7 @@ describe('http/request helper', () => {
 
   it('throws on non-2xx responses including best-effort text', async () => {
     const headers = new Headers({ 'content-type': 'text/plain' });
-    (global.fetch as any).mockResolvedValueOnce(new Response('Bad', { status: 400, headers }));
+    (globalThis.fetch as any).mockResolvedValueOnce(new Response('Bad', { status: 400, headers }));
     await expect(http.get('/bad')).rejects.toThrow(/HTTP 400: Bad/);
   });
 
@@ -86,4 +82,3 @@ describe('http/request helper', () => {
     await expect(p).rejects.toBeInstanceOf(DOMException);
   });
 });
-

@@ -79,8 +79,8 @@ export function UserLayout({
   }, [isTeamsPath]);
 
   const handleSearchClick = () => {
-    // Only open dialog for documents and dashboard views
-    if (activeView === 'documents' || activeView === 'dashboard') {
+    // Only open dialog for documents view
+    if (location.pathname === '/documents') {
       setSearchDialogOpen(true);
     }
   };
@@ -90,7 +90,7 @@ export function UserLayout({
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        if (activeView === 'documents' || activeView === 'dashboard') {
+        if (location.pathname === '/documents') {
           setSearchDialogOpen(true);
         }
       }
@@ -98,7 +98,7 @@ export function UserLayout({
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeView]);
+  }, [location.pathname]);
 
   const handleSearch = (query: string, mode: SearchMode) => {
     onSearch?.(query, mode);
@@ -284,52 +284,58 @@ export function UserLayout({
               <div className="flex h-16 items-center gap-4 px-6">
                 <SidebarTrigger />
 
-                {/* Search Bar - always visible */}
-                <div className="flex-1 max-w-2xl">
-                  <div className="flex items-center gap-2">
-                    <div
-                        className="relative cursor-pointer flex-1"
-                        onClick={handleSearchClick}
-                    >
-                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
-                      <div className={`pl-10 pr-20 h-10 flex items-center gap-2 border border-input rounded-md bg-background hover:bg-accent transition-colors ${isSearchActive ? 'border-primary' : ''}`}>
-                        {isSearchActive && currentSearchMode === 'advanced' && (
-                            <Badge variant="secondary" className="flex items-center gap-1 h-5">
-                              <Sparkles className="w-3 h-3" />
-                              AI
-                            </Badge>
-                        )}
-                        <span className={isSearchActive ? 'text-foreground' : 'text-muted-foreground'}>
-                        {currentSearchQuery || getSearchPlaceholder()}
-                      </span>
+                {location.pathname === '/documents' ? (
+                    <>
+                      {/* Search Bar */}
+                      <div className="flex-1 max-w-2xl">
+                        <div className="flex items-center gap-2">
+                          <div
+                              className="relative cursor-pointer flex-1"
+                              onClick={handleSearchClick}
+                          >
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 pointer-events-none" />
+                            <div className={`pl-10 pr-20 h-10 flex items-center gap-2 border border-input rounded-md bg-background hover:bg-accent transition-colors ${isSearchActive ? 'border-primary' : ''}`}>
+                              {isSearchActive && currentSearchMode === 'advanced' && (
+                                  <Badge variant="secondary" className="flex items-center gap-1 h-5">
+                                    <Sparkles className="w-3 h-3" />
+                                    AI
+                                  </Badge>
+                              )}
+                              <span className={isSearchActive ? 'text-foreground' : 'text-muted-foreground'}>
+                                {currentSearchQuery || getSearchPlaceholder()}
+                              </span>
+                            </div>
+                            {!isSearchActive && (
+                                <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                                  <span className="text-xs">⌘</span>K
+                                </kbd>
+                            )}
+                          </div>
+                          {isSearchActive && (
+                              <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={handleClearSearch}
+                                  className="h-10 px-3"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                          )}
+                        </div>
                       </div>
-                      {!isSearchActive && (activeView === 'documents' || activeView === 'dashboard') && (
-                          <kbd className="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
-                            <span className="text-xs">⌘</span>K
-                          </kbd>
-                      )}
-                    </div>
-                    {isSearchActive && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={handleClearSearch}
-                            className="h-10 px-3"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                    )}
-                  </div>
-                </div>
 
-                {/* Search Dialog */}
-                <SearchDialog
-                    open={searchDialogOpen}
-                    onOpenChange={setSearchDialogOpen}
-                    onSearch={handleSearch}
-                    initialMode={currentSearchMode}
-                    placeholder={getSearchPlaceholder()}
-                />
+                      {/* Search Dialog */}
+                      <SearchDialog
+                          open={searchDialogOpen}
+                          onOpenChange={setSearchDialogOpen}
+                          onSearch={handleSearch}
+                          initialMode={currentSearchMode}
+                          placeholder={getSearchPlaceholder()}
+                      />
+                    </>
+                ) : (
+                    <div className="flex-1" /> // Spacer
+                )}
 
                 {/* Actions */}
                 <div className="flex items-center gap-3">

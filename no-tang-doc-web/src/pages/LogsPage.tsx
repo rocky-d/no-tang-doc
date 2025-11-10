@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Button } from '../components/ui/button';
 import { ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, FileUp, FileDown, CheckCircle, XCircle, User, Activity, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
-import { http } from '../utils/request';
+import { getLogsRepository } from '../repositories/LogsRepository';
 
 interface LogEntry {
     id: number;
@@ -23,8 +23,6 @@ interface LogEntry {
     time: string;
 }
 
-const LOGS_LIST_ALL = (import.meta.env as unknown).VITE_LOGS_LIST_ALL || '/api/v1/logs';
-
 export function LogsPage() {
     const [logs, setLogs] = useState<LogEntry[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
@@ -38,16 +36,13 @@ export function LogsPage() {
         try {
             setLoading(true);
             setError('');
-            const resp: unknown = await http.get(`${LOGS_LIST_ALL}`);
-            const data = resp?.data ?? resp;
-            if (!Array.isArray(data)) {
-                throw new Error('Unexpected logs response');
-            }
-            setLogs(data as LogEntry[]);
+            const repo = getLogsRepository();
+            const data = await repo.getAllLogs();
+            setLogs(data);
         } catch (e: unknown) {
             console.error('Fetch logs failed', e);
-            setError(e?.message || '获取日志失败');
-            toast.error(e?.message || '获取日志失败');
+            setError(e?.message || 'Failed to load logs');
+            toast.error(e?.message || 'Failed to load logs');
         } finally {
             setLoading(false);
         }
@@ -151,7 +146,7 @@ export function LogsPage() {
                 {!loading && error && (
                     <Card className="p-6">
                         <p className="text-destructive mb-4">{error}</p>
-                        <Button variant="outline" onClick={fetchLogs}>重试</Button>
+                        <Button variant="outline" onClick={fetchLogs}>Retry</Button>
                     </Card>
                 )}
 

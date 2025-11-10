@@ -210,14 +210,15 @@ export function TagManagement({ searchTerm = '' }: TagManagementProps) {
                       variant="ghost"
                       size="sm"
                       onClick={() => openEditDialog(tag)}
+                      aria-label="Edit"
                     >
-                      <Edit className="w-4 h-4" />
+                      <Edit className="w-4 h-4 lucide-edit" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteTag(tag)}
-                      disabled={tag.documentCount > 0}
+                      aria-label="Delete"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

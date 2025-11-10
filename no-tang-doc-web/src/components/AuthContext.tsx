@@ -15,6 +15,11 @@ interface OIDCUser {
     name?: string;
     email?: string;
     roles?: string[];
+    // Optional profile fields used in Profile component
+    avatar?: string;
+    bio?: string;
+    location?: string;
+    website?: string;
 }
 
 interface AuthContextType {
@@ -29,6 +34,8 @@ interface AuthContextType {
   completeLogin: (tokens: { access_token: string; refresh_token?: string; expires_in: number; id_token?: string; refresh_expires_in?: number }) => void;
   hasRole: (role: string) => boolean;
   error: string | null;
+  // Allow local UI to update cached user info
+  updateUser?: (next: Partial<OIDCUser>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -269,6 +276,10 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
 
     const hasRole = (role: string) => !!user?.roles?.includes(role);
 
+    const updateUser = useCallback((next: Partial<OIDCUser>) => {
+        setUser((prev) => ({ ...(prev || {} as OIDCUser), ...next }) as OIDCUser);
+    }, []);
+
     useEffect(() => {
         const onStorage = (e: StorageEvent) => {
             if (e.key === PERSIST_KEY && e.newValue === null && !loggedOut.current) {
@@ -299,7 +310,8 @@ export function AuthProvider({children}: { children: React.ReactNode }) {
             logout,
             completeLogin,
             hasRole,
-            error
+            error,
+            updateUser
         }}>
             {children}
         </AuthContext.Provider>

@@ -3,8 +3,8 @@ import { FileText, TrendingUp, Calendar, HardDrive } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import { Progress } from './ui/progress';
 
-import { getAllDocuments } from '../utils/documentApi';
-import { http } from '../utils/request';
+import { getAllDocuments } from '@/utils/documentApi';
+import { getLogsRepository } from '@/repositories/LogsRepository';
 
 interface Document {
   id: string;
@@ -17,18 +17,13 @@ interface Document {
   sizeBytes?: number; // raw size for accurate totals
 }
 
+// LogsRepository will provide log entries; only operationStatus is needed here.
 // Minimal LogEntry shape reused from LogsPage for success rate
-interface LogEntry {
-  operationStatus: 'SUCCESS' | 'FAILURE';
-}
-
 interface DashboardOverviewProps {
   readonly documents: Document[];
 }
 
 // Reuse LogsPage endpoint logic
-const LOGS_LIST_ALL = (import.meta.env as unknown).VITE_LOGS_LIST_ALL || '/api/v1/logs';
-
 export function DashboardOverview({ documents }: DashboardOverviewProps) {
   // Fetch real documents and prefer them over props
   const [apiDocs, setApiDocs] = useState<Document[]>([]);
@@ -64,14 +59,8 @@ export function DashboardOverview({ documents }: DashboardOverviewProps) {
     (async () => {
       setSuccessLoading(true);
       try {
-        const resp: unknown = await http.get(LOGS_LIST_ALL);
-        const data = resp?.data ?? resp;
-        if (!Array.isArray(data)) {
-          console.warn('DashboardOverview: logs API returned non-array payload');
-          if (mounted) setSuccessRate(0);
-          return;
-        }
-        const logs = data as LogEntry[];
+        const repo = getLogsRepository();
+        const logs = await repo.getAllLogs();
         const total = logs.length;
         const success = logs.filter(l => l.operationStatus === 'SUCCESS').length;
         const rate = total > 0 ? Math.round((success / total) * 100) : 0;

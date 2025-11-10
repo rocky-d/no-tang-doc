@@ -91,7 +91,8 @@ export function SearchDialog({
 
   const clearHistory = () => {
     setSearchHistory([]);
-    localStorage.removeItem(STORAGE_KEY);
+    // Persist an empty array instead of removing the key so tests can assert against it
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([]));
   };
 
   const removeHistoryItem = (index: number) => {
@@ -166,7 +167,7 @@ export function SearchDialog({
                   />
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  Search through document names, types, categories, and tags. Results are instant.
+                  Search through document names, and tags. Results are instant.
                 </p>
               </div>
             </TabsContent>
@@ -250,6 +251,7 @@ export function SearchDialog({
                           variant="ghost"
                           size="sm"
                           className="h-auto p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          aria-label="Remove history item"
                           onClick={(e) => {
                             e.stopPropagation();
                             removeHistoryItem(index);

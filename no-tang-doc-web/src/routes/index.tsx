@@ -8,7 +8,6 @@ import {UploadDocumentPage} from '../pages/UploadDocumentPage';
 import {DocumentsPage} from "../pages/DocumentsPage";
 import {NotFoundPage} from "../pages/NotFoundPage";
 import {ProfilePage} from "../pages/ProfilePage";
-import {TagManagementPage} from "../pages/TagManagementPage";
 import {MyTeamsPage} from "../pages/MyTeamsPage";
 import {TeamSpacePage} from "../pages/TeamSpacePage";
 import {useAuth} from "../components/AuthContext";
@@ -104,11 +103,6 @@ export function AppRoutes() {
                 <Route path="/profile" element={
                     <ProtectedRoute>
                         <ProfilePage/>
-                    </ProtectedRoute>
-                }/>
-                <Route path="/manage/tags" element={
-                    <ProtectedRoute>
-                        <TagManagementPage/>
                     </ProtectedRoute>
                 }/>
                 <Route path="/manage/logs" element={
