@@ -244,15 +244,15 @@ export function UserLayout({
                             <span>My Teams</span>
                           </SidebarMenuSubButton>
                         </SidebarMenuSubItem>
-                        {/*<SidebarMenuSubItem>*/}
-                        {/*  <SidebarMenuSubButton*/}
-                        {/*      onClick={() => navigate('/teams/team-space')}*/}
-                        {/*      isActive={location.pathname === '/teams/team-space'}*/}
-                        {/*  >*/}
-                        {/*    <Users className="h-4 w-4" />*/}
-                        {/*    <span>TeamSpace</span>*/}
-                        {/*  </SidebarMenuSubButton>*/}
-                        {/*</SidebarMenuSubItem>*/}
+                        <SidebarMenuSubItem>
+                          <SidebarMenuSubButton
+                              onClick={() => navigate('/teams/team-space')}
+                              isActive={location.pathname === '/teams/team-space'}
+                          >
+                            <Users className="h-4 w-4" />
+                            <span>TeamSpace</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
                       </SidebarMenuSub>
                     </CollapsibleContent>
                   </SidebarMenuItem>

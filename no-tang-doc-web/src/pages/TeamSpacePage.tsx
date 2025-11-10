@@ -191,16 +191,16 @@ export function TeamSpacePage() {
                             Collaborative workspace for your team
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
-                        <Button variant="outline">
-                            <Calendar className="w-4 h-4 mr-2" />
-                            Schedule Meeting
-                        </Button>
-                        <Button>
-                            <MessageSquare className="w-4 h-4 mr-2" />
-                            New Discussion
-                        </Button>
-                    </div>
+                    {/*<div className="flex items-center gap-2">*/}
+                    {/*    <Button variant="outline">*/}
+                    {/*        <Calendar className="w-4 h-4 mr-2" />*/}
+                    {/*        Schedule Meeting*/}
+                    {/*    </Button>*/}
+                    {/*    <Button>*/}
+                    {/*        <MessageSquare className="w-4 h-4 mr-2" />*/}
+                    {/*        New Discussion*/}
+                    {/*    </Button>*/}
+                    {/*</div>*/}
                 </div>
 
                 {/* Team Info Card */}
@@ -223,10 +223,10 @@ export function TeamSpacePage() {
                                             <Users className="w-4 h-4 flex-shrink-0" />
                                             <span>{selectedTeam.memberCount} members</span>
                                         </div>
-                                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                                            <FileText className="w-4 h-4 flex-shrink-0" />
-                                            <span>{selectedTeam.documentCount} documents</span>
-                                        </div>
+                                        {/*<div className="flex items-center gap-1.5 text-sm text-muted-foreground">*/}
+                                        {/*    <FileText className="w-4 h-4 flex-shrink-0" />*/}
+                                        {/*    <span>{selectedTeam.documentCount} documents</span>*/}
+                                        {/*</div>*/}
                                     </div>
                                 </div>
                             </div>
@@ -277,72 +277,70 @@ export function TeamSpacePage() {
                 </Card>
 
                 {/* Tabs */}
-                <Tabs defaultValue="overview" className="space-y-4">
+                <Tabs defaultValue="members" className="space-y-4">
                     <TabsList>
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
                         <TabsTrigger value="members">Members</TabsTrigger>
-                        <TabsTrigger value="documents">Documents</TabsTrigger>
-                        <TabsTrigger value="activity">Activity</TabsTrigger>
+                        {/*<TabsTrigger value="overview">Overview</TabsTrigger>*/}
                     </TabsList>
 
                     {/* Overview Tab */}
-                    <TabsContent value="overview" className="space-y-4">
-                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                            {/* Recent Documents */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base">Recent Documents</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    {mockDocuments.slice(0, 3).map((doc) => (
-                                        <div key={doc.id} className="flex items-center justify-between">
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">
-                                                    <FileText className="w-4 h-4" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-sm font-medium">{doc.name}</p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {doc.uploadedBy} • {doc.uploadDate}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
+                    {/*<TabsContent value="overview" className="space-y-4">*/}
+                    {/*    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">*/}
+                            {/*/!* Recent Documents *!/*/}
+                            {/*<Card>*/}
+                            {/*    <CardHeader>*/}
+                            {/*        <CardTitle className="text-base">Recent Documents</CardTitle>*/}
+                            {/*    </CardHeader>*/}
+                            {/*    <CardContent className="space-y-3">*/}
+                            {/*        {mockDocuments.slice(0, 3).map((doc) => (*/}
+                            {/*            <div key={doc.id} className="flex items-center justify-between">*/}
+                            {/*                <div className="flex items-center gap-3">*/}
+                            {/*                    <div className="w-8 h-8 rounded bg-primary/10 flex items-center justify-center">*/}
+                            {/*                        <FileText className="w-4 h-4" />*/}
+                            {/*                    </div>*/}
+                            {/*                    <div>*/}
+                            {/*                        <p className="text-sm font-medium">{doc.name}</p>*/}
+                            {/*                        <p className="text-xs text-muted-foreground">*/}
+                            {/*                            {doc.uploadedBy} • {doc.uploadDate}*/}
+                            {/*                        </p>*/}
+                            {/*                    </div>*/}
+                            {/*                </div>*/}
+                            {/*            </div>*/}
+                            {/*        ))}*/}
+                            {/*    </CardContent>*/}
+                            {/*</Card>*/}
 
-                            {/* Recent Activity */}
-                            <Card>
-                                <CardHeader>
-                                    <CardTitle className="text-base">Recent Activity</CardTitle>
-                                </CardHeader>
-                                <CardContent className="space-y-3">
-                                    {mockActivities.map((activity) => (
-                                        <div key={activity.id} className="flex items-start gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarFallback className="text-xs">
-                                                    {getInitials(activity.user)}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm">
-                                                    <span className="font-medium">{activity.user}</span>{' '}
-                                                    {activity.action}{' '}
-                                                    {activity.target && (
-                                                        <span className="font-medium">{activity.target}</span>
-                                                    )}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {activity.timestamp}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </TabsContent>
+                            {/*/!* Recent Activity *!/*/}
+                            {/*<Card>*/}
+                            {/*    <CardHeader>*/}
+                            {/*        <CardTitle className="text-base">Recent Activity</CardTitle>*/}
+                            {/*    </CardHeader>*/}
+                            {/*    <CardContent className="space-y-3">*/}
+                            {/*        {mockActivities.map((activity) => (*/}
+                            {/*            <div key={activity.id} className="flex items-start gap-3">*/}
+                            {/*                <Avatar className="h-8 w-8">*/}
+                            {/*                    <AvatarFallback className="text-xs">*/}
+                            {/*                        {getInitials(activity.user)}*/}
+                            {/*                    </AvatarFallback>*/}
+                            {/*                </Avatar>*/}
+                            {/*                <div className="flex-1 min-w-0">*/}
+                            {/*                    <p className="text-sm">*/}
+                            {/*                        <span className="font-medium">{activity.user}</span>{' '}*/}
+                            {/*                        {activity.action}{' '}*/}
+                            {/*                        {activity.target && (*/}
+                            {/*                            <span className="font-medium">{activity.target}</span>*/}
+                            {/*                        )}*/}
+                            {/*                    </p>*/}
+                            {/*                    <p className="text-xs text-muted-foreground">*/}
+                            {/*                        {activity.timestamp}*/}
+                            {/*                    </p>*/}
+                            {/*                </div>*/}
+                            {/*            </div>*/}
+                            {/*        ))}*/}
+                            {/*    </CardContent>*/}
+                            {/*</Card>*/}
+                    {/*    </div>*/}
+                    {/*</TabsContent>*/}
 
                     {/* Members Tab */}
                     <TabsContent value="members" className="space-y-4">
