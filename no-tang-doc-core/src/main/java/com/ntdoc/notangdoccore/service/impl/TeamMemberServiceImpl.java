@@ -8,12 +8,12 @@ import com.ntdoc.notangdoccore.repository.TeamMemberRepository;
 import com.ntdoc.notangdoccore.repository.TeamRepository;
 import com.ntdoc.notangdoccore.repository.UserRepository;
 import com.ntdoc.notangdoccore.service.TeamMemberService;
+import com.ntdoc.notangdoccore.service.TeamPermissionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -27,14 +27,15 @@ public class TeamMemberServiceImpl implements TeamMemberService {
     private final TeamRepository teamRepository;
     private final TeamMemberRepository teamMemberRepository;
     private final UserRepository userRepository;
+    private final TeamPermissionService permissionService;  // ✅ 新增权限服务
 
     @Override
     public TeamMember addMember(Long teamId, String userEmail, String role, String operatorKcId) {
-        log.info("Adding member to team: teamId={}, role={}, operator={}",
+        log.info("Adding member to team: teamId={}, userKcId={}, role={}, operator={}",
                 teamId, userEmail, role, operatorKcId);
 
-        // 1. 验证操作者权限（必须是 OWNER 或 ADMIN）
-        if (!hasManagePermission(teamId, operatorKcId)) {
+        // 1. 使用权限服务验证操作者权限
+        if (!permissionService.hasInviteMemberPermission(teamId, operatorKcId)) {
             throw new SecurityException("只有团队拥有者或管理员可以添加成员");
         }
 
@@ -90,9 +91,9 @@ public class TeamMemberServiceImpl implements TeamMemberService {
         log.info("Removing member from team: teamId={}, memberId={}, operator={}",
                 teamId, memberId, operatorKcId);
 
-        // 1. 验证操作者权限
-        if (!hasManagePermission(teamId, operatorKcId)) {
-            throw new SecurityException("只有团队拥有者或管理员可以移除成员");
+        // 1. 使用权限服务验证是否可以移除
+        if (!permissionService.canRemoveMember(teamId, memberId, operatorKcId)) {
+            throw new SecurityException("您没有权限移除该成员");
         }
 
         // 2. 获取成员记录
@@ -104,16 +105,11 @@ public class TeamMemberServiceImpl implements TeamMemberService {
             throw new IllegalArgumentException("成员不属于该团队");
         }
 
-        // 4. 不能移除团队拥有者
-        if (member.getRole() == TeamMember.TeamRole.OWNER) {
-            throw new IllegalArgumentException("不能移除团队拥有者");
-        }
-
-        // 5. 标记为已移除（软删除）
+        // 4. 标记为已移除（软删除）
         member.setStatus(TeamMember.MemberStatus.REMOVED);
         teamMemberRepository.save(member);
 
-        // 6. 更新团队成员数量
+        // 5. 更新团队成员数量
         Team team = member.getTeam();
         team.setMemberCount(Math.max(1, team.getMemberCount() - 1));
         teamRepository.save(team);
@@ -126,14 +122,8 @@ public class TeamMemberServiceImpl implements TeamMemberService {
         log.info("Updating member role: teamId={}, memberId={}, newRole={}, operator={}",
                 teamId, memberId, newRole, operatorKcId);
 
-        // 1. 验证操作者是团队拥有者（只有拥有者可以修改角色）
-        Team team = teamRepository.findById(teamId)
-                .orElseThrow(() -> new RuntimeException("团队不存在: " + teamId));
-
-        User operator = userRepository.findByKcUserId(operatorKcId)
-                .orElseThrow(() -> new RuntimeException("操作者不存在: " + operatorKcId));
-
-        if (!team.getOwner().getId().equals(operator.getId())) {
+        // 1. 使用权限服务验证操作者权限
+        if (!permissionService.hasModifyRolePermission(teamId, operatorKcId)) {
             throw new SecurityException("只有团队拥有者可以修改成员角色");
         }
 
@@ -146,18 +136,15 @@ public class TeamMemberServiceImpl implements TeamMemberService {
             throw new IllegalArgumentException("成员不属于该团队");
         }
 
-        // 4. 不能修改拥有者的角色
-        if (member.getRole() == TeamMember.TeamRole.OWNER) {
-            throw new IllegalArgumentException("不能修改团队拥有者的角色");
-        }
-
-        // 5. 不能将成员设置为拥有者
+        // 4. 验证角色变更的合法性
+        TeamMember.TeamRole operatorRole = permissionService.getUserRole(teamId, operatorKcId);
         TeamMember.TeamRole newRoleEnum = TeamMember.TeamRole.valueOf(newRole.toUpperCase());
-        if (newRoleEnum == TeamMember.TeamRole.OWNER) {
-            throw new IllegalArgumentException("不能将成员设置为拥有者");
+
+        if (!permissionService.isRoleChangeAllowed(operatorRole, member.getRole(), newRoleEnum)) {
+            throw new IllegalArgumentException("不允许该角色变更");
         }
 
-        // 6. 更新角色
+        // 5. 更新角色
         member.setRole(newRoleEnum);
         member = teamMemberRepository.save(member);
 
@@ -174,21 +161,20 @@ public class TeamMemberServiceImpl implements TeamMemberService {
     public List<TeamMemberResponse> getTeamMembers(Long teamId, String operatorKcId) {
         log.debug("Getting team members: teamId={}, operator={}", teamId, operatorKcId);
 
-        // 验证操作者是团队成员
-        if (!isMember(teamId, operatorKcId)) {
+        // 使用权限服务验证操作者是团队成员
+        TeamMember.TeamRole role = permissionService.getUserRole(teamId, operatorKcId);
+        if (role == null) {
             throw new SecurityException("只有团队成员可以查看成员列表");
         }
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("团队不存在: " + teamId));
-        List<TeamMember> teamMembers =  teamMemberRepository.findByTeamOrderByJoinedAtAsc(team);
 
-        List<TeamMemberResponse> teamMemberResponses = teamMembers
-                .stream()
+        List<TeamMember> teamMembers = teamMemberRepository.findByTeamOrderByJoinedAtAsc(team);
+
+        return teamMembers.stream()
                 .map(TeamMemberResponse::fromEntity)
                 .collect(Collectors.toList());
-
-        return teamMemberResponses;
     }
 
     @Override
@@ -196,22 +182,20 @@ public class TeamMemberServiceImpl implements TeamMemberService {
     public List<TeamMemberResponse> getActiveTeamMembers(Long teamId, String operatorKcId) {
         log.debug("Getting active team members: teamId={}, operator={}", teamId, operatorKcId);
 
-        // 验证操作者是团队成员
-        if (!isMember(teamId, operatorKcId)) {
+        // 使用权限服务验证操作者是团队成员
+        TeamMember.TeamRole role = permissionService.getUserRole(teamId, operatorKcId);
+        if (role == null) {
             throw new SecurityException("只有团队成员可以查看成员列表");
         }
 
         Team team = teamRepository.findById(teamId)
                 .orElseThrow(() -> new RuntimeException("团队不存在: " + teamId));
 
-        List<TeamMember> teamMembers =  teamMemberRepository.findByTeamAndStatus(team, TeamMember.MemberStatus.ACTIVE);
+        List<TeamMember> teamMembers = teamMemberRepository.findByTeamAndStatus(team, TeamMember.MemberStatus.ACTIVE);
 
-        List<TeamMemberResponse> teamMemberResponses = teamMembers
-                .stream()
+        return teamMembers.stream()
                 .map(TeamMemberResponse::fromEntity)
                 .collect(Collectors.toList());
-
-        return teamMemberResponses;
     }
 
     @Override
@@ -227,7 +211,7 @@ public class TeamMemberServiceImpl implements TeamMemberService {
         TeamMember member = teamMemberRepository.findByTeamAndUser(team, user)
                 .orElseThrow(() -> new RuntimeException("您不是该团队成员"));
 
-        // 团队拥有者不能退出自己的团队
+        // 使用权限服务检查角色
         if (member.getRole() == TeamMember.TeamRole.OWNER) {
             throw new IllegalArgumentException("团队拥有者不能退出团队，请先转让团队或删除团队");
         }
@@ -246,39 +230,12 @@ public class TeamMemberServiceImpl implements TeamMemberService {
     @Override
     @Transactional(readOnly = true)
     public boolean isMember(Long teamId, String userKcId) {
-        Team team = teamRepository.findById(teamId).orElse(null);
-        if (team == null) {
-            return false;
-        }
-
-        User user = userRepository.findByKcUserId(userKcId).orElse(null);
-        if (user == null) {
-            return false;
-        }
-
-        return teamMemberRepository.existsByTeamAndUserAndStatus(team, user, TeamMember.MemberStatus.ACTIVE);
+        return permissionService.getUserRole(teamId, userKcId) != null;
     }
 
     @Override
     @Transactional(readOnly = true)
     public boolean hasManagePermission(Long teamId, String userKcId) {
-        Team team = teamRepository.findById(teamId).orElse(null);
-        if (team == null) {
-            return false;
-        }
-
-        User user = userRepository.findByKcUserId(userKcId).orElse(null);
-        if (user == null) {
-            return false;
-        }
-
-        Optional<TeamMember> member = teamMemberRepository.findByTeamAndUser(team, user);
-        if (member.isEmpty() || member.get().getStatus() != TeamMember.MemberStatus.ACTIVE) {
-            return false;
-        }
-
-        TeamMember.TeamRole role = member.get().getRole();
-        return role == TeamMember.TeamRole.OWNER || role == TeamMember.TeamRole.ADMIN;
+        return permissionService.hasManageMemberPermission(teamId, userKcId);
     }
 }
-

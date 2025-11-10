@@ -40,6 +40,12 @@ public class TeamResponse {
     @Schema(description = "成员数量", example = "1")
     private Integer memberCount;
 
+    @Schema(description = "当前用户在该团队的角色", example = "OWNER", allowableValues = {"OWNER", "ADMIN", "MEMBER"})
+    private String currentUserRole;
+
+    @Schema(description = "当前用户的权限")
+    private TeamPermissions permissions;
+
     @Schema(description = "创建时间")
     private Instant createdAt;
 
@@ -47,7 +53,7 @@ public class TeamResponse {
     private Instant updatedAt;
 
     /**
-     * 从 Team 实体转换为 DTO
+     * 从 Team 实体转换为 DTO（不含角色信息）
      */
     public static TeamResponse fromEntity(Team team) {
         return TeamResponse.builder()
@@ -62,5 +68,89 @@ public class TeamResponse {
                 .updatedAt(team.getUpdatedAt())
                 .build();
     }
-}
 
+    /**
+     * 从 Team 实体转换为 DTO（含角色信息）
+     */
+    public static TeamResponse fromEntityWithRole(Team team, String currentUserRole) {
+        TeamResponse response = fromEntity(team);
+        response.setCurrentUserRole(currentUserRole);
+        response.setPermissions(TeamPermissions.fromRole(currentUserRole));
+        return response;
+    }
+
+    /**
+     * 团队权限DTO
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(description = "团队权限")
+    public static class TeamPermissions {
+        @Schema(description = "是否可以编辑团队信息", example = "true")
+        private Boolean canEdit;
+
+        @Schema(description = "是否可以邀请成员", example = "true")
+        private Boolean canInvite;
+
+        @Schema(description = "是否可以删除团队", example = "true")
+        private Boolean canDelete;
+
+        @Schema(description = "是否可以管理成员", example = "true")
+        private Boolean canManageMembers;
+
+        @Schema(description = "是否可以修改成员角色", example = "true")
+        private Boolean canModifyRoles;
+
+        /**
+         * 根据角色生成权限
+         */
+        public static TeamPermissions fromRole(String role) {
+            if (role == null) {
+                return TeamPermissions.builder()
+                        .canEdit(false)
+                        .canInvite(false)
+                        .canDelete(false)
+                        .canManageMembers(false)
+                        .canModifyRoles(false)
+                        .build();
+            }
+
+            switch (role) {
+                case "OWNER":
+                    return TeamPermissions.builder()
+                            .canEdit(true)
+                            .canInvite(true)
+                            .canDelete(true)
+                            .canManageMembers(true)
+                            .canModifyRoles(true)
+                            .build();
+                case "ADMIN":
+                    return TeamPermissions.builder()
+                            .canEdit(true)
+                            .canInvite(true)
+                            .canDelete(false)
+                            .canManageMembers(true)
+                            .canModifyRoles(false)
+                            .build();
+                case "MEMBER":
+                    return TeamPermissions.builder()
+                            .canEdit(false)
+                            .canInvite(false)
+                            .canDelete(false)
+                            .canManageMembers(false)
+                            .canModifyRoles(false)
+                            .build();
+                default:
+                    return TeamPermissions.builder()
+                            .canEdit(false)
+                            .canInvite(false)
+                            .canDelete(false)
+                            .canManageMembers(false)
+                            .canModifyRoles(false)
+                            .build();
+            }
+        }
+    }
+}

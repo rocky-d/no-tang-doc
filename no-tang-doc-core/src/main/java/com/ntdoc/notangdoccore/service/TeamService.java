@@ -69,5 +69,22 @@ public interface TeamService {
      * @return 是否是拥有者
      */
     boolean isTeamOwner(Long teamId, String kcUserId);
-}
 
+    /**
+     * 获取用户在指定团队中的角色
+     *
+     * @param teamId   团队ID
+     * @param kcUserId Keycloak 用户ID
+     * @return 角色名称（OWNER/ADMIN/MEMBER），如果不是成员则返回null
+     */
+    String getUserRoleInTeam(Long teamId, String kcUserId);
+
+    /**
+     * 检查用户是否是团队成员
+     *
+     * @param teamId   团队ID
+     * @param kcUserId Keycloak 用户ID
+     * @return 是否是团队成员
+     */
+    boolean isTeamMember(Long teamId, String kcUserId);
+}

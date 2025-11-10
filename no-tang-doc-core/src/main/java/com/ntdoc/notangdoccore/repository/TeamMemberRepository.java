@@ -36,6 +36,11 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     Optional<TeamMember> findByTeamAndUser(Team team, User user);
 
     /**
+     * 根据团队、用户和状态查找成员记录
+     */
+    Optional<TeamMember> findByTeamAndUserAndStatus(Team team, User user, TeamMember.MemberStatus status);
+
+    /**
      * 检查用户是否是团队成员
      */
     boolean existsByTeamAndUserAndStatus(Team team, User user, TeamMember.MemberStatus status);
