@@ -25,6 +25,11 @@ on:
         required: false
         type: string
         default: ""
+      debug:
+        description: Enable debug mode
+        required: false
+        type: boolean
+        default: false
     secrets:
       DO_ACCESS_TOKEN:
         required: false
@@ -181,4 +186,5 @@ jobs:
     with:
       sha: ${{ github.sha }}
       branch: ${{ github.ref_name }}
+      debug: ${{ inputs.debug || false }}
     secrets: inherit

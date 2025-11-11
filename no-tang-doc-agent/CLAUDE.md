@@ -196,9 +196,9 @@ async def fetch_team(
     async with httpx.AsyncClient(
         headers={"Authorization": authorization}
     ) as client:
-        response = await client.get(f"{base_url}/api/v1/teams/{team_id}")
-        response.raise_for_status()
-        return response.json()
+        resp = await client.get(f"{base_url}/api/v1/teams/{team_id}")
+        resp.raise_for_status()
+        return resp.json()
 ```
 
 ### Code Quality Commands

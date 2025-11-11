@@ -13,7 +13,7 @@ from no_tang_doc_agent.datetime_excepthook import apply_datetime_excepthook
 from no_tang_doc_agent.mcp_server import (
     FastMCPSettings,
     JWTTokenVerifier,
-    start_mcp_server,
+    launch_server,
 )
 
 logger = logging.getLogger(__name__)
@@ -65,7 +65,8 @@ class ScopesParamType(click.ParamType):
 @click.option(
     "--debug",
     is_flag=True,
-    default=True,
+    envvar="DEBUG",
+    default=False,
     help="Enable debug mode",
     show_default=True,
 )
@@ -138,7 +139,7 @@ def main(
     logger.critical(f"{issuer_url=}")
     logger.critical(f"{resource_server_url=}")
     logger.critical(f"{required_scopes=}")
-    start_mcp_server(
+    launch_server(
         base_url=base_url,
         mcp_settings=FastMCPSettings(
             name=name,
