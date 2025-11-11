@@ -31,6 +31,11 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     List<TeamMember> findByUserOrderByJoinedAtDesc(User user);
 
     /**
+     * 根据用户和状态查找所有团队成员关系
+     */
+    List<TeamMember> findByUserAndStatus(User user, TeamMember.MemberStatus status);
+
+    /**
      * 查找用户在某个团队中的成员记录
      */
     Optional<TeamMember> findByTeamAndUser(Team team, User user);
