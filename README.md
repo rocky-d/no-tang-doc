@@ -17,7 +17,7 @@
 - [Overview](#overview)
 - [Architecture](#architecture)
 - [Services](#services)
-  - [no-tang-doc-agent](#no-tang-doc-agent)
+  - [no-tang-doc-agent](#no-tang-doc-agent-mcp-server)
   - [no-tang-doc-core](#no-tang-doc-core-backend-api)
   - [no-tang-doc-web](#no-tang-doc-web-frontend)
 - [Infrastructure](#infrastructure)
@@ -55,10 +55,10 @@
 
 | Service | URL | Description |
 |---------|-----|-------------|
-| **Web** | https://ntdoc.site | Frontend User Interface |
-| **Agent** | https://agent.ntdoc.site | MCP Server API |
-| **Core** | https://api.ntdoc.site | Backend REST API |
-| **Auth** | https://auth.ntdoc.site | Keycloak Authentication |
+| **Web** | <https://ntdoc.site> | Frontend User Interface |
+| **Agent** | <https://agent.ntdoc.site> | MCP Server API |
+| **Core** | <https://api.ntdoc.site> | Backend REST API |
+| **Auth** | <https://auth.ntdoc.site> | Keycloak Authentication |
 
 ---
 
@@ -117,7 +117,7 @@ The Agent service implements the Model Context Protocol (MCP), enabling Large La
 
 - **Language**: Python 3.13.7
 - **Package Manager**: uv (Rust-based, 10-100x faster than pip)
-- **Core Framework**: 
+- **Core Framework**:
   - `fast-agent-mcp` ≥ 0.3.18
   - `mcp[cli]` ≥ 1.19.0
   - `pyjwt` ≥ 2.10.1
@@ -128,6 +128,7 @@ The Agent service implements the Model Context Protocol (MCP), enabling Large La
 The agent exposes 20 tools for LLM interactions:
 
 **Document Management**
+
 - `upload-document`: Upload new documents
 - `download-document-content`: Retrieve document content
 - `download-document-metadata`: Get document metadata
@@ -136,6 +137,7 @@ The agent exposes 20 tools for LLM interactions:
 - `get-documents`: List user's documents
 
 **Team Management**
+
 - `create-team`: Create new teams
 - `get-team-by-id`: Retrieve team details
 - `get-teams`: List user's teams
@@ -144,17 +146,20 @@ The agent exposes 20 tools for LLM interactions:
 - `leave-team`: Leave a team
 
 **Member Management**
+
 - `add-team-member`: Add members to teams
 - `remove-team-member`: Remove team members
 - `update-team-member-role`: Change member roles
 - `get-team-members`: List team members
 
 **Analytics**
+
 - `get-logs-list`: View operation logs
 - `get-logs-count`: Get log statistics
 - `get-logs-documents`: Retrieve document logs
 
 **User**
+
 - `get-api-auth-me`: Get current user info
 
 #### Directory Structure
@@ -187,6 +192,7 @@ For detailed configuration instructions, environment variables, and setup guides
 For detailed development setup, testing procedures, linting, and Docker workflows, please refer to [`no-tang-doc-agent/README.md`](no-tang-doc-agent/README.md).
 
 **Quick Start**
+
 ```bash
 cd no-tang-doc-agent
 uv sync --all-extras --dev
@@ -198,11 +204,11 @@ uv run no-tang-doc-agent-mcp-server
 For detailed Helm chart configuration and deployment instructions, please refer to [`no-tang-doc-agent/README.md`](no-tang-doc-agent/README.md).
 
 **Current Status**
+
 - **Namespace**: `ntdoc-agent`
 - **Replicas**: 1/1 Ready
-- **Image**: `registry.digitalocean.com/ntdoc/ntdoc-agent:dev-ba4702b`
+- **Image**: `registry.digitalocean.com/ntdoc/ntdoc-agent`
 - **Ingress Host**: `agent.ntdoc.site`
-- **External IP**: `139.59.221.243`
 - **Ports**: 8002 (internal), 80/443 (ingress)
 
 #### CI/CD Workflows
@@ -213,23 +219,21 @@ For detailed CI/CD workflow configurations and deployment procedures, please ref
 
 Triggers: Push, PR, manual (`workflow_dispatch`), reusable (`workflow_call`)
 
-Jobs: Lint (~8s) → Test (~15s) → Deploy (calls CD workflow)
+Jobs: Lint → Test → Deploy (calls CD workflow)
 
 **Agent CD (`.github/workflows/no-tang-doc-agent-cd.yaml`)**
 
 Triggers: CI workflow call, manual trigger
 
-Jobs: Build (~37s) → Deploy (~29s)
+Jobs: Build → Deploy
 
 #### Container Image
 
 For detailed Dockerfile configuration and build instructions, please refer to [`no-tang-doc-agent/README.md`](no-tang-doc-agent/README.md).
 
 **Registry**: DigitalOcean Container Registry (DOCR)
+
 - **Repository**: `registry.digitalocean.com/ntdoc/ntdoc-agent`
-- **Latest Tag**: `dev-ba4702b`
-- **Total Tags**: 16 versions
-- **Last Updated**: 2025-11-01 12:38:10 UTC
 
 > **Note**: For comprehensive Agent service documentation including development setup, testing, deployment, and CI/CD workflows, please refer to [`no-tang-doc-agent/README.md`](no-tang-doc-agent/README.md).
 
@@ -254,10 +258,9 @@ The Core service provides the main backend REST API for the no-tang-doc system.
 #### Kubernetes Deployment
 
 - **Namespace**: `ntdoc-core`
-- **Image**: `registry.digitalocean.com/ntdoc/ntdoc-core:dev`
+- **Image**: `registry.digitalocean.com/ntdoc/ntdoc-core`
 - **Replicas**: 1/1 Ready
 - **Ingress Host**: `api.ntdoc.site`
-- **External IP**: `139.59.221.243`
 
 #### Directory Structure
 
@@ -299,10 +302,7 @@ The Web service provides the frontend user interface for the no-tang-doc system.
 
 #### Container Image
 
-- **Repository**: `registry.digitalocean.com/ntdoc/ntdoc-web:dev`
-- **Latest Tag**: `dev-6fc8fce`
-- **Total Tags**: 3 versions
-- **Last Updated**: 2025-11-01 04:20:40 UTC
+- **Repository**: `registry.digitalocean.com/ntdoc/ntdoc-web`
 
 #### Kubernetes Deployment
 
@@ -340,6 +340,7 @@ no-tang-doc-web/
 ### Kubernetes Deployment
 
 **Cluster Information**
+
 - **Provider**: DigitalOcean Kubernetes (DOKS)
 - **Cluster Name**: `ntdoc-doks`
 - **Region**: Singapore (sgp1)
@@ -347,6 +348,7 @@ no-tang-doc-web/
 - **Node Pool**: `ntdoc-pool`
 
 **Namespaces**
+
 ```
 ├── cert-manager      # TLS certificate management
 ├── default           # Default namespace
@@ -362,8 +364,9 @@ no-tang-doc-web/
 ```
 
 **Ingress Routes**
+
 ```
-139.59.221.243 (Load Balancer)
+Load Balancer
     ├── ntdoc.site         → Web Frontend (80/443)
     ├── auth.ntdoc.site    → Keycloak (80/443)
     ├── api.ntdoc.site     → Core Service (80/443)
@@ -376,11 +379,11 @@ no-tang-doc-web/
 
 Registry: `registry.digitalocean.com/ntdoc`
 
-| Repository | Latest Tag | Total Tags | Last Updated |
-|------------|-----------|------------|--------------|
-| `ntdoc-agent` | dev-ba4702b | 16 | 2025-11-01 12:38 UTC |
-| `ntdoc-core` | dev | 3 | 2025-11-01 04:11 UTC |
-| `ntdoc-web` | dev-6fc8fce | 3 | 2025-11-01 04:20 UTC |
+**Available Repositories:**
+
+- `ntdoc-agent` - Agent service images
+- `ntdoc-core` - Core service images
+- `ntdoc-web` - Web service images
 
 ### Authentication Service
 
@@ -394,6 +397,7 @@ Registry: `registry.digitalocean.com/ntdoc`
 - **Required Scopes**: `email`, `profile`, `mcp-user`
 
 **Features**
+
 - Centralized identity management
 - OAuth 2.0 / OIDC authentication
 - SSO (Single Sign-On)
@@ -408,6 +412,7 @@ Registry: `registry.digitalocean.com/ntdoc`
 For comprehensive development guide including setup, testing, linting, and Docker workflows, please refer to [`no-tang-doc-agent/README.md`](no-tang-doc-agent/README.md).
 
 **Quick Start**
+
 ```bash
 cd no-tang-doc-agent
 uv sync --all-extras --dev
@@ -417,6 +422,7 @@ uv run no-tang-doc-agent-mcp-server
 ### Branch Strategy
 
 **Protected Branches**
+
 - `main`: Production releases
 - `dev`: Development integration
 - `docs`: Documentation updates (merges to `dev`)
@@ -426,12 +432,14 @@ uv run no-tang-doc-agent-mcp-server
   - `mod/web`: Web service
 
 **Feature Branches**
+
 - `feat/{module}/*`: Feature development
   - Example: `feat/agent/<feature-name>`
 - `feat/*`: Project-wide features
   - Example: `feat/<feature-name>`
 
 **Workflow**
+
 ```
 feat/{module}/* → mod/{module} → dev → main
       ↓ PR           ↓ PR        ↓ PR
@@ -443,6 +451,7 @@ feat/* (docs, etc.) → dev → main
 ```
 
 **Rules**
+
 - Protected branches (`main`, `dev`, `docs`, `mod/*`) require Pull Requests
 - No direct pushes to protected branches
 - CI must pass before merging
@@ -460,6 +469,7 @@ feat/* (docs, etc.) → dev → main
 | Deploy to DOKS | `deploy-to-doks.yaml` | manual | Generic deployment |
 
 **CI/CD Features**
+
 - ✅ Automatic testing with coverage requirements
 - ✅ Docker image building with BuildKit cache
 - ✅ Helm-based Kubernetes deployment
@@ -475,6 +485,7 @@ feat/* (docs, etc.) → dev → main
 ### Prerequisites
 
 **Required Tools**
+
 - `kubectl`: Kubernetes CLI
 - `helm`: Kubernetes package manager
 - `doctl`: DigitalOcean CLI
@@ -482,6 +493,7 @@ feat/* (docs, etc.) → dev → main
 - `terraform`: Infrastructure as Code (optional)
 
 **Required Secrets**
+
 - `DO_ACCESS_TOKEN`: DigitalOcean API token
 - `DOKS_CLUSTER_NAME`: Kubernetes cluster name
 - `KEYCLOAK_CLIENT_SECRET`: OAuth client secret
@@ -491,6 +503,7 @@ feat/* (docs, etc.) → dev → main
 For detailed Terraform configuration and usage, please refer to [`IaC/README.md`](IaC/README.md).
 
 **Terraform Modules**
+
 ```
 IaC/
 ├── cluster/              # DOKS cluster
@@ -508,11 +521,13 @@ IaC/
 ### Manual Deployment
 
 For detailed deployment instructions and Helm configuration, please refer to service-specific README files:
+
 - Agent: [`no-tang-doc-agent/README.md`](no-tang-doc-agent/README.md)
 - Core: [`no-tang-doc-core/README.md`](no-tang-doc-core/README.md)
 - Web: [`no-tang-doc-web/README.md`](no-tang-doc-web/README.md)
 
 **Quick Example (Agent Service)**
+
 ```bash
 doctl kubernetes cluster kubeconfig save ntdoc-doks
 helm upgrade --install ntdoc-agent charts/ntdoc-agent \
@@ -523,6 +538,7 @@ kubectl -n ntdoc-agent get all,ingress
 ### Automated Deployment
 
 Deployments are automatically triggered by:
+
 1. Merging PRs to protected branches (`main`, `dev`, `mod/agent`)
 2. CI workflow success
 3. Manual workflow dispatch in GitHub Actions
@@ -541,6 +557,7 @@ We welcome contributions! Please see [`CONTRIBUTING.md`](CONTRIBUTING.md) for de
 - Development environment setup
 
 **Quick Start for Contributors:**
+
 1. Fork the repository
 2. Create a feature branch (`feat/{module}/your-feature`)
 3. Make your changes with tests
@@ -556,6 +573,7 @@ For detailed instructions, please read [`CONTRIBUTING.md`](CONTRIBUTING.md).
 ### Metrics
 
 **Prometheus Integration**
+
 - Core service exposes metrics via Spring Actuator
 - Metrics endpoint: `/actuator/prometheus`
 - Grafana dashboards (planned)
@@ -565,16 +583,19 @@ For detailed instructions, please read [`CONTRIBUTING.md`](CONTRIBUTING.md).
 For detailed logging configuration, please refer to service-specific README files.
 
 **Agent Service**
+
 - Structured logging with YAML configuration
 - Kubernetes logs: `kubectl -n ntdoc-agent logs -f deployment/ntdoc-agent-ntdoc-agent`
 
 ### Health Checks
 
 **Kubernetes Probes**
+
 - Liveness probes configured for all services
 - Readiness probes ensure traffic only to healthy pods
 
 **Service Health**
+
 ```bash
 # Check all pods
 kubectl get pods --all-namespaces
@@ -591,6 +612,7 @@ kubectl -n ntdoc-core get pods
 ### Common Issues
 
 **Agent Service Won't Start**
+
 ```bash
 # Check pod logs
 kubectl -n ntdoc-agent logs deployment/ntdoc-agent-ntdoc-agent
@@ -603,6 +625,7 @@ kubectl -n ntdoc-agent describe pod <pod-name>
 ```
 
 **Authentication Errors**
+
 ```bash
 # Verify Keycloak is running
 kubectl -n keycloak get pods
@@ -615,6 +638,7 @@ curl https://auth.ntdoc.site/realms/ntdoc/.well-known/openid-configuration
 ```
 
 **CI/CD Failures**
+
 - Check GitHub Actions workflow logs
 - Verify secrets are set in repository settings
 - Ensure Docker registry credentials are valid
@@ -626,12 +650,12 @@ curl https://auth.ntdoc.site/realms/ntdoc/.well-known/openid-configuration
 
 ### Documentation
 
-- **MCP Protocol**: https://modelcontextprotocol.io
-- **MCP Python SDK**: https://github.com/modelcontextprotocol/python-sdk
-- **uv Package Manager**: https://docs.astral.sh/uv/
-- **Spring Boot**: https://spring.io/projects/spring-boot
-- **Kubernetes**: https://kubernetes.io/docs/
-- **Helm**: https://helm.sh/docs/
+- **MCP Protocol**: <https://modelcontextprotocol.io>
+- **MCP Python SDK**: <https://github.com/modelcontextprotocol/python-sdk>
+- **uv Package Manager**: <https://docs.astral.sh/uv/>
+- **Spring Boot**: <https://spring.io/projects/spring-boot>
+- **Kubernetes**: <https://kubernetes.io/docs/>
+- **Helm**: <https://helm.sh/docs/>
 
 ### Internal Documentation
 
@@ -643,6 +667,7 @@ curl https://auth.ntdoc.site/realms/ntdoc/.well-known/openid-configuration
 ### Support
 
 For questions or issues:
+
 1. Check existing documentation
 2. Search GitHub Issues
 3. Contact team leads
@@ -661,14 +686,17 @@ Copyright (c) 2025 Rocky Haotian Du
 ## Team
 
 **Agent Team**
+
 - Focus: MCP server, Python development, CI/CD
 - Repository: `no-tang-doc-agent/`
 
 **Core Team**
+
 - Focus: Backend API, Java development, database
 - Repository: `no-tang-doc-core/`
 
 **Web Team**
+
 - Focus: Frontend UI, TypeScript development
 - Repository: `no-tang-doc-web/`
 
