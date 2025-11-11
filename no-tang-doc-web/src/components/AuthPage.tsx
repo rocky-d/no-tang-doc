@@ -1,8 +1,6 @@
-import { useState } from 'react';
 import { ArrowLeft, FileText } from 'lucide-react';
 import { Button } from './ui/button';
-import { LoginForm } from './LoginForm';
-import { RegisterForm } from './RegisterForm';
+import { useAuth } from './AuthContext';
 
 interface AuthPageProps {
   initialMode?: 'login' | 'register';
@@ -10,7 +8,9 @@ interface AuthPageProps {
 }
 
 export function AuthPage({ initialMode = 'login', onBack }: AuthPageProps) {
-  const [isLogin, setIsLogin] = useState(initialMode === 'login');
+  const { login, register, isLoading } = useAuth();
+  // Use prop directly so rerender reflects new heading
+  const mode: 'login' | 'register' = initialMode;
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,18 +29,23 @@ export function AuthPage({ initialMode = 'login', onBack }: AuthPageProps) {
             <span className="font-semibold">NTDoc</span>
           </div>
           
-          <div className="w-32"></div> {/* Spacer for center alignment */}
+          <div className="w-32"></div>
         </div>
       </header>
 
       {/* Auth Content */}
       <main className="flex items-center justify-center min-h-[calc(100vh-4rem)] py-8">
-        <div className="w-full max-w-md">
-          {isLogin ? (
-            <LoginForm onSwitchToRegister={() => setIsLogin(false)} />
-          ) : (
-            <RegisterForm onSwitchToLogin={() => setIsLogin(true)} />
-          )}
+        <div className="w-full max-w-md space-y-4 text-center">
+          <h2 className="text-xl font-semibold">{mode === 'login' ? 'Sign in' : 'Create your account'}</h2>
+          <p className="text-sm text-muted-foreground">You will be redirected to the identity provider.</p>
+          <div className="flex flex-col gap-3">
+            <Button onClick={() => login()} disabled={isLoading}>
+              Sign in
+            </Button>
+            <Button variant="outline" onClick={() => register()} disabled={isLoading}>
+              Create account
+            </Button>
+          </div>
         </div>
       </main>
     </div>

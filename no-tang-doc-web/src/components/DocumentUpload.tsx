@@ -100,12 +100,12 @@ export function DocumentUpload() {
       })
         .then(() => {
           setFiles(prev => prev.map(f => f.id === tempId ? { ...f, progress: 100, status: 'completed' } : f));
-          toast.success(`${file.name} 上传成功`);
+          toast.success(`${file.name} uploaded successfully`);
         })
         .catch((err) => {
           console.error('Upload error:', err);
           setFiles(prev => prev.map(f => f.id === tempId ? { ...f, status: 'error' } : f));
-          toast.error(`${file.name} 上传失败：${err?.message || '未知错误'}`);
+          toast.error(`${file.name} upload failed: ${err?.message || 'Unknown error'}`);
         });
     });
   };
