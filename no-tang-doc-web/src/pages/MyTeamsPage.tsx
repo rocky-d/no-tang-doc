@@ -14,21 +14,14 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { toast } from 'sonner';
-import { http } from '../utils/request';
+import { getTeamRepository, type Team as BaseTeam } from '../repositories/TeamRepository';
 import { useAuth } from '../components/AuthContext';
 
-interface Team {
-    id: string;
-    name: string;
-    description: string;
-    memberCount: number;
+interface Team extends BaseTeam {
     role: 'owner' | 'admin' | 'member';
-    avatar?: string;
     ownerName?: string;
     ownerEmail?: string;
 }
-
-const TEAMS_API_PREFIX = (import.meta.env as unknown).VITE_TEAMS_API_PREFIX || 'https://api.ntdoc.site/api/v1/teams';
 
 export function MyTeamsPage() {
     const navigate = useNavigate();
@@ -57,24 +50,19 @@ export function MyTeamsPage() {
         try {
             setTeamsLoading(true);
             setTeamsError('');
-            const resp: unknown = await http.get(`${TEAMS_API_PREFIX}?activeOnly=true`);
-            const body = resp?.data ?? resp ?? {};
-            const list = body?.data?.teams ?? body?.teams ?? [];
-            const mapped: Team[] = (Array.isArray(list) ? list : []).map((t: unknown) => ({
-                id: String(t?.teamId ?? t?.id ?? Math.random().toString(36).slice(2)),
-                name: t?.name ?? 'Unnamed Team',
-                description: t?.description ?? '',
-                memberCount: Number(t?.memberCount ?? 0),
+            const repo = getTeamRepository();
+            const base = await repo.getTeams({ activeOnly: true });
+            const mapped: Team[] = base.map((t) => ({
+                ...t,
                 role: 'owner',
-                avatar: undefined,
                 ownerName: currentOwnerName,
                 ownerEmail: currentOwnerEmail,
             }));
             setTeams(mapped);
         } catch (e: unknown) {
             console.error('Fetch teams failed', e);
-            setTeamsError(e?.message || '获取团队列表失败');
-            toast.error(e?.message || '获取团队列表失败');
+            setTeamsError(e?.message || 'Failed to load team list');
+            toast.error(e?.message || 'Failed to load team list');
         } finally {
             setTeamsLoading(false);
         }
@@ -108,29 +96,17 @@ export function MyTeamsPage() {
         try {
             setCreating(true);
             const payload = { name, description };
-            const resp: unknown = await http.post(`${TEAMS_API_PREFIX}`, payload);
-            const body = resp?.data ?? resp ?? {};
-            const statusOk = typeof resp?.status === 'number' ? (resp.status >= 200 && resp.status < 300) : false;
-            const successOk = resp?.success === true;
-            const ok = statusOk || successOk;
-            if (!ok) {
-                throw new Error(body?.message || 'Create Team failed');
-            }
-            const data = body?.data ?? {};
-
+            const repo = getTeamRepository();
+            const created = await repo.createTeam(payload);
             const newTeam: Team = {
-                id: String(data?.teamId ?? data?.id ?? Math.random().toString(36).slice(2)),
-                name: data?.name ?? name,
-                description: data?.description ?? description,
-                memberCount: Number(data?.memberCount ?? 1),
+                ...created,
                 role: 'owner',
-                avatar: undefined,
                 ownerName: currentOwnerName,
                 ownerEmail: currentOwnerEmail,
             };
 
             setTeams(prev => [newTeam, ...prev]);
-            toast.success(body?.message || 'Team created successfully');
+            toast.success('Team created successfully');
 
             // Reset form and close dialog
             setTeamName('');
@@ -165,25 +141,18 @@ export function MyTeamsPage() {
         try {
             setEditSaving(true);
             const payload = { name: newName, description: newDesc };
-            const resp: unknown = await http.put(`${TEAMS_API_PREFIX}/${selectedTeam.id}`, payload);
-            const body = resp?.data ?? resp ?? {};
-            const statusOk = typeof resp?.status === 'number' ? (resp.status >= 200 && resp.status < 300) : false;
-            const successOk = resp?.success === true;
-            const ok = statusOk || successOk;
-            if (!ok) {
-                throw new Error(body?.message || 'Update team failed');
-            }
-            const data = body?.data ?? {};
+            const repo = getTeamRepository();
+            const updatedTeam = await repo.updateTeam(selectedTeam.id, payload);
             const updated = {
-                name: data?.name ?? newName,
-                description: data?.description ?? newDesc,
-                memberCount: Number(data?.memberCount ?? selectedTeam.memberCount),
+                name: updatedTeam.name,
+                description: updatedTeam.description,
+                memberCount: updatedTeam.memberCount,
             };
             // Update list and selectedTeam
             setTeams(prev => prev.map(t => t.id === selectedTeam.id ? { ...t, ...updated } : t));
             setSelectedTeam(prev => prev ? { ...prev, ...updated } : prev);
 
-            toast.success(body?.message || 'Team updated successfully');
+            toast.success('Team updated successfully');
             setViewDialogOpen(false);
         } catch (e: unknown) {
             console.error('Update team failed', e);
@@ -194,25 +163,20 @@ export function MyTeamsPage() {
     };
     const handleDeleteTeam = async (teamId: string) => {
         if (!teamId) return;
-        const ok = window.confirm('确定要删除该团队吗？此操作不可撤销。');
+        const ok = window.confirm('Are you sure you want to delete this team? This action cannot be undone.');
         if (!ok) return;
         try {
             setDeletingId(teamId);
-            const resp: unknown = await http.delete(`${TEAMS_API_PREFIX}/${teamId}`);
-            const body = resp?.data ?? resp ?? {};
-            const statusOk = typeof resp?.status === 'number' ? (resp.status >= 200 && resp.status < 300) : false;
-            const successOk = resp?.success === true;
-            const success = statusOk || successOk;
-            if (!success) {
-                throw new Error(body?.message || 'Delete team failed');
-            }
+            const repo = getTeamRepository();
+            const res = await repo.deleteTeam(teamId);
+            if (!res.success) throw new Error(res.message || 'Delete team failed');
             setTeams(prev => prev.filter(t => t.id !== teamId));
             // If currently viewing this team, close dialog
             setSelectedTeam(prev => (prev && prev.id === teamId) ? null : prev);
             if (viewDialogOpen && selectedTeam && selectedTeam.id === teamId) {
                 setViewDialogOpen(false);
             }
-            toast.success(body?.message || 'Team deleted successfully');
+            toast.success(res.message || 'Team deleted successfully');
         } catch (e: unknown) {
             console.error('Delete team failed', e);
             toast.error(e?.message || 'Delete team failed');
@@ -274,7 +238,7 @@ export function MyTeamsPage() {
                 {!teamsLoading && teamsError && (
                     <Card className="p-6">
                         <p className="text-destructive mb-4">{teamsError}</p>
-                        <Button variant="outline" onClick={fetchTeams}>重试</Button>
+                        <Button variant="outline" onClick={fetchTeams}>Retry</Button>
                     </Card>
                 )}
 
@@ -382,7 +346,7 @@ export function MyTeamsPage() {
                                 onChange={(e) => setTeamName(e.target.value)}
                                 maxLength={50}
                             />
-                            <p className="text-xs text-muted-foreground">最多 50 个字符</p>
+                            <p className="text-xs text-muted-foreground">Max 50 characters</p>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="description">Description</Label>
@@ -421,7 +385,7 @@ export function MyTeamsPage() {
                                 onChange={(e) => setEditTeamName(e.target.value)}
                                 maxLength={50}
                             />
-                            <p className="text-xs text-muted-foreground">最多 50 个字符</p>
+                            <p className="text-xs text-muted-foreground">Max 50 characters</p>
                         </div>
 
                         {/* 团队描述输入框 */}
